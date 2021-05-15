@@ -26,8 +26,49 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event;
-pub mod object;
-pub mod system;
-pub mod component;
-pub mod scene;
+//! REGECS component layer
+
+use std::vec::Vec;
+
+use crate::object::ObjectRef;
+
+/// Represents an allocation pool for a given type of component
+pub struct ComponentPool<TComponent: Sized>
+{
+    comps: Vec<TComponent>
+}
+
+impl <TComponent: Sized> ComponentPool<TComponent>
+{
+    pub fn new() -> ComponentPool<TComponent>
+    {
+        return ComponentPool
+        {
+            comps: Vec::new()
+        };
+    }
+
+    pub fn add(&mut self, comp: TComponent) -> usize
+    {
+        let id = self.comps.len();
+        self.comps.push(comp);
+        return id;
+    }
+
+    pub fn get(&mut self, id: usize) -> &mut TComponent
+    {
+        return &mut self.comps[id];
+    }
+
+    pub fn remove(&mut self, id: usize)
+    {
+        self.comps.remove(id);
+    }
+}
+
+/// Base trait to represent the container of all component pools
+pub trait ComponentManager
+{
+    /// Clears all components attached to the given entity
+    fn clear_components(&mut self, target: ObjectRef);
+}

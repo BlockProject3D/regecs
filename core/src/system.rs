@@ -26,8 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event;
-pub mod object;
-pub mod system;
-pub mod component;
-pub mod scene;
+//! REGECS system layer
+
+/// System interface
+pub trait System<TState, TComponentManager>
+{
+    fn update(&mut self, ctx: &mut TState, components: &mut TComponentManager);
+}

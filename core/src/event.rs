@@ -26,8 +26,50 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event;
-pub mod object;
-pub mod system;
-pub mod component;
-pub mod scene;
+//! REGECS event system
+
+use std::any::Any;
+use std::boxed::Box;
+
+use crate::object::ObjectRef;
+
+pub struct EventContext<'a, TState, TComponentManager>
+{
+    pub ptr: ObjectRef,
+    pub other: Option<ObjectRef>,
+    pub state: &'a mut TState,
+    pub components: &'a mut TComponentManager
+}
+
+pub struct EventResult
+{
+    to_send: Vec<(Option<ObjectRef>, Box<dyn Any>)>,
+    remove_flag: bool
+}
+
+impl EventResult
+{
+    pub fn new() -> EventResult
+    {
+        return EventResult
+        {
+            to_send: Vec::new(),
+            remove_flag: false
+        };
+    }
+
+    pub fn remove(&mut self)
+    {
+        self.remove_flag = true;
+    }
+
+    pub fn send<EventType: Any>(&mut self, target: ObjectRef, ev: EventType)
+    {
+        self.to_send.push((Some(target), Box::from(ev)));
+    }
+
+    pub fn broadcast<EventType: Any>(&mut self, ev: EventType)
+    {
+        self.to_send.push((None, Box::from(ev)));
+    }
+}
