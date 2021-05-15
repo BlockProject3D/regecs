@@ -79,9 +79,9 @@ publish:
         - master
     before_script:
         - . ./.gitlab/support/unix.sh
-        - startsection build "Push to crates.io"
+        - startsection deps "Install job dependencies"
         - cargo install cargo-publish-all
-        - endsection build
+        - endsection deps
     script:
         - startsection build "Push to crates.io"
         - cargo publish-all --token ${RELEASE_TOKEN} --yes
