@@ -74,14 +74,17 @@ build-release:
 
 publish:
     stage: release
-    image: "registry.gitlab.com/torkleyy/cargo-publish-all:latest"
+    image: "rust:latest"
     only:
         - master
     before_script:
         - . ./.gitlab/support/unix.sh
+        - startsection build "Push to crates.io"
+        - cargo install cargo-publish-all
+        - endsection build
     script:
         - startsection build "Push to crates.io"
-        - cargo-publish-all --token ${RELEASE_TOKEN} --yes
+        - cargo publish-all --token ${RELEASE_TOKEN} --yes
         - endsection build
 
 create-release:
