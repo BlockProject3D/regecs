@@ -6,7 +6,7 @@ edition = "2018"
 description = "Rust Extended Generic ECS (REGECS)"
 license = "BSD-3-Clause"
 repository = "https://gitlab.com/bp3d/regecs"
-readme = "./README.MD"
+readme = "../README.MD"
 keywords = ["rust", "extended", "generic", "ecs"]
 categories = ["game-development", "rust-patterns"]
 
