@@ -60,7 +60,7 @@ get-version:
             - core/versionfile.txt
             - codegen/versionfile.txt
 
-build-release-test:
+build-release:
     stage: build
     image: "rust:latest"
     only:
