@@ -72,4 +72,9 @@ impl EventResult
     {
         self.to_send.push((None, Box::from(ev)));
     }
+
+    pub fn consume(self) -> (bool, Vec<(Option<ObjectRef>, Box<dyn Any>)>)
+    {
+        return (self.remove_flag, self.to_send);
+    }
 }

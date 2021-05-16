@@ -28,8 +28,45 @@
 
 //! REGECS system layer
 
+use std::boxed::Box;
+use std::any::Any;
+use std::vec::Vec;
+
+use crate::object::ObjectRef;
+
 /// System interface
 pub trait System<TState, TComponentManager>
 {
-    fn update(&mut self, ctx: &mut TState, components: &mut TComponentManager);
+    fn update(&mut self, ctx: &mut TState, components: &mut TComponentManager) -> Option<EventList>;
+}
+
+pub struct EventList
+{
+    to_send: Vec<(ObjectRef, Box<dyn Any>)>
+}
+
+impl EventList
+{
+    pub fn new() -> EventList
+    {
+        return EventList
+        {
+            to_send: Vec::new()
+        };
+    }
+
+    pub fn send<EventType: Any>(&mut self, target: ObjectRef, ev: EventType)
+    {
+        self.to_send.push((target, Box::from(ev)));
+    }
+
+    pub fn send_raw(&mut self, target: ObjectRef, raw: Box<dyn Any>)
+    {
+        self.to_send.push((target, raw));
+    }
+
+    pub fn consume(self) -> Vec<(ObjectRef, Box<dyn Any>)>
+    {
+        return self.to_send;
+    }
 }
