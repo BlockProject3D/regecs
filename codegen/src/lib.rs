@@ -33,14 +33,11 @@ use quote::quote;
 use syn::parse_macro_input;
 use syn::DeriveInput;
 use syn::FieldsNamed;
-use proc_macro2::Span;
 use syn::Fields;
 use syn::Data;
 use syn::Type;
 use syn::PathArguments;
 use syn::GenericArgument;
-use syn::Ident;
-use syn::Visibility;
 
 fn expand_type_name(t: &syn::Type) -> String
 {
@@ -128,20 +125,17 @@ pub fn component_manager(input: TokenStream) -> TokenStream
     let mut impls_tokens = Vec::new();
     for (field_name, component_type) in &v
     {
-        let mut s = component_type.clone();
-        s.push_str("Provider");
-        let new_ident = syn::parse_str::<Type>(&s).unwrap();
-        let new_ident1 = syn::parse_str::<Type>(&component_type).unwrap();
+        let new_ident = syn::parse_str::<Type>(&component_type).unwrap();
         let mgr_impl_tokens = quote!
         {
-            impl #new_ident for #ident
+            impl ComponentProvider<#new_ident> for #ident
             {
-                fn get(&mut self, id: usize) -> &mut #new_ident1
+                fn get(&mut self, id: usize) -> &mut #new_ident
                 {
                     return self.#field_name.get(id);
                 }
 
-                fn get_pool(&mut self) -> &mut ComponentPool<#new_ident1>
+                fn get_pool(&mut self) -> &mut ComponentPool<#new_ident>
                 {
                     return &mut self.#field_name;
                 }
@@ -163,26 +157,6 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         }
 
         #(#impls_tokens)*
-    };
-    return output.into();
-}
-
-#[proc_macro_derive(Component)]
-pub fn component(input: TokenStream) -> TokenStream
-{
-    let DeriveInput { ident, vis, .. } = parse_macro_input!(input);
-
-    let mut s = ident.to_string();
-    s.push_str("Provider");
-    let new_ident = Ident::new(&s, Span::call_site());
-    let vis = match vis
-    {
-        Visibility::Public(_) => Some(Ident::new("pub", Span::call_site())),
-        _ => None
-    };
-    let output = quote!
-    {
-        #vis type #new_ident = ComponentProvider<#ident>;
     };
     return output.into();
 }
