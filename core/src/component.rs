@@ -64,6 +64,11 @@ impl <TComponent: Sized> ComponentPool<TComponent>
     {
         self.comps.remove(id);
     }
+
+    pub fn size(&self) -> usize
+    {
+        return self.comps.len();
+    }
 }
 
 pub trait ComponentProvider<TComponent: Sized>
