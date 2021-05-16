@@ -33,6 +33,7 @@ use std::any::Any;
 
 use crate::event::EventContext;
 use crate::event::EventResult;
+use crate::component::ComponentManager;
 
 /// Type alias for object references
 /// 
@@ -57,7 +58,7 @@ pub trait Object<TState, TComponentManager>
     fn remove(&mut self, components: &mut TComponentManager, this: ObjectRef);
 }
 
-impl <TState, TComponentManager, EventType: Any, O: Object<TState, TComponentManager, EventType = EventType>> LowObject<TState, TComponentManager> for O
+impl <TState, TComponentManager: ComponentManager, EventType: Any, O: Object<TState, TComponentManager, EventType = EventType>> LowObject<TState, TComponentManager> for O
 {
     fn on_event(&mut self, event: &Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>
     {
@@ -75,6 +76,7 @@ impl <TState, TComponentManager, EventType: Any, O: Object<TState, TComponentMan
 
     fn on_remove(&mut self, components: &mut TComponentManager, this: ObjectRef)
     {
+        components.clear_components(this);
         self.remove(components, this);
     }
 }
