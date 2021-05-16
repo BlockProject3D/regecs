@@ -65,4 +65,9 @@ impl <TState, TComponentManager> Scene<TState, TComponentManager>
         let b = Box::new(system);
         self.systems.push(b);
     }
+
+    pub fn consume(self) -> TComponentManager
+    {
+        return self.component_manager;
+    }
 }

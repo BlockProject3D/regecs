@@ -11,8 +11,9 @@ variables:
 .build-script:
     stage: build
     script:
-        - startsection build "Build"
+        - startsection build "Build & test"
         - cargo build
+        - ./target/debug/testprog
         - endsection build
 
 build-linux:
