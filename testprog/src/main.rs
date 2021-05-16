@@ -30,6 +30,7 @@ use regecs_codegen::ComponentManager;
 use regecs::component::ComponentPool;
 use regecs::scene::Scene;
 use regecs::system::System;
+use regecs::system::EventList;
 use regecs::component::ComponentProvider;
 use regecs::component::add_component;
 use regecs::component::get_component;
@@ -55,11 +56,12 @@ struct MySystem
 
 impl <TComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>> System<i32, TComponentManager> for MySystem
 {
-    fn update(&mut self, ctx: &mut i32, components: &mut TComponentManager)
+    fn update(&mut self, ctx: &mut i32, components: &mut TComponentManager) -> Option<EventList>
     {
         get_component::<_, components::Test>(components, 0).value = 12;
         get_component::<_, components::Test2>(components, 0).value2 = 42;
         *ctx = 1;
+        return None;
     }
 }
 
