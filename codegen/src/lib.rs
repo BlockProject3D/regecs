@@ -129,7 +129,7 @@ pub fn component_manager(input: TokenStream) -> TokenStream
     for (field_name, component_type) in &v
     {
         let mut s = component_type.clone();
-        s.push_str("Manager");
+        s.push_str("Provider");
         let new_ident = syn::parse_str::<Type>(&s).unwrap();
         let new_ident1 = syn::parse_str::<Type>(&component_type).unwrap();
         let mgr_impl_tokens = quote!
@@ -173,7 +173,7 @@ pub fn component(input: TokenStream) -> TokenStream
     let DeriveInput { ident, vis, .. } = parse_macro_input!(input);
 
     let mut s = ident.to_string();
-    s.push_str("Manager");
+    s.push_str("Provider");
     let new_ident = Ident::new(&s, Span::call_site());
     let vis = match vis
     {
@@ -182,11 +182,7 @@ pub fn component(input: TokenStream) -> TokenStream
     };
     let output = quote!
     {
-        #vis trait #new_ident
-        {
-            fn get(&mut self, id: usize) -> &mut #ident;
-            fn get_pool(&mut self) -> &mut ComponentPool<#ident>;
-        }
+        #vis type #new_ident = ComponentProvider<#ident>;
     };
     return output.into();
 }
