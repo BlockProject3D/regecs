@@ -66,9 +66,30 @@ impl <TComponent: Sized> ComponentPool<TComponent>
     }
 }
 
+pub trait ComponentProvider<TComponent: Sized>
+{
+    fn get(&mut self, id: usize) -> &mut TComponent;
+    fn get_pool(&mut self) -> &mut ComponentPool<TComponent>;
+}
+
 /// Base trait to represent the container of all component pools
 pub trait ComponentManager
 {
     /// Clears all components attached to the given entity
     fn clear_components(&mut self, target: ObjectRef);
+}
+
+pub fn add_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, comp: TComponent) -> usize
+{
+    return mgr.get_pool().add(comp);
+}
+
+pub fn get_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, id: usize) -> &'a mut TComponent
+{
+    return mgr.get(id);
+}
+
+pub fn remove_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, id: usize)
+{
+    mgr.get_pool().remove(id);
 }
