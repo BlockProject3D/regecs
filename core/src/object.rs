@@ -42,9 +42,9 @@ pub type ObjectRef = u32;
 /// Low-level object interface to represent all dynamic objects managed by a scene
 pub trait LowObject<TState, TComponentManager>
 {
-    fn on_event(&mut self, event: Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult>;
-    fn on_init(&mut self, ptr: ObjectRef, components: &mut TComponentManager);
-    fn on_remove(&mut self, ptr: ObjectRef, components: &mut TComponentManager);
+    fn on_event(&mut self, event: &Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>;
+    fn on_init(&mut self, components: &mut TComponentManager, this: ObjectRef, spawned_by: Option<ObjectRef>);
+    fn on_remove(&mut self, components: &mut TComponentManager, this: ObjectRef);
 }
 
 /// High-level object interface
@@ -52,29 +52,29 @@ pub trait Object<TState, TComponentManager>
 {
     type EventType: Any;
 
-    fn event(&mut self, event: &Self::EventType, context: EventContext<TState, TComponentManager>) -> Option<EventResult>;
-    fn init(&mut self, ptr: ObjectRef, components: &mut TComponentManager);
-    fn remove(&mut self, ptr: ObjectRef, components: &mut TComponentManager);
+    fn event(&mut self, event: &Self::EventType, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>;
+    fn init(&mut self, components: &mut TComponentManager, this: ObjectRef, spawned_by: Option<ObjectRef>);
+    fn remove(&mut self, components: &mut TComponentManager, this: ObjectRef);
 }
 
 impl <TState, TComponentManager, EventType: Any, O: Object<TState, TComponentManager, EventType = EventType>> LowObject<TState, TComponentManager> for O
 {
-    fn on_event(&mut self, event: Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult>
+    fn on_event(&mut self, event: &Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>
     {
-        if let Ok(ev) = event.downcast::<EventType>()
+        if let Some(ev) = event.downcast_ref::<EventType>()
         {
             return self.event(&ev, context);
         }
         return None;
     }
 
-    fn on_init(&mut self, ptr: ObjectRef, components: &mut TComponentManager)
+    fn on_init(&mut self, components: &mut TComponentManager, this: ObjectRef, spawned_by: Option<ObjectRef>)
     {
-        self.init(ptr, components);
+        self.init(components, this, spawned_by);
     }
 
-    fn on_remove(&mut self, ptr: ObjectRef, components: &mut TComponentManager)
+    fn on_remove(&mut self, components: &mut TComponentManager, this: ObjectRef)
     {
-        self.remove(ptr, components);
+        self.remove(components, this);
     }
 }
