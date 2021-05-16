@@ -32,30 +32,38 @@ use std::any::Any;
 use std::boxed::Box;
 
 use crate::object::ObjectRef;
+use crate::object::LowObject;
 
 pub struct EventContext<'a, TState, TComponentManager>
 {
-    pub ptr: ObjectRef,
-    pub other: Option<ObjectRef>,
+    pub this: ObjectRef,
+    pub sender: Option<ObjectRef>,
     pub state: &'a mut TState,
     pub components: &'a mut TComponentManager
 }
 
-pub struct EventResult
+pub struct EventResult<TState, TComponentManager>
 {
     to_send: Vec<(Option<ObjectRef>, Box<dyn Any>)>,
+    to_spawn: Vec<Box<dyn LowObject<TState, TComponentManager>>>,
     remove_flag: bool
 }
 
-impl EventResult
+impl <TState, TComponentManager> EventResult <TState, TComponentManager>
 {
-    pub fn new() -> EventResult
+    pub fn new() -> EventResult<TState, TComponentManager>
     {
         return EventResult
         {
             to_send: Vec::new(),
+            to_spawn: Vec::new(),
             remove_flag: false
         };
+    }
+
+    pub fn spawn_object<TObject: LowObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
+    {
+        self.to_spawn.push(Box::from(obj));
     }
 
     pub fn remove(&mut self)
@@ -73,8 +81,8 @@ impl EventResult
         self.to_send.push((None, Box::from(ev)));
     }
 
-    pub fn consume(self) -> (bool, Vec<(Option<ObjectRef>, Box<dyn Any>)>)
+    pub fn consume(self) -> (bool, Vec<(Option<ObjectRef>, Box<dyn Any>)>, Vec<Box<dyn LowObject<TState, TComponentManager>>>)
     {
-        return (self.remove_flag, self.to_send);
+        return (self.remove_flag, self.to_send, self.to_spawn);
     }
 }
