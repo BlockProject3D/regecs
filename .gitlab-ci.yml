@@ -80,11 +80,12 @@ publish:
     before_script:
         - . ./.gitlab/support/unix.sh
         - startsection deps "Install job dependencies"
-        - cargo install cargo-publish-all
+        - cargo install cargo-workspaces
         - endsection deps
     script:
         - startsection build "Push to crates.io"
-        - cargo publish-all --token ${RELEASE_TOKEN} --yes
+        - cargo login ${RELEASE_TOKEN}
+        - cargo ws publish --from-git
         - endsection build
 
 create-release:
