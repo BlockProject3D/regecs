@@ -81,24 +81,24 @@ pub trait ComponentManager
     fn clear_components(&mut self, target: ObjectRef);
 }
 
-pub fn add_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
-    mgr: &'a mut TComponentManager,
+pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &mut TComponentManager,
     comp: TComponent
 ) -> usize
 {
     return mgr.get_pool().add(comp);
 }
 
-pub fn get_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
-    mgr: &'a mut TComponentManager,
+pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &mut TComponentManager,
     id: usize
-) -> &'a mut TComponent
+) -> &mut TComponent
 {
     return mgr.get(id);
 }
 
-pub fn remove_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
-    mgr: &'a mut TComponentManager,
+pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &mut TComponentManager,
     id: usize
 )
 {
