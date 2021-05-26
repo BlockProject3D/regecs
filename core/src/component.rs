@@ -38,14 +38,11 @@ pub struct ComponentPool<TComponent: Sized>
     comps: Vec<TComponent>
 }
 
-impl <TComponent: Sized> ComponentPool<TComponent>
+impl<TComponent: Sized> ComponentPool<TComponent>
 {
     pub fn new() -> ComponentPool<TComponent>
     {
-        return ComponentPool
-        {
-            comps: Vec::new()
-        };
+        return ComponentPool { comps: Vec::new() };
     }
 
     pub fn add(&mut self, comp: TComponent) -> usize
@@ -84,17 +81,26 @@ pub trait ComponentManager
     fn clear_components(&mut self, target: ObjectRef);
 }
 
-pub fn add_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, comp: TComponent) -> usize
+pub fn add_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &'a mut TComponentManager,
+    comp: TComponent
+) -> usize
 {
     return mgr.get_pool().add(comp);
 }
 
-pub fn get_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, id: usize) -> &'a mut TComponent
+pub fn get_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &'a mut TComponentManager,
+    id: usize
+) -> &'a mut TComponent
 {
     return mgr.get(id);
 }
 
-pub fn remove_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(mgr: &'a mut TComponentManager, id: usize)
+pub fn remove_component<'a, TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+    mgr: &'a mut TComponentManager,
+    id: usize
+)
 {
     mgr.get_pool().remove(id);
 }

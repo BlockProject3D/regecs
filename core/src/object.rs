@@ -28,22 +28,26 @@
 
 //! REGECS object and entity layer
 
-use std::boxed::Box;
-use std::any::Any;
+use std::{any::Any, boxed::Box};
 
-use crate::event::EventContext;
-use crate::event::EventResult;
-use crate::component::ComponentManager;
+use crate::{
+    component::ComponentManager,
+    event::{EventContext, EventResult}
+};
 
 /// Type alias for object references
-/// 
+///
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
 pub trait LowObject<TState, TComponentManager>
 {
-    fn on_event(&mut self, event: &Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>;
+    fn on_event(
+        &mut self,
+        event: &Box<dyn Any>,
+        context: EventContext<TState, TComponentManager>
+    ) -> Option<EventResult<TState, TComponentManager>>;
     fn on_init(&mut self, components: &mut TComponentManager, this: ObjectRef, spawned_by: Option<ObjectRef>);
     fn on_remove(&mut self, components: &mut TComponentManager, this: ObjectRef);
 }
@@ -53,17 +57,29 @@ pub trait Object<TState, TComponentManager>
 {
     type EventType: Any;
 
-    fn event(&mut self, event: &Self::EventType, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>;
+    fn event(
+        &mut self,
+        event: &Self::EventType,
+        context: EventContext<TState, TComponentManager>
+    ) -> Option<EventResult<TState, TComponentManager>>;
     fn init(&mut self, components: &mut TComponentManager, this: ObjectRef, spawned_by: Option<ObjectRef>);
     fn remove(&mut self, components: &mut TComponentManager, this: ObjectRef);
 }
 
-impl <TState, TComponentManager: ComponentManager, EventType: Any, O: Object<TState, TComponentManager, EventType = EventType>> LowObject<TState, TComponentManager> for O
+impl<
+        TState,
+        TComponentManager: ComponentManager,
+        EventType: Any,
+        O: Object<TState, TComponentManager, EventType = EventType>
+    > LowObject<TState, TComponentManager> for O
 {
-    fn on_event(&mut self, event: &Box<dyn Any>, context: EventContext<TState, TComponentManager>) -> Option<EventResult<TState, TComponentManager>>
+    fn on_event(
+        &mut self,
+        event: &Box<dyn Any>,
+        context: EventContext<TState, TComponentManager>
+    ) -> Option<EventResult<TState, TComponentManager>>
     {
-        if let Some(ev) = event.downcast_ref::<EventType>()
-        {
+        if let Some(ev) = event.downcast_ref::<EventType>() {
             return self.event(&ev, context);
         }
         return None;

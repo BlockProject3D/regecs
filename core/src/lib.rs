@@ -26,8 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+pub mod component;
 pub mod event;
 pub mod object;
-pub mod system;
-pub mod component;
 pub mod scene;
+pub mod system;

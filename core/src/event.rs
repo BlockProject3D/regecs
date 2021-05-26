@@ -28,11 +28,9 @@
 
 //! REGECS event system
 
-use std::any::Any;
-use std::boxed::Box;
+use std::{any::Any, boxed::Box};
 
-use crate::object::ObjectRef;
-use crate::object::LowObject;
+use crate::object::{LowObject, ObjectRef};
 
 pub struct EventContext<'a, TState, TComponentManager>
 {
@@ -49,12 +47,11 @@ pub struct EventResult<TState, TComponentManager>
     remove_flag: bool
 }
 
-impl <TState, TComponentManager> EventResult <TState, TComponentManager>
+impl<TState, TComponentManager> EventResult<TState, TComponentManager>
 {
     pub fn new() -> EventResult<TState, TComponentManager>
     {
-        return EventResult
-        {
+        return EventResult {
             to_send: Vec::new(),
             to_spawn: Vec::new(),
             remove_flag: false
@@ -81,7 +78,13 @@ impl <TState, TComponentManager> EventResult <TState, TComponentManager>
         self.to_send.push((None, Box::from(ev)));
     }
 
-    pub fn consume(self) -> (bool, Vec<(Option<ObjectRef>, Box<dyn Any>)>, Vec<Box<dyn LowObject<TState, TComponentManager>>>)
+    pub fn consume(
+        self
+    ) -> (
+        bool,
+        Vec<(Option<ObjectRef>, Box<dyn Any>)>,
+        Vec<Box<dyn LowObject<TState, TComponentManager>>>
+    )
     {
         return (self.remove_flag, self.to_send, self.to_spawn);
     }

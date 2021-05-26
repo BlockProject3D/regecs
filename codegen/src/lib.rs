@@ -26,34 +26,24 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::vec::Vec;
-use std::string::String;
+use std::{string::String, vec::Vec};
+
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::parse_macro_input;
-use syn::DeriveInput;
-use syn::FieldsNamed;
-use syn::Fields;
-use syn::Data;
-use syn::Type;
-use syn::PathArguments;
-use syn::GenericArgument;
+use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, GenericArgument, PathArguments, Type};
 
 fn expand_type_name(t: &syn::Type) -> String
 {
     let mut s = String::new();
 
-    match t
-    {
-        Type::Path(p) =>
-        {
-            for v in &p.path.segments
-            {
+    match t {
+        Type::Path(p) => {
+            for v in &p.path.segments {
                 s.push_str(&v.ident.to_string());
                 s.push_str("::");
             }
             return String::from(&s[0..s.len() - 2]);
-        }
+        },
         _ => panic!("Invalid generic type name for ComponentPool")
     }
 }
@@ -64,47 +54,31 @@ pub fn component_manager(input: TokenStream) -> TokenStream
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     let mut v = Vec::new();
 
-    match data
-    {
-        Data::Struct(s) => match s.fields
-        {
-            Fields::Named(FieldsNamed { named, .. }) =>
-            {
-                for f in &named
-                {
-                    match &f.ty
-                    {
-                        Type::Path(p) =>
-                        {
+    match data {
+        Data::Struct(s) => match s.fields {
+            Fields::Named(FieldsNamed { named, .. }) => {
+                for f in &named {
+                    match &f.ty {
+                        Type::Path(p) => {
                             let last = &p.path.segments.last().unwrap();
-                            if let PathArguments::AngleBracketed(b) = &last.arguments
-                            {
-                                if let Some(v1) = b.args.first()
-                                {
-                                    if let GenericArgument::Type(t) = v1
-                                    {
+                            if let PathArguments::AngleBracketed(b) = &last.arguments {
+                                if let Some(v1) = b.args.first() {
+                                    if let GenericArgument::Type(t) = v1 {
                                         let name = expand_type_name(&t);
-                                        if let Some(useless) = &f.ident
-                                        {
+                                        if let Some(useless) = &f.ident {
                                             v.push((useless.clone(), name));
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             panic!("How is it possible that you get no identifier???!!!")
                                         }
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         panic!("Could not identify type of component for field {:?}", f.ident);
                                     }
-                                }
-                                else
-                                {
+                                } else {
                                     panic!("Could not identify type of component for field {:?}", f.ident);
                                 }
                             }
                         },
-                        _ => panic!("Could not identify type of component for field {:?}", f.ident),
+                        _ => panic!("Could not identify type of component for field {:?}", f.ident)
                     }
                 }
             },
@@ -113,21 +87,15 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         _ => panic!("ComponentManager cannot be implemented on non-structs")
     };
     let mut impl_base_tokens = Vec::new();
-    for (field_name, _) in &v
-    {
-        impl_base_tokens.push(
-            quote!
-            {
-                #field_name: ComponentPool::new()
-            }
-        );
-    };
+    for (field_name, _) in &v {
+        impl_base_tokens.push(quote! {
+            #field_name: ComponentPool::new()
+        });
+    }
     let mut impls_tokens = Vec::new();
-    for (field_name, component_type) in &v
-    {
+    for (field_name, component_type) in &v {
         let new_ident = syn::parse_str::<Type>(&component_type).unwrap();
-        let mgr_impl_tokens = quote!
-        {
+        let mgr_impl_tokens = quote! {
             impl ComponentProvider<#new_ident> for #ident
             {
                 fn get(&mut self, id: usize) -> &mut #new_ident
@@ -143,8 +111,7 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         };
         impls_tokens.push(mgr_impl_tokens);
     }
-    let output = quote!
-    {
+    let output = quote! {
         impl #ident
         {
             pub fn new() -> #ident

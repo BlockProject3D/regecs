@@ -28,9 +28,7 @@
 
 //! REGECS system layer
 
-use std::boxed::Box;
-use std::any::Any;
-use std::vec::Vec;
+use std::{any::Any, boxed::Box, vec::Vec};
 
 use crate::object::ObjectRef;
 
@@ -49,10 +47,7 @@ impl EventList
 {
     pub fn new() -> EventList
     {
-        return EventList
-        {
-            to_send: Vec::new()
-        };
+        return EventList { to_send: Vec::new() };
     }
 
     pub fn send<EventType: Any>(&mut self, target: ObjectRef, ev: EventType)

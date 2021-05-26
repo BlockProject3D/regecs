@@ -26,15 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use regecs::{
+    component::{add_component, get_component, remove_component, ComponentPool, ComponentProvider},
+    scene::Scene,
+    system::{EventList, System}
+};
 use regecs_codegen::ComponentManager;
-use regecs::component::ComponentPool;
-use regecs::scene::Scene;
-use regecs::system::System;
-use regecs::system::EventList;
-use regecs::component::ComponentProvider;
-use regecs::component::add_component;
-use regecs::component::get_component;
-use regecs::component::remove_component;
 
 mod components
 {
@@ -42,19 +39,17 @@ mod components
     {
         pub value: i32
     }
-    
+
     pub struct Test2
     {
         pub value2: i32
-    }    
+    }
 }
 
-struct MySystem
-{
-    
-}
+struct MySystem {}
 
-impl <TComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>> System<i32, TComponentManager> for MySystem
+impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>>
+    System<i32, TComponentManager> for MySystem
 {
     fn update(&mut self, ctx: &mut i32, components: &mut TComponentManager) -> Option<EventList>
     {
@@ -76,14 +71,8 @@ fn main()
 {
     let mut ctx = 0;
     let mut mgr = MyComponentManager::new();
-    add_component(&mut mgr, components::Test
-    {
-        value: 0
-    });
-    add_component(&mut mgr, components::Test2
-    {
-        value2: 0
-    });
+    add_component(&mut mgr, components::Test { value: 0 });
+    add_component(&mut mgr, components::Test2 { value2: 0 });
     let mut sc: Scene<i32, _> = Scene::new(mgr);
     sc.add_system(MySystem {});
     sc.update(&mut ctx);
