@@ -26,23 +26,35 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use regecs::{
-    component::{add_component, get_component, remove_component, ComponentPool, ComponentProvider},
-    scene::Scene,
-    system::{EventList, System}
-};
+use regecs::pool_type;
 use regecs_codegen::ComponentManager;
+use regecs::component::interface::{ComponentProvider, get_component, ComponentPool, add_component, remove_component};
+use regecs::system::{System, EventList};
+use regecs::scene::Scene;
 
 mod components
 {
+    use regecs::component::interface::Component;
+    use regecs::component::BasicComponentPool;
+
     pub struct Test
     {
         pub value: i32
     }
 
+    impl Component for Test
+    {
+        type Pool = BasicComponentPool<Test>;
+    }
+
     pub struct Test2
     {
         pub value2: i32
+    }
+
+    impl Component for Test2
+    {
+        type Pool = BasicComponentPool<Test2>;
     }
 }
 
@@ -63,8 +75,8 @@ impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<
 #[derive(ComponentManager)]
 struct MyComponentManager
 {
-    pool: ComponentPool<components::Test>,
-    pool1: ComponentPool<components::Test2>
+    pool: pool_type!(components::Test),
+    pool1: pool_type!(components::Test2)
 }
 
 fn main()

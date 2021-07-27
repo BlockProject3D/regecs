@@ -26,14 +26,70 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS component layer
-
-use std::vec::Vec;
+//! REGECS component interfaces
 
 use crate::object::ObjectRef;
 
+/// Represents a component
+pub trait Component: Sized
+{
+    /// The type of ComponentPool to use for storing instances of this component
+    type Pool: ComponentPool<Self>;
+}
+
 /// Represents an allocation pool for a given type of component
-pub struct ComponentPool<TComponent: Sized>
+///
+/// *The ComponentPool is a trait to allow customizing the data structure used to store components*
+pub trait ComponentPool<TComponent: Component>
+{
+    /// Creates a new instance of this ComponentPool
+    ///
+    /// # Returns
+    ///
+    /// * the new component pool
+    fn new() -> Self;
+
+    /// Stores a new component in this pool
+    ///
+    /// # Arguments
+    ///
+    /// * `comp` - the component to store
+    ///
+    /// # Returns
+    ///
+    /// * the unique index of the new stored component
+    fn add(&mut self, comp: TComponent) -> usize;
+
+    /// Gets access to a given component for mutability
+    ///
+    /// *This function panics if the component index is invalid*
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - the index of the component to get
+    ///
+    /// # Returns
+    ///
+    /// * a mutable reference to the component
+    fn get(&mut self, id: usize) -> &mut TComponent;
+
+    /// Removes a component from this pool
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - the index of the component to remove
+    fn remove(&mut self, id: usize);
+
+    /// Returns the number of components stored in this pool
+    ///
+    /// # Returns
+    ///
+    /// * the component count
+    fn size(&self) -> usize;
+}
+
+/// Represents an allocation pool for a given type of component
+/*pub struct ComponentPool<TComponent: Sized>
 {
     comps: Vec<TComponent>
 }
@@ -66,12 +122,12 @@ impl<TComponent: Sized> ComponentPool<TComponent>
     {
         return self.comps.len();
     }
-}
+}*/
 
-pub trait ComponentProvider<TComponent: Sized>
+pub trait ComponentProvider<TComponent: Component>
 {
     fn get(&mut self, id: usize) -> &mut TComponent;
-    fn get_pool(&mut self) -> &mut ComponentPool<TComponent>;
+    fn get_pool(&mut self) -> &mut TComponent::Pool;
 }
 
 /// Base trait to represent the container of all component pools
@@ -81,25 +137,25 @@ pub trait ComponentManager
     fn clear_components(&mut self, target: ObjectRef);
 }
 
-pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    comp: TComponent
+    comp: TComponent,
 ) -> usize
 {
     return mgr.get_pool().add(comp);
 }
 
-pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    id: usize
+    id: usize,
 ) -> &mut TComponent
 {
     return mgr.get(id);
 }
 
-pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Sized>(
+pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    id: usize
+    id: usize,
 )
 {
     mgr.get_pool().remove(id);

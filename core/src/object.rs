@@ -31,7 +31,7 @@
 use std::{any::Any, boxed::Box};
 
 use crate::{
-    component::ComponentManager,
+    component::interface::ComponentManager,
     event::{EventContext, EventResult}
 };
 

@@ -26,8 +26,17 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event;
-pub mod object;
-pub mod scene;
-pub mod system;
-pub mod component;
+//! REGECS component layer
+
+pub mod interface;
+
+mod basic_pool;
+
+pub use basic_pool::BasicComponentPool;
+
+#[macro_export]
+macro_rules! pool_type {
+    ($i: ty) => {
+        <$i as regecs::component::interface::Component>::Pool
+    };
+}

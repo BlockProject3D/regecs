@@ -26,8 +26,35 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event;
-pub mod object;
-pub mod scene;
-pub mod system;
-pub mod component;
+use crate::component::interface::{Component, ComponentPool};
+
+/// Basic component pool (stores components in a single simple array list)
+///
+/// *May not be optimized for rendering 3D model components*
+pub struct BasicComponentPool<TComponent: Component>
+{
+    comps: Vec<TComponent>,
+}
+
+impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
+{
+    fn new() -> Self {
+        todo!()
+    }
+
+    fn add(&mut self, comp: TComponent) -> usize {
+        todo!()
+    }
+
+    fn get(&mut self, id: usize) -> &mut TComponent {
+        todo!()
+    }
+
+    fn remove(&mut self, id: usize) {
+        todo!()
+    }
+
+    fn size(&self) -> usize {
+        todo!()
+    }
+}

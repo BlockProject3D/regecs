@@ -26,27 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::{string::String, vec::Vec};
+use std::vec::Vec;
 
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, GenericArgument, PathArguments, Type};
-
-fn expand_type_name(t: &syn::Type) -> String
-{
-    let mut s = String::new();
-
-    match t {
-        Type::Path(p) => {
-            for v in &p.path.segments {
-                s.push_str(&v.ident.to_string());
-                s.push_str("::");
-            }
-            return String::from(&s[0..s.len() - 2]);
-        },
-        _ => panic!("Invalid generic type name for ComponentPool")
-    }
-}
+use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Type};
 
 #[proc_macro_derive(ComponentManager)]
 pub fn component_manager(input: TokenStream) -> TokenStream
@@ -59,41 +43,30 @@ pub fn component_manager(input: TokenStream) -> TokenStream
             Fields::Named(FieldsNamed { named, .. }) => {
                 for f in &named {
                     match &f.ty {
-                        Type::Path(p) => {
-                            let last = &p.path.segments.last().unwrap();
-                            if let PathArguments::AngleBracketed(b) = &last.arguments {
-                                if let Some(v1) = b.args.first() {
-                                    if let GenericArgument::Type(t) = v1 {
-                                        let name = expand_type_name(&t);
-                                        if let Some(useless) = &f.ident {
-                                            v.push((useless.clone(), name));
-                                        } else {
-                                            panic!("How is it possible that you get no identifier???!!!")
-                                        }
-                                    } else {
-                                        panic!("Could not identify type of component for field {:?}", f.ident);
-                                    }
-                                } else {
-                                    panic!("Could not identify type of component for field {:?}", f.ident);
-                                }
+                        Type::Macro(m) => {
+                            let comp_type = m.mac.tokens.to_string();
+                            if let Some(useless) = &f.ident {
+                                v.push((useless.clone(), comp_type, m.mac.clone()));
+                            } else {
+                                panic!("How is it possible that you get no identifier???!!!");
                             }
-                        },
+                        }
                         _ => panic!("Could not identify type of component for field {:?}", f.ident)
                     }
                 }
-            },
+            }
             _ => panic!("Your component list must not be empty")
         },
         _ => panic!("ComponentManager cannot be implemented on non-structs")
     };
     let mut impl_base_tokens = Vec::new();
-    for (field_name, _) in &v {
+    for (field_name, _, pool_type) in &v {
         impl_base_tokens.push(quote! {
-            #field_name: ComponentPool::new()
+            #field_name: <#pool_type>::new()
         });
     }
     let mut impls_tokens = Vec::new();
-    for (field_name, component_type) in &v {
+    for (field_name, component_type, pool_type) in &v {
         let new_ident = syn::parse_str::<Type>(&component_type).unwrap();
         let mgr_impl_tokens = quote! {
             impl ComponentProvider<#new_ident> for #ident
@@ -103,7 +76,7 @@ pub fn component_manager(input: TokenStream) -> TokenStream
                     return self.#field_name.get(id);
                 }
 
-                fn get_pool(&mut self) -> &mut ComponentPool<#new_ident>
+                fn get_pool(&mut self) -> &mut #pool_type
                 {
                     return &mut self.#field_name;
                 }
