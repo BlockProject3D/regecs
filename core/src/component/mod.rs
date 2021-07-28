@@ -31,8 +31,10 @@
 pub mod interface;
 
 mod basic_pool;
+mod grouped_pool;
 
 pub use basic_pool::BasicComponentPool;
+pub use grouped_pool::GroupComponentPool;
 
 #[macro_export]
 macro_rules! pool_type {
