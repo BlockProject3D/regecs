@@ -142,8 +142,8 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponen
             if val.len() == 0 {
                 self.map.remove(prev);
             }
-            self.group_map.insert(id, new_group);
         }
+        self.group_map.insert(id, new_group);
         let val = self.map.entry(new_group).or_insert(Vec::new());
         val.push(id);
     }
