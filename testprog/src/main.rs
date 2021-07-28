@@ -27,13 +27,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use regecs::{
-    component::interface::{
+    component::{
         add_component,
         get_component,
         get_component_mut,
-        remove_component,
-        ComponentPool,
-        ComponentProvider
+        interface::{ComponentPool, ComponentProvider},
+        remove_component
     },
     pool_type,
     scene::Scene,
@@ -41,9 +40,18 @@ use regecs::{
 };
 use regecs_codegen::ComponentManager;
 
+use crate::components::ComplexComponent;
+
 mod components
 {
-    use regecs::component::{interface::Component, BasicComponentPool};
+    use regecs::{
+        component::{
+            interface::{Component, ComponentProvider, IterableComponentPool},
+            BasicComponentPool,
+            GroupComponentPool
+        },
+        system::{EventList, System}
+    };
 
     pub struct Test
     {
@@ -63,6 +71,65 @@ mod components
     impl Component for Test2
     {
         type Pool = BasicComponentPool<Test2>;
+    }
+
+    pub struct ComplexComponent
+    {
+        last_order: u32,
+        pub order: u32,
+        pub value: i32
+    }
+
+    impl ComplexComponent
+    {
+        pub fn new(order: u32, value: i32) -> ComplexComponent
+        {
+            return ComplexComponent {
+                last_order: 0,
+                order,
+                value
+            };
+        }
+    }
+
+    impl Component for ComplexComponent
+    {
+        type Pool = GroupComponentPool<u32, ComplexComponent>;
+    }
+
+    pub struct ComplexSystem
+    {
+        events: Vec<(usize, u32)>
+    }
+
+    impl ComplexSystem
+    {
+        pub fn new() -> ComplexSystem
+        {
+            return ComplexSystem {
+                events: Vec::with_capacity(5)
+            };
+        }
+    }
+
+    impl<TComponentManager: ComponentProvider<ComplexComponent>> System<i32, TComponentManager> for ComplexSystem
+    {
+        fn update(&mut self, _: &mut i32, components: &mut TComponentManager) -> Option<EventList>
+        {
+            println!("____");
+            while let Some((component, new_order)) = self.events.pop() {
+                components.pool_mut().update_group(component, new_order);
+            }
+            for (i, v) in components.pool_mut().iter_mut() {
+                if v.last_order != v.order {
+                    // Record new events
+                    self.events.push((i, v.order));
+                    v.last_order = v.order;
+                }
+                println!("{}", i);
+            }
+            return None;
+        }
     }
 }
 
@@ -84,7 +151,8 @@ impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<
 struct MyComponentManager
 {
     pool: pool_type!(components::Test),
-    pool1: pool_type!(components::Test2)
+    pool1: pool_type!(components::Test2),
+    pool2: pool_type!(components::ComplexComponent)
 }
 
 fn main()
@@ -93,10 +161,18 @@ fn main()
     let mut mgr = MyComponentManager::new();
     add_component(&mut mgr, components::Test { value: 0 });
     add_component(&mut mgr, components::Test2 { value2: 0 });
+    add_component(&mut mgr, ComplexComponent::new(2, 3));
+    add_component(&mut mgr, ComplexComponent::new(1, 1));
+    add_component(&mut mgr, ComplexComponent::new(2, 4));
+    add_component(&mut mgr, ComplexComponent::new(1, 2));
     let mut sc: Scene<i32, _> = Scene::new(mgr);
     sc.add_system(MySystem {});
     sc.update(&mut ctx);
     assert_eq!(ctx, 1);
+    sc.add_system(components::ComplexSystem::new());
+    ctx = 0;
+    sc.update(&mut ctx);
+    sc.update(&mut ctx);
     mgr = sc.consume();
     assert_eq!(get_component::<_, components::Test>(&mut mgr, 0).value, 12);
     assert_eq!(get_component::<_, components::Test2>(&mut mgr, 0).value2, 42);
