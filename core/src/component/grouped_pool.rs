@@ -62,7 +62,7 @@ macro_rules! gcp_iterator {
 
         impl <'a, K: Sized + Eq + Hash + Copy, TComponent: Component> Iterator for $name<'a, K, TComponent>
         {
-            type Item = &'a $($su)? TComponent;
+            type Item = (usize, &'a $($su)? TComponent);
 
             fn next(&mut self) -> Option<Self::Item>
             {
@@ -92,12 +92,12 @@ macro_rules! gcp_iterator {
                 }
                 macro_rules! gcp_iter_internal {
                     () => {
-                        return Some(&self.comps[next_id]);
+                        return Some((next_id, &self.comps[next_id]));
                     };
                     (mut) => {
                         unsafe {
                             let ptr = &mut self.comps[next_id] as *mut TComponent;
-                            return Some(&mut *ptr);
+                            return Some((next_id, &mut *ptr));
                         }
                     }
                 }
@@ -114,14 +114,16 @@ gcp_iterator!(GcpIteratorMut, mut);
 ///
 /// *The grouped component pool allows to maintain grouped components when iterating*
 /// *This pool is optimized for rendering systems to reduce the number of pipeline changes*
-pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy, TComponent: Component>
+///
+/// _NOTE: The K::default() group is reserved to store components that are not yet attached to a group_
+pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy + Default, TComponent: Component>
 {
     comps: BasicComponentPool<TComponent>,
     map: HashMap<K, Vec<usize>>,
     group_map: HashMap<usize, K>
 }
 
-impl<K: Sized + Eq + Hash + Copy, TComponent: Component> GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponentPool<K, TComponent>
 {
     /// Update the group of a component
     ///
@@ -147,7 +149,8 @@ impl<K: Sized + Eq + Hash + Copy, TComponent: Component> GroupComponentPool<K, T
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy, TComponent: Component> ComponentPool<TComponent> for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool<TComponent>
+    for GroupComponentPool<K, TComponent>
 {
     fn new() -> Self
     {
@@ -160,7 +163,9 @@ impl<K: Sized + Eq + Hash + Copy, TComponent: Component> ComponentPool<TComponen
 
     fn add(&mut self, comp: TComponent) -> usize
     {
-        return self.comps.add(comp);
+        let id = self.comps.add(comp);
+        self.update_group(id, K::default());
+        return id;
     }
 
     fn remove(&mut self, id: usize)
@@ -182,7 +187,7 @@ impl<K: Sized + Eq + Hash + Copy, TComponent: Component> ComponentPool<TComponen
     }
 }
 
-impl<'a, K: 'a + Sized + Eq + Hash + Copy, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
+impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
     for GroupComponentPool<K, TComponent>
 {
     type Iter = GcpIterator<'a, K, TComponent>;
@@ -199,7 +204,7 @@ impl<'a, K: 'a + Sized + Eq + Hash + Copy, TComponent: 'a + Component> IterableC
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy, TComponent: Component> Index<usize> for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Index<usize> for GroupComponentPool<K, TComponent>
 {
     type Output = TComponent;
 
@@ -209,7 +214,7 @@ impl<K: Sized + Eq + Hash + Copy, TComponent: Component> Index<usize> for GroupC
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy, TComponent: Component> IndexMut<usize> for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> IndexMut<usize> for GroupComponentPool<K, TComponent>
 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output
     {

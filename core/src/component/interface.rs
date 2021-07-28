@@ -84,10 +84,10 @@ pub trait ComponentPool<TComponent: Component>: Index<usize, Output = TComponent
 pub trait IterableComponentPool<'a, TComponent: 'a + Component>
 {
     /// The type of immutable iterator
-    type Iter: Iterator<Item = &'a TComponent>;
+    type Iter: Iterator<Item = (usize, &'a TComponent)>;
 
     /// The type of mutable iterator
-    type IterMut: Iterator<Item = &'a mut TComponent>;
+    type IterMut: Iterator<Item = (usize, &'a mut TComponent)>;
 
     /// Returns an iterator into this pool
     ///

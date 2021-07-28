@@ -55,7 +55,7 @@ macro_rules! bcp_iterator {
 
         impl<'a, TComponent: Component> Iterator for $name<'a, TComponent>
         {
-            type Item = &'a $($su)? TComponent;
+            type Item = (usize, &'a $($su)? TComponent);
 
             fn next(&mut self) -> Option<Self::Item>
             {
@@ -65,7 +65,7 @@ macro_rules! bcp_iterator {
                 macro_rules! bcp_iter_internal {
                     () => {
                         if let Some(v) = &self.comps[self.pos] {
-                            return Some(v);
+                            return Some((self.pos, v));
                         } else {
                             return None;
                         }
@@ -75,7 +75,7 @@ macro_rules! bcp_iterator {
                             unsafe
                             {
                                 let ptr = v as *mut TComponent;
-                                return Some(&mut *ptr);
+                                return Some((self.pos, &mut *ptr));
                             }
                         } else {
                             return None;
