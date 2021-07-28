@@ -121,6 +121,7 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
         } else {
             self.comps[i] = Some(comp);
         }
+        self.size += 1;
         return i;
     }
 
@@ -132,6 +133,7 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
             self.comps.remove(i);
             i -= 1;
         }
+        self.size -= 1;
     }
 
     fn size(&self) -> usize
