@@ -26,16 +26,24 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use regecs::pool_type;
+use regecs::{
+    component::interface::{
+        add_component,
+        get_component,
+        get_component_mut,
+        remove_component,
+        ComponentPool,
+        ComponentProvider
+    },
+    pool_type,
+    scene::Scene,
+    system::{EventList, System}
+};
 use regecs_codegen::ComponentManager;
-use regecs::component::interface::{ComponentProvider, get_component, ComponentPool, add_component, remove_component};
-use regecs::system::{System, EventList};
-use regecs::scene::Scene;
 
 mod components
 {
-    use regecs::component::interface::Component;
-    use regecs::component::BasicComponentPool;
+    use regecs::component::{interface::Component, BasicComponentPool};
 
     pub struct Test
     {
@@ -65,8 +73,8 @@ impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<
 {
     fn update(&mut self, ctx: &mut i32, components: &mut TComponentManager) -> Option<EventList>
     {
-        get_component::<_, components::Test>(components, 0).value = 12;
-        get_component::<_, components::Test2>(components, 0).value2 = 42;
+        get_component_mut::<_, components::Test>(components, 0).value = 12;
+        get_component_mut::<_, components::Test2>(components, 0).value2 = 42;
         *ctx = 1;
         return None;
     }
@@ -94,8 +102,8 @@ fn main()
     assert_eq!(get_component::<_, components::Test2>(&mut mgr, 0).value2, 42);
     remove_component::<_, components::Test>(&mut mgr, 0);
     remove_component::<_, components::Test2>(&mut mgr, 0);
-    let test = <MyComponentManager as ComponentProvider<components::Test>>::get_pool(&mut mgr).size();
-    let test1 = <MyComponentManager as ComponentProvider<components::Test2>>::get_pool(&mut mgr).size();
+    let test = <MyComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr).size();
+    let test1 = <MyComponentManager as ComponentProvider<components::Test2>>::pool(&mut mgr).size();
     assert_eq!(test, 0);
     assert_eq!(test1, 0);
 }

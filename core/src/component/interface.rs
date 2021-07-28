@@ -28,6 +28,8 @@
 
 //! REGECS component interfaces
 
+use std::ops::{Index, IndexMut};
+
 use crate::object::ObjectRef;
 
 /// Represents a component
@@ -40,7 +42,7 @@ pub trait Component: Sized
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<TComponent: Component>
+pub trait ComponentPool<TComponent: Component>: Index<usize, Output = TComponent> + IndexMut<usize>
 {
     /// Creates a new instance of this ComponentPool
     ///
@@ -60,19 +62,6 @@ pub trait ComponentPool<TComponent: Component>
     /// * the unique index of the new stored component
     fn add(&mut self, comp: TComponent) -> usize;
 
-    /// Gets access to a given component for mutability
-    ///
-    /// *This function panics if the component index is invalid*
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - the index of the component to get
-    ///
-    /// # Returns
-    ///
-    /// * a mutable reference to the component
-    fn get(&mut self, id: usize) -> &mut TComponent;
-
     /// Removes a component from this pool
     ///
     /// # Arguments
@@ -88,46 +77,37 @@ pub trait ComponentPool<TComponent: Component>
     fn size(&self) -> usize;
 }
 
-/// Represents an allocation pool for a given type of component
-/*pub struct ComponentPool<TComponent: Sized>
+/// Allows a component pool to be iterated
+///
+/// *All iterators in component pools returns indices of components*
+/// *to get the actual component instance use index or index_mut*
+pub trait IterableComponentPool<'a, TComponent: 'a + Component>
 {
-    comps: Vec<TComponent>
+    /// The type of immutable iterator
+    type Iter: Iterator<Item = &'a TComponent>;
+
+    /// The type of mutable iterator
+    type IterMut: Iterator<Item = &'a mut TComponent>;
+
+    /// Returns an iterator into this pool
+    ///
+    /// # Returns
+    ///
+    /// * a new immutable iterator instance
+    fn iter(&'a self) -> Self::Iter;
+
+    /// Returns an iterator into this pool
+    ///
+    /// # Returns
+    ///
+    /// * a new mutable iterator instance
+    fn iter_mut(&'a mut self) -> Self::IterMut;
 }
-
-impl<TComponent: Sized> ComponentPool<TComponent>
-{
-    pub fn new() -> ComponentPool<TComponent>
-    {
-        return ComponentPool { comps: Vec::new() };
-    }
-
-    pub fn add(&mut self, comp: TComponent) -> usize
-    {
-        let id = self.comps.len();
-        self.comps.push(comp);
-        return id;
-    }
-
-    pub fn get(&mut self, id: usize) -> &mut TComponent
-    {
-        return &mut self.comps[id];
-    }
-
-    pub fn remove(&mut self, id: usize)
-    {
-        self.comps.remove(id);
-    }
-
-    pub fn size(&self) -> usize
-    {
-        return self.comps.len();
-    }
-}*/
 
 pub trait ComponentProvider<TComponent: Component>
 {
-    fn get(&mut self, id: usize) -> &mut TComponent;
-    fn get_pool(&mut self) -> &mut TComponent::Pool;
+    fn pool(&self) -> &TComponent::Pool;
+    fn pool_mut(&mut self) -> &mut TComponent::Pool;
 }
 
 /// Base trait to represent the container of all component pools
@@ -139,24 +119,32 @@ pub trait ComponentManager
 
 pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    comp: TComponent,
+    comp: TComponent
 ) -> usize
 {
-    return mgr.get_pool().add(comp);
+    return mgr.pool_mut().add(comp);
 }
 
 pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &TComponentManager,
+    id: usize
+) -> &TComponent
+{
+    return &mgr.pool()[id];
+}
+
+pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    id: usize,
+    id: usize
 ) -> &mut TComponent
 {
-    return mgr.get(id);
+    return &mut mgr.pool_mut()[id];
 }
 
 pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
-    id: usize,
+    id: usize
 )
 {
-    mgr.get_pool().remove(id);
+    mgr.pool_mut().remove(id);
 }

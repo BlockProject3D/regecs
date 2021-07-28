@@ -46,37 +46,37 @@ pub fn component_manager(input: TokenStream) -> TokenStream
                         Type::Macro(m) => {
                             let comp_type = m.mac.tokens.to_string();
                             if let Some(useless) = &f.ident {
-                                v.push((useless.clone(), comp_type, m.mac.clone()));
+                                v.push((useless.clone(), m.mac.clone(), comp_type));
                             } else {
                                 panic!("How is it possible that you get no identifier???!!!");
                             }
-                        }
+                        },
                         _ => panic!("Could not identify type of component for field {:?}", f.ident)
                     }
                 }
-            }
+            },
             _ => panic!("Your component list must not be empty")
         },
         _ => panic!("ComponentManager cannot be implemented on non-structs")
     };
     let mut impl_base_tokens = Vec::new();
-    for (field_name, _, pool_type) in &v {
+    for (field_name, pool_type, _) in &v {
         impl_base_tokens.push(quote! {
             #field_name: <#pool_type>::new()
         });
     }
     let mut impls_tokens = Vec::new();
-    for (field_name, component_type, pool_type) in &v {
-        let new_ident = syn::parse_str::<Type>(&component_type).unwrap();
+    for (field_name, pool_type, comp_type) in &v {
+        let new_ident = syn::parse_str::<Type>(&comp_type).unwrap();
         let mgr_impl_tokens = quote! {
             impl ComponentProvider<#new_ident> for #ident
             {
-                fn get(&mut self, id: usize) -> &mut #new_ident
+                fn pool(&self) -> &#pool_type
                 {
-                    return self.#field_name.get(id);
+                    return &self.#field_name;
                 }
 
-                fn get_pool(&mut self) -> &mut #pool_type
+                fn pool_mut(&mut self) -> &mut #pool_type
                 {
                     return &mut self.#field_name;
                 }

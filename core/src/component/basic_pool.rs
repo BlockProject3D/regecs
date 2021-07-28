@@ -26,35 +26,150 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::interface::{Component, ComponentPool};
+use std::{
+    ops::{Index, IndexMut},
+    vec::Vec
+};
+
+use crate::component::interface::{Component, ComponentPool, IterableComponentPool};
+
+macro_rules! bcp_iterator {
+    ($name: ident $(, $su: ident)?) => {
+        pub struct $name<'a, TComponent: Component>
+        {
+            comps: &'a $($su)? Vec<Option<TComponent>>,
+            pos: usize,
+        }
+
+        impl<'a, TComponent: Component> $name<'a, TComponent>
+        {
+            fn new(comps: &'a $($su)? Vec<Option<TComponent>>) -> $name<'a, TComponent>
+            {
+                return $name
+                {
+                    comps,
+                    pos: 0,
+                };
+            }
+        }
+
+        impl<'a, TComponent: Component> Iterator for $name<'a, TComponent>
+        {
+            type Item = &'a $($su)? TComponent;
+
+            fn next(&mut self) -> Option<Self::Item>
+            {
+                while self.pos < self.comps.len() && self.comps[self.pos].is_none() {
+                    self.pos += 1;
+                }
+                macro_rules! bcp_iter_internal {
+                    () => {
+                        if let Some(v) = &self.comps[self.pos] {
+                            return Some(v);
+                        } else {
+                            return None;
+                        }
+                    };
+                    (mut) => {
+                        if let Some(v) = &mut self.comps[self.pos] {
+                            unsafe
+                            {
+                                let ptr = v as *mut TComponent;
+                                return Some(&mut *ptr);
+                            }
+                        } else {
+                            return None;
+                        }
+                    }
+                }
+                bcp_iter_internal!($($su)?);
+            }
+        }
+    };
+}
+
+bcp_iterator!(BcpIterator);
+bcp_iterator!(BcpIteratorMut, mut);
 
 /// Basic component pool (stores components in a single simple array list)
 ///
 /// *May not be optimized for rendering 3D model components*
 pub struct BasicComponentPool<TComponent: Component>
 {
-    comps: Vec<TComponent>,
+    comps: Vec<Option<TComponent>>,
+    size: usize
 }
 
 impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
 {
-    fn new() -> Self {
-        todo!()
+    fn new() -> Self
+    {
+        return BasicComponentPool {
+            comps: Vec::new(),
+            size: 0
+        };
     }
 
-    fn add(&mut self, comp: TComponent) -> usize {
-        todo!()
+    fn add(&mut self, comp: TComponent) -> usize
+    {
+        let mut i = 0;
+        while i < self.comps.len() && self.comps[i].is_some() {
+            i += 1;
+        }
+        if i >= self.comps.len() {
+            self.comps.push(Some(comp));
+        } else {
+            self.comps[i] = Some(comp);
+        }
+        return i;
     }
 
-    fn get(&mut self, id: usize) -> &mut TComponent {
-        todo!()
+    fn remove(&mut self, id: usize)
+    {
+        self.comps[id] = None; //Mark slot as unclaimed
+        let mut i = self.comps.len() - 1; //Trim end of array
+        while i > 0 && self.comps[i].is_none() {
+            self.comps.remove(i);
+            i -= 1;
+        }
     }
 
-    fn remove(&mut self, id: usize) {
-        todo!()
+    fn size(&self) -> usize
+    {
+        return self.size;
+    }
+}
+
+impl<'a, TComponent: 'a + Component> IterableComponentPool<'a, TComponent> for BasicComponentPool<TComponent>
+{
+    type Iter = BcpIterator<'a, TComponent>;
+    type IterMut = BcpIteratorMut<'a, TComponent>;
+
+    fn iter(&'a self) -> Self::Iter
+    {
+        return BcpIterator::new(&self.comps);
     }
 
-    fn size(&self) -> usize {
-        todo!()
+    fn iter_mut(&'a mut self) -> Self::IterMut
+    {
+        return BcpIteratorMut::new(&mut self.comps);
+    }
+}
+
+impl<TComponent: Component> Index<usize> for BasicComponentPool<TComponent>
+{
+    type Output = TComponent;
+
+    fn index(&self, index: usize) -> &Self::Output
+    {
+        return self.comps[index].as_ref().unwrap();
+    }
+}
+
+impl<TComponent: Component> IndexMut<usize> for BasicComponentPool<TComponent>
+{
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output
+    {
+        return self.comps[index].as_mut().unwrap();
     }
 }
