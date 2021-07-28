@@ -116,35 +116,3 @@ pub trait ComponentManager
     /// Clears all components attached to the given entity
     fn clear_components(&mut self, target: ObjectRef);
 }
-
-pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    comp: TComponent
-) -> usize
-{
-    return mgr.pool_mut().add(comp);
-}
-
-pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager,
-    id: usize
-) -> &TComponent
-{
-    return &mgr.pool()[id];
-}
-
-pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-) -> &mut TComponent
-{
-    return &mut mgr.pool_mut()[id];
-}
-
-pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-)
-{
-    mgr.pool_mut().remove(id);
-}

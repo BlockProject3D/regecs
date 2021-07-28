@@ -36,9 +36,57 @@ mod grouped_pool;
 pub use basic_pool::BasicComponentPool;
 pub use grouped_pool::GroupComponentPool;
 
+use crate::component::interface::{Component, ComponentPool, ComponentProvider};
+
 #[macro_export]
 macro_rules! pool_type {
     ($i: ty) => {
         <$i as regecs::component::interface::Component>::Pool
     };
+}
+
+pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &mut TComponentManager,
+    comp: TComponent
+) -> usize
+{
+    return mgr.pool_mut().add(comp);
+}
+
+pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &TComponentManager,
+    id: usize
+) -> &TComponent
+{
+    return &mgr.pool()[id];
+}
+
+pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &mut TComponentManager,
+    id: usize
+) -> &mut TComponent
+{
+    return &mut mgr.pool_mut()[id];
+}
+
+pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &mut TComponentManager,
+    id: usize
+)
+{
+    mgr.pool_mut().remove(id);
+}
+
+pub fn get_component_pool_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &mut TComponentManager
+) -> &mut TComponent::Pool
+{
+    return mgr.pool_mut();
+}
+
+pub fn get_component_pool<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+    mgr: &TComponentManager
+) -> &TComponent::Pool
+{
+    return mgr.pool();
 }
