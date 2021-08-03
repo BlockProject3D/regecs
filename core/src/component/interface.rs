@@ -104,6 +104,36 @@ pub trait IterableComponentPool<'a, TComponent: 'a + Component>
     fn iter_mut(&'a mut self) -> Self::IterMut;
 }
 
+pub trait AttachmentProvider
+{
+    /// Attach a new component
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - the entity to attach the component to
+    /// * `component` - the component index to attach
+    fn attach(&mut self, entity: ObjectRef, component: usize);
+
+    /// Lists all attachments of a given entity
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - the entity to list
+    ///
+    /// # Returns
+    ///
+    /// * the list of all components attached to the given entity
+    /// * None if the entity does not exist or that the entity does not have any attachements
+    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>;
+
+    /// Removes all components attached to a given entity
+    ///
+    /// # Arguments
+    ///
+    /// * `entity` - the entity to clear
+    fn clear(&mut self, entity: ObjectRef);
+}
+
 pub trait ComponentProvider<TComponent: Component>
 {
     fn pool(&self) -> &TComponent::Pool;

@@ -26,68 +26,57 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS component layer
+use std::collections::{HashSet, HashMap};
+use crate::object::ObjectRef;
+use crate::component::interface::AttachmentProvider;
 
-pub mod interface;
-
-mod basic_pool;
-mod grouped_pool;
-mod attachments;
-
-pub use basic_pool::BasicComponentPool;
-pub use grouped_pool::GroupComponentPool;
-
-use crate::component::interface::{Component, ComponentPool, ComponentProvider};
-
-#[macro_export]
-macro_rules! pool_type {
-    ($i: ty) => {
-        <$i as regecs::component::interface::Component>::Pool
-    };
+pub struct AttachmentsManager
+{
+    map: HashMap<ObjectRef, HashSet<usize>>
 }
 
-pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    comp: TComponent
-) -> usize
+impl AttachmentsManager
 {
-    return mgr.pool_mut().add(comp);
+    pub fn new() -> AttachmentsManager
+    {
+        return AttachmentsManager {
+            map: HashMap::new()
+        }
+    }
+
+    pub fn remove(&mut self, entity: ObjectRef, component: usize)
+    {
+        self.map.get_mut(&entity).unwrap().remove(&component);
+    }
 }
 
-pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager,
-    id: usize
-) -> &TComponent
+impl AttachmentProvider for AttachmentsManager
 {
-    return &mgr.pool()[id];
-}
+    fn attach(&mut self, entity: ObjectRef, component: usize)
+    {
+        if let Some(set) = self.map.get_mut(&entity) {
+            set.insert(component);
+        } else {
+            let mut set = HashSet::new();
+            set.insert(component);
+            self.map.insert(entity, set);
+        }
+    }
 
-pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-) -> &mut TComponent
-{
-    return &mut mgr.pool_mut()[id];
-}
+    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    {
+        if let Some(set) = self.map.get(&entity)
+        {
+            let mut vec = Vec::with_capacity(set.len());
+            for v in set {
+                vec.push(*v);
+            }
+            return Some(vec);
+        }
+        return None;
+    }
 
-pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-)
-{
-    mgr.pool_mut().remove(id);
-}
-
-pub fn get_component_pool_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager
-) -> &mut TComponent::Pool
-{
-    return mgr.pool_mut();
-}
-
-pub fn get_component_pool<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager
-) -> &TComponent::Pool
-{
-    return mgr.pool();
+    fn clear(&mut self, entity: ObjectRef) {
+        self.map.remove(&entity);
+    }
 }
