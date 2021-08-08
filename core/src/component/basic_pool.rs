@@ -31,7 +31,9 @@ use std::{
     vec::Vec
 };
 
-use crate::component::interface::{Component, ComponentPool, IterableComponentPool};
+use crate::component::interface::{Component, ComponentPool, IterableComponentPool, AttachmentProvider};
+use crate::component::attachments::AttachmentsManager;
+use crate::object::ObjectRef;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -97,7 +99,8 @@ bcp_iterator!(BcpIteratorMut, mut);
 pub struct BasicComponentPool<TComponent: Component>
 {
     comps: Vec<Option<TComponent>>,
-    size: usize
+    size: usize,
+    attachments: AttachmentsManager
 }
 
 impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
@@ -106,7 +109,8 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
     {
         return BasicComponentPool {
             comps: Vec::new(),
-            size: 0
+            size: 0,
+            attachments: AttachmentsManager::new()
         };
     }
 
@@ -134,11 +138,35 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
             i -= 1;
         }
         self.size -= 1;
+        self.attachments.remove(id);
     }
 
     fn size(&self) -> usize
     {
         return self.size;
+    }
+}
+
+impl <TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent>
+{
+    fn attach(&mut self, entity: ObjectRef, component: usize)
+    {
+        self.attachments.attach(entity, component);
+    }
+
+    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    {
+        return self.attachments.list(entity);
+    }
+
+    fn clear(&mut self, entity: ObjectRef)
+    {
+        if let Some(set) = self.attachments.list(entity) {
+            for v in set {
+                self.remove(v)
+            }
+            self.attachments.clear(entity);
+        }
     }
 }
 

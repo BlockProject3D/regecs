@@ -32,7 +32,8 @@ use crate::component::interface::AttachmentProvider;
 
 pub struct AttachmentsManager
 {
-    map: HashMap<ObjectRef, HashSet<usize>>
+    map: HashMap<ObjectRef, HashSet<usize>>,
+    inv_map: HashMap<usize, ObjectRef>
 }
 
 impl AttachmentsManager
@@ -40,13 +41,19 @@ impl AttachmentsManager
     pub fn new() -> AttachmentsManager
     {
         return AttachmentsManager {
-            map: HashMap::new()
+            map: HashMap::new(),
+            inv_map: HashMap::new()
         }
     }
 
-    pub fn remove(&mut self, entity: ObjectRef, component: usize)
+    pub fn remove(&mut self, component: usize)
     {
-        self.map.get_mut(&entity).unwrap().remove(&component);
+        if let Some(entity) = self.inv_map.get(&component) {
+            if let Some(set) = self.map.get_mut(entity) {
+                set.remove(&component);
+                self.inv_map.remove(&component);
+            }
+        }
     }
 }
 
@@ -61,12 +68,12 @@ impl AttachmentProvider for AttachmentsManager
             set.insert(component);
             self.map.insert(entity, set);
         }
+        self.inv_map.insert(component, entity);
     }
 
     fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
     {
-        if let Some(set) = self.map.get(&entity)
-        {
+        if let Some(set) = self.map.get(&entity) {
             let mut vec = Vec::with_capacity(set.len());
             for v in set {
                 vec.push(*v);
@@ -77,6 +84,8 @@ impl AttachmentProvider for AttachmentsManager
     }
 
     fn clear(&mut self, entity: ObjectRef) {
-        self.map.remove(&entity);
+        if let Some(set) = self.map.get(&entity) {
+            self.map.remove(&entity);
+        }
     }
 }

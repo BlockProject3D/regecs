@@ -36,6 +36,8 @@ use crate::component::{
     interface::{Component, ComponentPool, IterableComponentPool},
     BasicComponentPool
 };
+use crate::component::interface::AttachmentProvider;
+use crate::object::ObjectRef;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -184,6 +186,28 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool
     fn size(&self) -> usize
     {
         return self.comps.size();
+    }
+}
+
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentProvider for GroupComponentPool<K, TComponent>
+{
+    fn attach(&mut self, entity: ObjectRef, component: usize)
+    {
+        self.comps.attach(entity, component);
+    }
+
+    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    {
+        return self.comps.list(entity);
+    }
+
+    fn clear(&mut self, entity: ObjectRef)
+    {
+        if let Some(set) = self.comps.list(entity) {
+            for v in set {
+                self.remove(v)
+            }
+        }
     }
 }
 
