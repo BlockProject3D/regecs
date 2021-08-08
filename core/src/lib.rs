@@ -31,3 +31,4 @@ pub mod event;
 pub mod object;
 pub mod scene;
 pub mod system;
+pub mod entity;
