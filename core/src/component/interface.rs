@@ -144,5 +144,5 @@ pub trait ComponentProvider<TComponent: Component>
 pub trait ComponentManager
 {
     /// Clears all components attached to the given entity
-    fn clear_components(&mut self, target: ObjectRef);
+    fn clear_components(&mut self, entity: ObjectRef);
 }

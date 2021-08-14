@@ -84,8 +84,6 @@ impl AttachmentProvider for AttachmentsManager
     }
 
     fn clear(&mut self, entity: ObjectRef) {
-        if let Some(set) = self.map.get(&entity) {
-            self.map.remove(&entity);
-        }
+        self.map.remove(&entity);
     }
 }
