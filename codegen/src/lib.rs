@@ -32,7 +32,17 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Type};
 
-#[proc_macro_derive(ComponentManager)]
+fn workarround_unprintable_path(path: &syn::Path) -> String
+{
+    let mut s = String::new();
+
+    for v in &path.segments {
+        s.push_str(&v.ident.to_string());
+    }
+    return s;
+}
+
+#[proc_macro_derive(ComponentManager, attributes(no_attachments))]
 pub fn component_manager(input: TokenStream) -> TokenStream
 {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
@@ -42,11 +52,18 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         Data::Struct(s) => match s.fields {
             Fields::Named(FieldsNamed { named, .. }) => {
                 for f in &named {
+                    let mut flag = true;
+                    for v in &f.attrs {
+                        let str = workarround_unprintable_path(&v.path);
+                        if str == "no_attachments" {
+                            flag = false;
+                        }
+                    }
                     match &f.ty {
                         Type::Macro(m) => {
                             let comp_type = m.mac.tokens.to_string();
                             if let Some(useless) = &f.ident {
-                                v.push((useless.clone(), m.mac.clone(), comp_type));
+                                v.push((useless.clone(), m.mac.clone(), comp_type, flag));
                             } else {
                                 panic!("How is it possible that you get no identifier???!!!");
                             }
@@ -60,13 +77,19 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         _ => panic!("ComponentManager cannot be implemented on non-structs")
     };
     let mut impl_base_tokens = Vec::new();
-    for (field_name, pool_type, _) in &v {
+    let mut impl_cmgr_tokens = Vec::new();
+    for (field_name, pool_type, _, flag) in &v {
         impl_base_tokens.push(quote! {
             #field_name: <#pool_type>::new()
         });
+        if *flag {
+            impl_cmgr_tokens.push(quote! {
+                self.#field_name.clear(entity);
+            });
+        }
     }
     let mut impls_tokens = Vec::new();
-    for (field_name, pool_type, comp_type) in &v {
+    for (field_name, pool_type, comp_type, _) in &v {
         let new_ident = syn::parse_str::<Type>(&comp_type).unwrap();
         let mgr_impl_tokens = quote! {
             impl ComponentProvider<#new_ident> for #ident
@@ -84,6 +107,17 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         };
         impls_tokens.push(mgr_impl_tokens);
     }
+    let cmgr = quote! {
+        impl regecs::component::interface::ComponentManager for #ident
+        {
+            fn clear_components(&mut self, entity: regecs::object::ObjectRef)
+            {
+                use regecs::component::interface::AttachmentProvider;
+
+                #(#impl_cmgr_tokens;)*
+            }
+        }
+    };
     let output = quote! {
         impl #ident
         {
@@ -95,6 +129,8 @@ pub fn component_manager(input: TokenStream) -> TokenStream
                 };
             }
         }
+
+        #cmgr
 
         #(#impls_tokens)*
     };
