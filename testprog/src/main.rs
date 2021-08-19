@@ -34,6 +34,7 @@ use regecs::{
         interface::{ComponentPool, ComponentProvider},
         remove_component
     },
+    entity::{ComponentTypeProvider, Entity, EntityPart},
     pool_type,
     scene::Scene,
     system::{EventList, System}
@@ -52,7 +53,9 @@ mod components
         },
         system::{EventList, System}
     };
+    use regecs_codegen::NonSerializableComponent;
 
+    #[derive(NonSerializableComponent)]
     pub struct Test
     {
         pub value: i32
@@ -63,6 +66,7 @@ mod components
         type Pool = BasicComponentPool<Test>;
     }
 
+    #[derive(NonSerializableComponent)]
     pub struct Test2
     {
         pub value2: i32
@@ -73,6 +77,7 @@ mod components
         type Pool = BasicComponentPool<Test2>;
     }
 
+    #[derive(NonSerializableComponent)]
     pub struct ComplexComponent
     {
         last_order: u32,
@@ -159,6 +164,9 @@ fn main()
 {
     let mut ctx = 0;
     let mut mgr = MyComponentManager::new();
+    let mut entity = Entity::new(&mut mgr, 0);
+    entity.add(components::Test { value: 12 });
+    entity.get_mut(components::Test::ctype(), 0).value = 12;
     add_component(&mut mgr, components::Test { value: 0 });
     add_component(&mut mgr, components::Test2 { value2: 0 });
     add_component(&mut mgr, ComplexComponent::new(2, 3));
