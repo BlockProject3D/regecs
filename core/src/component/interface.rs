@@ -32,8 +32,20 @@ use std::ops::{Index, IndexMut};
 
 use crate::object::ObjectRef;
 
+pub trait Serializable
+{
+    fn serialize(&self) -> bpx::sd::Object;
+    fn deserialize(&mut self, obj: &bpx::sd::Object);
+}
+
+pub trait MaybeSerializable
+{
+    fn as_serializable_mut(&mut self) -> Option<&mut dyn Serializable>;
+    fn as_serializable(&self) -> Option<&dyn Serializable>;
+}
+
 /// Represents a component
-pub trait Component: Sized
+pub trait Component: Sized + MaybeSerializable
 {
     /// The type of ComponentPool to use for storing instances of this component
     type Pool: ComponentPool<Self>;

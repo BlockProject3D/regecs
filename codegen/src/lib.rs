@@ -42,6 +42,56 @@ fn workarround_unprintable_path(path: &syn::Path) -> String
     return s;
 }
 
+#[proc_macro_derive(SerializableComponent)]
+pub fn serializable_component(input: TokenStream) -> TokenStream
+{
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    if let Data::Struct(_) = data {
+        let output = quote! {
+            impl regecs::component::interface::MaybeSerializable for #ident
+            {
+                fn as_serializable_mut(&mut self) -> Option<&mut dyn regecs::component::interface::Serializable>
+                {
+                    return Some(&mut self);
+                }
+
+                fn as_serializable(&self) -> Option<&dyn regecs::component::interface::Serializable>
+                {
+                    return Some(&self);
+                }
+            }
+        };
+        return output.into();
+    } else {
+        panic!("SerializableComponent cannot be implemented on non-structs");
+    }
+}
+
+#[proc_macro_derive(NonSerializableComponent)]
+pub fn non_serializable_component(input: TokenStream) -> TokenStream
+{
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    if let Data::Struct(_) = data {
+        let output = quote! {
+            impl regecs::component::interface::MaybeSerializable for #ident
+            {
+                fn as_serializable_mut(&mut self) -> Option<&mut dyn regecs::component::interface::Serializable>
+                {
+                    return None;
+                }
+
+                fn as_serializable(&self) -> Option<&dyn regecs::component::interface::Serializable>
+                {
+                    return None;
+                }
+            }
+        };
+        return output.into();
+    } else {
+        panic!("NonSerializableComponent cannot be implemented on non-structs");
+    }
+}
+
 #[proc_macro_derive(ComponentManager, attributes(no_attachments))]
 pub fn component_manager(input: TokenStream) -> TokenStream
 {
