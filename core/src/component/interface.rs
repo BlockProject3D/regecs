@@ -34,7 +34,7 @@ use crate::object::ObjectRef;
 
 pub trait Serializable
 {
-    fn serialize(&self) -> bpx::sd::Object;
+    fn serialize(&self, obj: &mut bpx::sd::Object);
     fn deserialize(&mut self, obj: &bpx::sd::Object);
 }
 
