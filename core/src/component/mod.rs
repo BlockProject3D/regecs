@@ -30,9 +30,9 @@
 
 pub mod interface;
 
+mod attachments;
 mod basic_pool;
 mod grouped_pool;
-mod attachments;
 
 pub use basic_pool::BasicComponentPool;
 pub use grouped_pool::GroupComponentPool;

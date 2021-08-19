@@ -31,9 +31,13 @@ use std::{
     vec::Vec
 };
 
-use crate::component::interface::{Component, ComponentPool, IterableComponentPool, AttachmentProvider};
-use crate::component::attachments::AttachmentsManager;
-use crate::object::ObjectRef;
+use crate::{
+    component::{
+        attachments::AttachmentsManager,
+        interface::{AttachmentProvider, Component, ComponentPool, IterableComponentPool}
+    },
+    object::ObjectRef
+};
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -147,7 +151,7 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
     }
 }
 
-impl <TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent>
+impl<TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent>
 {
     fn attach(&mut self, entity: ObjectRef, component: usize)
     {

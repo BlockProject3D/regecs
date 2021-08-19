@@ -26,9 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::collections::{HashSet, HashMap};
-use crate::object::ObjectRef;
-use crate::component::interface::AttachmentProvider;
+use std::collections::{HashMap, HashSet};
+
+use crate::{component::interface::AttachmentProvider, object::ObjectRef};
 
 pub struct AttachmentsManager
 {
@@ -43,7 +43,7 @@ impl AttachmentsManager
         return AttachmentsManager {
             map: HashMap::new(),
             inv_map: HashMap::new()
-        }
+        };
     }
 
     pub fn remove(&mut self, component: usize)
@@ -83,7 +83,8 @@ impl AttachmentProvider for AttachmentsManager
         return None;
     }
 
-    fn clear(&mut self, entity: ObjectRef) {
+    fn clear(&mut self, entity: ObjectRef)
+    {
         self.map.remove(&entity);
     }
 }

@@ -26,8 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::interface::{Component, ComponentProvider, ComponentPool, AttachmentProvider};
-use crate::object::ObjectRef;
+use crate::{
+    component::interface::{AttachmentProvider, Component, ComponentPool, ComponentProvider},
+    object::ObjectRef
+};
 
 pub struct Entity<'a, TComponentManager>
 {
@@ -55,7 +57,10 @@ pub trait EntityPart<TComponent: Component, TComponentManager: ComponentProvider
     fn list(&self, _: ComponentType<TComponent>) -> Option<Vec<usize>>;
 }
 
-impl <'a, TComponent: Component, TComponentManager: ComponentProvider<TComponent>> EntityPart<TComponent, TComponentManager> for Entity<'a, TComponentManager> where TComponent::Pool: AttachmentProvider
+impl<'a, TComponent: Component, TComponentManager: ComponentProvider<TComponent>>
+    EntityPart<TComponent, TComponentManager> for Entity<'a, TComponentManager>
+where
+    TComponent::Pool: AttachmentProvider
 {
     fn add(&mut self, comp: TComponent) -> usize
     {
@@ -81,7 +86,7 @@ impl <'a, TComponent: Component, TComponentManager: ComponentProvider<TComponent
 
     fn list(&self, _: ComponentType<TComponent>) -> Option<Vec<usize>>
     {
-        return self.mgr.pool().list(self.entity)
+        return self.mgr.pool().list(self.entity);
     }
 }
 
@@ -113,13 +118,10 @@ impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
     }
 }
 
-impl <'a, TComponentManager> Entity<'a, TComponentManager>
+impl<'a, TComponentManager> Entity<'a, TComponentManager>
 {
     pub fn new(mgr: &'a mut TComponentManager, entity: ObjectRef) -> Entity<'a, TComponentManager>
     {
-        return Entity {
-            mgr,
-            entity
-        };
+        return Entity { mgr, entity };
     }
 }

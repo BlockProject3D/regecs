@@ -27,8 +27,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pub mod component;
+pub mod entity;
 pub mod event;
 pub mod object;
 pub mod scene;
 pub mod system;
-pub mod entity;

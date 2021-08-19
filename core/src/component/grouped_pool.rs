@@ -32,12 +32,13 @@ use std::{
     ops::{Index, IndexMut}
 };
 
-use crate::component::{
-    interface::{Component, ComponentPool, IterableComponentPool},
-    BasicComponentPool
+use crate::{
+    component::{
+        interface::{AttachmentProvider, Component, ComponentPool, IterableComponentPool},
+        BasicComponentPool
+    },
+    object::ObjectRef
 };
-use crate::component::interface::AttachmentProvider;
-use crate::object::ObjectRef;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -189,7 +190,8 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentProvider for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentProvider
+    for GroupComponentPool<K, TComponent>
 {
     fn attach(&mut self, entity: ObjectRef, component: usize)
     {
