@@ -30,7 +30,7 @@
 
 use std::{any::Any, boxed::Box};
 
-use crate::object::{LowObject, ObjectRef};
+use crate::object::{ObjectRef, CoreObject};
 
 pub struct EventContext<'a, TState, TComponentManager>
 {
@@ -43,7 +43,7 @@ pub struct EventContext<'a, TState, TComponentManager>
 pub struct EventResult<TState, TComponentManager>
 {
     to_send: Vec<(Option<ObjectRef>, Box<dyn Any>)>,
-    to_spawn: Vec<Box<dyn LowObject<TState, TComponentManager>>>,
+    to_spawn: Vec<Box<dyn CoreObject<TState, TComponentManager>>>,
     remove_flag: bool
 }
 
@@ -58,7 +58,7 @@ impl<TState, TComponentManager> EventResult<TState, TComponentManager>
         };
     }
 
-    pub fn spawn_object<TObject: LowObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
+    pub fn spawn_object<TObject: CoreObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
     {
         self.to_spawn.push(Box::from(obj));
     }
@@ -83,7 +83,7 @@ impl<TState, TComponentManager> EventResult<TState, TComponentManager>
     ) -> (
         bool,
         Vec<(Option<ObjectRef>, Box<dyn Any>)>,
-        Vec<Box<dyn LowObject<TState, TComponentManager>>>
+        Vec<Box<dyn CoreObject<TState, TComponentManager>>>
     )
     {
         return (self.remove_flag, self.to_send, self.to_spawn);

@@ -41,7 +41,7 @@ use crate::{
 pub type ObjectRef = u32;
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait LowObject<TState, TComponentManager>
+pub trait CoreObject<TState, TComponentManager>
 {
     fn on_event(
         &mut self,
@@ -71,7 +71,7 @@ impl<
         TComponentManager: ComponentManager,
         EventType: Any,
         O: Object<TState, TComponentManager, EventType = EventType>
-    > LowObject<TState, TComponentManager> for O
+    > CoreObject<TState, TComponentManager> for O
 {
     fn on_event(
         &mut self,

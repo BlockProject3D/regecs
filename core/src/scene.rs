@@ -32,7 +32,7 @@ use std::{any::Any, boxed::Box, collections::VecDeque};
 
 use crate::{
     event::EventContext,
-    object::{LowObject, ObjectRef},
+    object::{CoreObject, ObjectRef},
     system::System
 };
 
@@ -41,7 +41,7 @@ pub struct Scene<TState, TComponentManager>
 {
     component_manager: TComponentManager,
     systems: Vec<Box<dyn System<TState, TComponentManager>>>,
-    objects: Vec<Option<Box<dyn LowObject<TState, TComponentManager>>>>,
+    objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
     targeted_event_que: VecDeque<(Option<ObjectRef>, ObjectRef, Box<dyn Any>)>,
     untargeted_event_que: VecDeque<(Option<ObjectRef>, Box<dyn Any>)>
 }
@@ -128,7 +128,7 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
 
     fn spawn_object_internal(
         &mut self,
-        mut obj: Box<dyn LowObject<TState, TComponentManager>>,
+        mut obj: Box<dyn CoreObject<TState, TComponentManager>>,
         spawned_by: Option<ObjectRef>
     )
     {
@@ -154,7 +154,7 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
         }
     }
 
-    pub fn spawn_object<TObject: LowObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
+    pub fn spawn_object<TObject: CoreObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
     {
         self.spawn_object_internal(Box::from(obj), None);
     }
