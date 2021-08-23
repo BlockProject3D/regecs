@@ -26,10 +26,55 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod component;
-pub mod entity;
-pub mod event;
-pub mod object;
-pub mod scene;
-pub mod system;
-pub mod reflection;
+use crate::reflection::class::Class;
+
+pub mod config;
+
+#[derive(Clone)]
+pub struct PropertyType
+{
+    pub type_name: &'static str,
+    pub class: Option<Class>
+}
+
+pub trait AsProperty
+{
+    type ConfigType : 'static + config::PropertyConfig;
+    fn prop_type() -> PropertyType;
+}
+
+pub struct Property
+{
+    name: String,
+    optional: bool,
+    ptype: PropertyType,
+    config: Box<dyn config::PropertyConfig>
+}
+
+impl Clone for Property
+{
+    fn clone(&self) -> Self
+    {
+        return Property
+        {
+            name: self.name.clone(),
+            optional: self.optional,
+            ptype: self.ptype.clone(),
+            config: self.config.clone_box()
+        }
+    }
+}
+
+impl Property
+{
+    fn new<T: AsProperty>(name: String, optional: bool, config: T::ConfigType) -> Property
+    {
+        return Property
+        {
+            name,
+            optional,
+            ptype: T::prop_type(),
+            config: Box::new(config)
+        }
+    }
+}

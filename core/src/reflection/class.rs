@@ -26,10 +26,40 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod component;
-pub mod entity;
-pub mod event;
-pub mod object;
-pub mod scene;
-pub mod system;
-pub mod reflection;
+use crate::reflection::property::Property;
+use std::any::Any;
+
+#[derive(Clone)]
+pub struct Class
+{
+    name: String,
+    props: Vec<Property>,
+    instance_func: fn () -> Box<dyn Any>
+}
+
+impl Class
+{
+    pub fn new(name: String, props: Vec<Property>, instance_func: fn () -> Box<dyn Any>) -> Class
+    {
+        return Class {
+            name,
+            props,
+            instance_func
+        };
+    }
+
+    pub fn new_instance(&self) -> Box<dyn Any>
+    {
+        return (self.instance_func)();
+    }
+
+    pub fn get_name(&self) -> &str
+    {
+        return &self.name;
+    }
+
+    pub fn get_properties(&self) -> &[Property]
+    {
+        return &self.props;
+    }
+}
