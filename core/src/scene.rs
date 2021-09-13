@@ -34,7 +34,7 @@ use crate::{
     object::{CoreObject, ObjectRef},
     system::System,
 };
-use crate::event::{EventManager, EventHandler, Event, EventSender, SystemEvent};
+use crate::event::{EventManager, Event, SystemEvent};
 use crate::object::{EventContext, CommonContext};
 use std::collections::HashSet;
 

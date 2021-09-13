@@ -37,7 +37,7 @@ pub type Handle = usize;
 
 pub struct EventTracker<T, TState, TComponentManager>
 {
-    events: Vec<(Handle, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<Box<dyn Any>>)>)>
+    events: Vec<(Handle, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>)>
 }
 
 impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
@@ -49,7 +49,7 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
         };
     }
 
-    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<TRes>)>(&mut self, handle: Handle, func: TFunc)
+    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<TRes>)>(&mut self, handle: Handle, func: TFunc)
     {
         self.events.push((handle, Box::new(move |this, ctx, data| {
             if let Some(obj) = data {
@@ -82,12 +82,12 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
 
 pub struct EventTrackerBatch<T, TState, TComponentManager>
 {
-    events: Vec<(Option<Box<dyn Any>>, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<Box<dyn Any>>)>)>
+    events: Vec<(Option<Box<dyn Any>>, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>)>
 }
 
 impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManager>
 {
-    pub fn run(self, this: &mut T, ctx: &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>)
+    pub fn run(self, this: &mut T, ctx: &mut CommonContext<TState, TComponentManager>)
     {
         for (data, func) in self.events {
             func(this, ctx, data);
@@ -149,20 +149,6 @@ impl EventBuilder
     }
 }
 
-pub trait EventHandler<TState, TComponentManager>
-{
-    fn poll_event(&mut self) -> Option<Event>;
-    fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>;
-    fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>);
-}
-
-pub trait EventSender<TState, TComponentManager>
-{
-    fn send(&mut self, event: EventBuilder) -> Handle;
-    fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle;
-    fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>);
-}
-
 pub enum SystemEvent<TState, TComponentManager>
 {
     EnableUpdate(ObjectRef, bool),
@@ -191,11 +177,8 @@ impl<TState, TComponentManager> EventManager<TState, TComponentManager>
             event_responses: HashMap::new(),
         };
     }
-}
 
-impl<TState, TComponentManager> EventSender<TState, TComponentManager> for EventManager<TState, TComponentManager>
-{
-    fn send(&mut self, event: EventBuilder) -> Handle
+    pub fn send(&mut self, event: EventBuilder) -> Handle
     {
         let handle = self.cur_handle;
         let mut e = event.into();
@@ -205,7 +188,7 @@ impl<TState, TComponentManager> EventSender<TState, TComponentManager> for Event
         return handle;
     }
 
-    fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle
+    pub fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle
     {
         let handle = self.cur_handle;
         self.cur_handle += 1;
@@ -213,28 +196,25 @@ impl<TState, TComponentManager> EventSender<TState, TComponentManager> for Event
         return handle;
     }
 
-    fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>)
+    pub fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>)
     {
         if let Some(data) = self.event_responses.remove(&handle) {
             return (true, data);
         }
         return (false, None);
     }
-}
 
-impl<TState, TComponentManager> EventHandler<TState, TComponentManager> for EventManager<TState, TComponentManager>
-{
-    fn poll_event(&mut self) -> Option<Event>
+    pub fn poll_event(&mut self) -> Option<Event>
     {
         return self.events.pop_front();
     }
 
-    fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>
+    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>
     {
         return self.system_events.pop_front();
     }
 
-    fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>)
+    pub fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>)
     {
         self.event_responses.insert(handle, response);
     }

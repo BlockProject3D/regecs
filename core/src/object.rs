@@ -31,21 +31,21 @@
 use std::{any::Any, boxed::Box};
 
 use crate::component::interface::ComponentManager;
-use crate::event::{EventManager, EventSender};
+use crate::event::{EventManager};
 
-pub struct EventContext<'a, TState, TComponentManager, TEventSender: EventSender<TState, TComponentManager>>
+pub struct EventContext<'a, TState, TComponentManager>
 {
     pub components: &'a mut TComponentManager,
-    pub event_manager: &'a TEventSender,
+    pub event_manager: &'a mut EventManager<TState, TComponentManager>,
     pub this: ObjectRef,
     pub sender: Option<ObjectRef>,
     pub state: &'a mut TState,
 }
 
-pub struct CommonContext<'a, TState, TComponentManager, TEventSender: EventSender<TState, TComponentManager>>
+pub struct CommonContext<'a, TState, TComponentManager>
 {
     pub components: &'a mut TComponentManager,
-    pub event_manager: &'a TEventSender,
+    pub event_manager: &'a mut EventManager<TState, TComponentManager>,
     pub this: ObjectRef,
     pub state: &'a mut TState,
 }
@@ -60,14 +60,14 @@ pub trait CoreObject<TState, TComponentManager>
 {
     fn on_event(
         &mut self,
-        context: EventContext<TState, TComponentManager, EventManager<TState, TComponentManager>>,
+        context: EventContext<TState, TComponentManager>,
         event: &Box<dyn Any>,
     ) -> Option<Box<dyn Any>>;
-    fn on_init(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn on_remove(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn on_update(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn serialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, obj: bpx::sd::Object);
+    fn on_init(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn on_remove(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn on_update(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn serialize(&mut self, context: CommonContext<TState, TComponentManager>) -> Option<bpx::sd::Object>;
+    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager>, obj: bpx::sd::Object);
 }
 
 /// High-level object interface
@@ -77,14 +77,14 @@ pub trait Object<TState, TComponentManager>
 
     fn handle_event<T: Any>(
         &mut self,
-        context: EventContext<TState, TComponentManager, EventManager<TState, TComponentManager>>,
+        context: EventContext<TState, TComponentManager>,
         event: &Self::EventType,
     ) -> Option<T>;
-    fn init(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn remove(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn update(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>);
-    fn serialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, obj: bpx::sd::Object);
+    fn init(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn remove(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn update(&mut self, context: CommonContext<TState, TComponentManager>);
+    fn serialize(&mut self, context: CommonContext<TState, TComponentManager>) -> Option<bpx::sd::Object>;
+    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager>, obj: bpx::sd::Object);
 }
 
 impl<
@@ -96,7 +96,7 @@ impl<
 {
     fn on_event(
         &mut self,
-        context: EventContext<TState, TComponentManager, EventManager<TState, TComponentManager>>,
+        context: EventContext<TState, TComponentManager>,
         event: &Box<dyn Any>,
     ) -> Option<Box<dyn Any>>
     {
@@ -106,28 +106,28 @@ impl<
         return None;
     }
 
-    fn on_init(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>)
+    fn on_init(&mut self, context: CommonContext<TState, TComponentManager>)
     {
         self.init(context);
     }
 
-    fn on_remove(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>)
+    fn on_remove(&mut self, context: CommonContext<TState, TComponentManager>)
     {
         context.components.clear_components(context.this);
         self.remove(context);
     }
 
-    fn on_update(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>)
+    fn on_update(&mut self, context: CommonContext<TState, TComponentManager>)
     {
         self.update(context);
     }
 
-    fn serialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>) -> Option<bpx::sd::Object>
+    fn serialize(&mut self, context: CommonContext<TState, TComponentManager>) -> Option<bpx::sd::Object>
     {
         return self.serialize(context);
     }
 
-    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, obj: bpx::sd::Object)
+    fn deserialize(&mut self, context: CommonContext<TState, TComponentManager>, obj: bpx::sd::Object)
     {
         self.deserialize(context, obj);
     }
