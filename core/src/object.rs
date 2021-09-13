@@ -30,8 +30,7 @@
 
 use std::{any::Any, boxed::Box};
 
-use crate::component::interface::ComponentManager;
-use crate::event::{EventManager};
+use crate::{component::interface::ComponentManager, event::EventManager};
 
 pub struct EventContext<'a, TState, TComponentManager>
 {
@@ -39,7 +38,7 @@ pub struct EventContext<'a, TState, TComponentManager>
     pub event_manager: &'a mut EventManager<TState, TComponentManager>,
     pub this: ObjectRef,
     pub sender: Option<ObjectRef>,
-    pub state: &'a mut TState,
+    pub state: &'a mut TState
 }
 
 pub struct CommonContext<'a, TState, TComponentManager>
@@ -47,7 +46,7 @@ pub struct CommonContext<'a, TState, TComponentManager>
     pub components: &'a mut TComponentManager,
     pub event_manager: &'a mut EventManager<TState, TComponentManager>,
     pub this: ObjectRef,
-    pub state: &'a mut TState,
+    pub state: &'a mut TState
 }
 
 /// Type alias for object references
@@ -61,7 +60,7 @@ pub trait CoreObject<TState, TComponentManager>
     fn on_event(
         &mut self,
         context: EventContext<TState, TComponentManager>,
-        event: &Box<dyn Any>,
+        event: &Box<dyn Any>
     ) -> Option<Box<dyn Any>>;
     fn on_init(&mut self, context: CommonContext<TState, TComponentManager>);
     fn on_remove(&mut self, context: CommonContext<TState, TComponentManager>);
@@ -78,7 +77,7 @@ pub trait Object<TState, TComponentManager>
     fn handle_event<T: Any>(
         &mut self,
         context: EventContext<TState, TComponentManager>,
-        event: &Self::EventType,
+        event: &Self::EventType
     ) -> Option<T>;
     fn init(&mut self, context: CommonContext<TState, TComponentManager>);
     fn remove(&mut self, context: CommonContext<TState, TComponentManager>);
@@ -88,16 +87,16 @@ pub trait Object<TState, TComponentManager>
 }
 
 impl<
-    TState,
-    TComponentManager: ComponentManager,
-    EventType: Any,
-    O: Object<TState, TComponentManager, EventType=EventType>
-> CoreObject<TState, TComponentManager> for O
+        TState,
+        TComponentManager: ComponentManager,
+        EventType: Any,
+        O: Object<TState, TComponentManager, EventType = EventType>
+    > CoreObject<TState, TComponentManager> for O
 {
     fn on_event(
         &mut self,
         context: EventContext<TState, TComponentManager>,
-        event: &Box<dyn Any>,
+        event: &Box<dyn Any>
     ) -> Option<Box<dyn Any>>
     {
         if let Some(ev) = event.downcast_ref::<EventType>() {

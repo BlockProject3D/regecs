@@ -26,11 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::reflection::property::PropertyType;
-use crate::reflection::property::AsProperty;
 use bpx::sd::Object;
 
-pub trait PropertyConfig : CloneBox
+use crate::reflection::property::{AsProperty, PropertyType};
+
+pub trait PropertyConfig: CloneBox
 {
     fn serialize(&self, obj: &mut bpx::sd::Object);
 }
@@ -40,7 +40,7 @@ pub trait CloneBox
     fn clone_box(&self) -> Box<dyn PropertyConfig>;
 }
 
-impl <T: 'static + Clone + PropertyConfig> CloneBox for T
+impl<T: 'static + Clone + PropertyConfig> CloneBox for T
 {
     fn clone_box(&self) -> Box<dyn PropertyConfig>
     {
@@ -56,7 +56,7 @@ pub struct NumericProperty<T: 'static + Clone>
     pub step: T
 }
 
-impl <T: Clone + Into<bpx::sd::Value>> PropertyConfig for NumericProperty<T>
+impl<T: Clone + Into<bpx::sd::Value>> PropertyConfig for NumericProperty<T>
 {
     fn serialize(&self, obj: &mut Object)
     {
@@ -86,11 +86,10 @@ impl AsProperty for String
 
     fn prop_type() -> PropertyType
     {
-        return PropertyType
-        {
+        return PropertyType {
             type_name: "String",
             class: None
-        }
+        };
     }
 }
 

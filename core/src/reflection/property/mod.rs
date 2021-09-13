@@ -39,7 +39,7 @@ pub struct PropertyType
 
 pub trait AsProperty
 {
-    type ConfigType : 'static + config::PropertyConfig;
+    type ConfigType: 'static + config::PropertyConfig;
     fn prop_type() -> PropertyType;
 }
 
@@ -55,13 +55,12 @@ impl Clone for Property
 {
     fn clone(&self) -> Self
     {
-        return Property
-        {
+        return Property {
             name: self.name.clone(),
             optional: self.optional,
             ptype: self.ptype.clone(),
             config: self.config.clone_box()
-        }
+        };
     }
 }
 
@@ -69,12 +68,11 @@ impl Property
 {
     fn new<T: AsProperty>(name: String, optional: bool, config: T::ConfigType) -> Property
     {
-        return Property
-        {
+        return Property {
             name,
             optional,
             ptype: T::prop_type(),
             config: Box::new(config)
-        }
+        };
     }
 }

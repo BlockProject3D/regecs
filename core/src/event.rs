@@ -28,40 +28,57 @@
 
 //! REGECS event system
 
-use std::{any::Any, boxed::Box};
+use std::{
+    any::Any,
+    boxed::Box,
+    collections::{HashMap, VecDeque}
+};
 
-use crate::object::{ObjectRef, CoreObject, CommonContext};
-use std::collections::{HashMap, VecDeque};
+use crate::object::{CommonContext, CoreObject, ObjectRef};
 
 pub type Handle = usize;
 
 pub struct EventTracker<T, TState, TComponentManager>
 {
-    events: Vec<(Handle, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>)>
+    events: Vec<(
+        Handle,
+        Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>
+    )>
 }
 
 impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
 {
     pub fn new() -> EventTracker<T, TState, TComponentManager>
     {
-        return EventTracker {
-            events: Vec::new()
-        };
+        return EventTracker { events: Vec::new() };
     }
 
-    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<TRes>)>(&mut self, handle: Handle, func: TFunc)
+    pub fn push<
+        TRes: 'static,
+        TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<TRes>)
+    >(
+        &mut self,
+        handle: Handle,
+        func: TFunc
+    )
     {
-        self.events.push((handle, Box::new(move |this, ctx, data| {
-            if let Some(obj) = data {
-                let o = *obj.downcast().unwrap();
-                func(this, ctx, o);
-            } else {
-                func(this, ctx, None);
-            }
-        })));
+        self.events.push((
+            handle,
+            Box::new(move |this, ctx, data| {
+                if let Some(obj) = data {
+                    let o = *obj.downcast().unwrap();
+                    func(this, ctx, o);
+                } else {
+                    func(this, ctx, None);
+                }
+            })
+        ));
     }
 
-    pub fn poll_batch(&mut self, event_manager: &mut EventManager<TState, TComponentManager>) -> EventTrackerBatch<T, TState, TComponentManager>
+    pub fn poll_batch(
+        &mut self,
+        event_manager: &mut EventManager<TState, TComponentManager>
+    ) -> EventTrackerBatch<T, TState, TComponentManager>
     {
         let mut batch = Vec::new();
         let mut i = 0;
@@ -74,15 +91,16 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
                 i += 1;
             }
         }
-        return EventTrackerBatch {
-            events: batch
-        };
+        return EventTrackerBatch { events: batch };
     }
 }
 
 pub struct EventTrackerBatch<T, TState, TComponentManager>
 {
-    events: Vec<(Option<Box<dyn Any>>, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>)>
+    events: Vec<(
+        Option<Box<dyn Any>>,
+        Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>
+    )>
 }
 
 impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManager>
@@ -101,26 +119,25 @@ pub struct Event
     pub target: Option<ObjectRef>,
     pub data: Box<dyn Any>,
     pub tracking: bool,
-    pub handle: Handle,
+    pub handle: Handle
 }
 
 pub struct EventBuilder
 {
-    ev: Event,
+    ev: Event
 }
 
 impl EventBuilder
 {
     pub fn new<TEvent: Any>(event: TEvent) -> EventBuilder
     {
-        return EventBuilder
-        {
+        return EventBuilder {
             ev: Event {
                 sender: None,
                 target: None,
                 data: Box::from(event),
                 tracking: false,
-                handle: 0,
+                handle: 0
             }
         };
     }
@@ -155,7 +172,7 @@ pub enum SystemEvent<TState, TComponentManager>
     Serialize(ObjectRef),
     Deserialize(ObjectRef, bpx::sd::Object),
     Spawn(Box<dyn CoreObject<TState, TComponentManager>>),
-    Destroy(ObjectRef),
+    Destroy(ObjectRef)
 }
 
 pub struct EventManager<TState, TComponentManager>
@@ -163,7 +180,7 @@ pub struct EventManager<TState, TComponentManager>
     events: VecDeque<Event>,
     system_events: VecDeque<(bool, Handle, SystemEvent<TState, TComponentManager>)>,
     cur_handle: Handle,
-    event_responses: HashMap<Handle, Option<Box<dyn Any>>>,
+    event_responses: HashMap<Handle, Option<Box<dyn Any>>>
 }
 
 impl<TState, TComponentManager> EventManager<TState, TComponentManager>
@@ -174,7 +191,7 @@ impl<TState, TComponentManager> EventManager<TState, TComponentManager>
             events: VecDeque::new(),
             system_events: VecDeque::new(),
             cur_handle: 0,
-            event_responses: HashMap::new(),
+            event_responses: HashMap::new()
         };
     }
 

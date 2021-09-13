@@ -28,15 +28,13 @@
 
 //! REGECS scene object
 
-use std::{any::Any, boxed::Box};
+use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
-    object::{CoreObject, ObjectRef},
-    system::System,
+    event::{Event, EventManager, SystemEvent},
+    object::{CommonContext, CoreObject, EventContext, ObjectRef},
+    system::System
 };
-use crate::event::{EventManager, Event, SystemEvent};
-use crate::object::{EventContext, CommonContext};
-use std::collections::HashSet;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<TState, TComponentManager>
@@ -45,7 +43,7 @@ pub struct Scene<TState, TComponentManager>
     systems: Vec<Box<dyn System<TState, TComponentManager>>>,
     objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
     updatables: HashSet<ObjectRef>,
-    event_manager: EventManager<TState, TComponentManager>,
+    event_manager: EventManager<TState, TComponentManager>
 }
 
 impl<TState, TComponentManager> Scene<TState, TComponentManager>
@@ -57,26 +55,33 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
             systems: Vec::new(),
             objects: Vec::new(),
             updatables: HashSet::new(),
-            event_manager: EventManager::new(),
+            event_manager: EventManager::new()
         };
     }
 
     fn object_event_call(&mut self, ctx: &mut TState, obj_ref: ObjectRef, event: &Event)
     {
         let obj = self.objects[obj_ref as usize].as_mut().unwrap();
-        let res = obj.on_event(EventContext {
-            components: &mut self.component_manager,
-            event_manager: &mut self.event_manager,
-            this: obj_ref,
-            sender: event.sender,
-            state: ctx,
-        }, &event.data);
+        let res = obj.on_event(
+            EventContext {
+                components: &mut self.component_manager,
+                event_manager: &mut self.event_manager,
+                this: obj_ref,
+                sender: event.sender,
+                state: ctx
+            },
+            &event.data
+        );
         if event.tracking {
             self.event_manager.queue_response(event.handle, res);
         }
     }
 
-    fn handle_system_event(&mut self, ctx: &mut TState, ev: SystemEvent<TState, TComponentManager>) -> Option<Box<dyn Any>>
+    fn handle_system_event(
+        &mut self,
+        ctx: &mut TState,
+        ev: SystemEvent<TState, TComponentManager>
+    ) -> Option<Box<dyn Any>>
     {
         return match ev {
             SystemEvent::EnableUpdate(obj, flag) => {
@@ -86,34 +91,35 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
                     self.updatables.remove(&obj);
                 }
                 None
-            }
+            },
             SystemEvent::Serialize(obj) => {
                 let o = self.objects[obj as usize].as_mut().unwrap();
                 let data = o.serialize(CommonContext {
                     components: &mut self.component_manager,
                     event_manager: &mut self.event_manager,
                     this: obj,
-                    state: ctx,
+                    state: ctx
                 });
                 if let Some(d) = data {
                     Some(Box::from(d))
                 } else {
                     None
                 }
-            }
+            },
             SystemEvent::Deserialize(obj, data) => {
                 let o = self.objects[obj as usize].as_mut().unwrap();
-                o.deserialize(CommonContext {
-                    components: &mut self.component_manager,
-                    event_manager: &mut self.event_manager,
-                    this: obj,
-                    state: ctx,
-                }, data);
+                o.deserialize(
+                    CommonContext {
+                        components: &mut self.component_manager,
+                        event_manager: &mut self.event_manager,
+                        this: obj,
+                        state: ctx
+                    },
+                    data
+                );
                 None
-            }
-            SystemEvent::Spawn(obj) => {
-                Some(Box::new(self.spawn_object_internal(ctx, obj)))
-            }
+            },
+            SystemEvent::Spawn(obj) => Some(Box::new(self.spawn_object_internal(ctx, obj))),
             SystemEvent::Destroy(target) => {
                 self.delete_object(ctx, target);
                 None
@@ -123,7 +129,6 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
 
     pub fn update(&mut self, ctx: &mut TState)
     {
-
         while let Some((tracking, handle, sys)) = self.event_manager.poll_system_event() {
             let res = self.handle_system_event(ctx, sys);
             if tracking {
@@ -136,7 +141,7 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
                 components: &mut self.component_manager,
                 event_manager: &mut self.event_manager,
                 this: *obj,
-                state: ctx,
+                state: ctx
             });
         }
         while let Some(event) = self.event_manager.poll_event() {
@@ -160,13 +165,17 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
                 components: &mut self.component_manager,
                 event_manager: &mut self.event_manager,
                 this: target,
-                state: ctx,
+                state: ctx
             });
         }
         self.objects[target as usize] = None;
     }
 
-    fn spawn_object_internal(&mut self, ctx: &mut TState, mut obj: Box<dyn CoreObject<TState, TComponentManager>>) -> ObjectRef
+    fn spawn_object_internal(
+        &mut self,
+        ctx: &mut TState,
+        mut obj: Box<dyn CoreObject<TState, TComponentManager>>
+    ) -> ObjectRef
     {
         let empty_slot = {
             let mut id = 0 as usize;
@@ -184,7 +193,7 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
             components: &mut self.component_manager,
             event_manager: &mut self.event_manager,
             this: 0,
-            state: ctx,
+            state: ctx
         };
         if let Some(slot) = empty_slot {
             initpayload.this = slot as ObjectRef;

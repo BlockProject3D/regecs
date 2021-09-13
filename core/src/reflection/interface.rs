@@ -26,8 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::reflection::class::Class;
 use std::any::Any;
+
+use crate::reflection::class::Class;
 
 pub trait ClassConnector
 {

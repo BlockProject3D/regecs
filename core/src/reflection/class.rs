@@ -26,20 +26,21 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::reflection::property::Property;
 use std::any::Any;
+
+use crate::reflection::property::Property;
 
 #[derive(Clone)]
 pub struct Class
 {
     name: String,
     props: Vec<Property>,
-    instance_func: fn () -> Box<dyn Any>
+    instance_func: fn() -> Box<dyn Any>
 }
 
 impl Class
 {
-    pub fn new(name: String, props: Vec<Property>, instance_func: fn () -> Box<dyn Any>) -> Class
+    pub fn new(name: String, props: Vec<Property>, instance_func: fn() -> Box<dyn Any>) -> Class
     {
         return Class {
             name,
