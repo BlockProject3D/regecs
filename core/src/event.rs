@@ -30,62 +30,212 @@
 
 use std::{any::Any, boxed::Box};
 
-use crate::object::{ObjectRef, CoreObject};
+use crate::object::{ObjectRef, CoreObject, CommonContext};
+use std::collections::{HashMap, VecDeque};
 
-pub struct EventContext<'a, TState, TComponentManager>
+pub type Handle = usize;
+
+pub struct EventTracker<T, TState, TComponentManager>
 {
-    pub this: ObjectRef,
-    pub sender: Option<ObjectRef>,
-    pub state: &'a mut TState,
-    pub components: &'a mut TComponentManager
+    events: Vec<(Handle, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<Box<dyn Any>>)>)>
 }
 
-pub struct EventResult<TState, TComponentManager>
+impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
 {
-    to_send: Vec<(Option<ObjectRef>, Box<dyn Any>)>,
-    to_spawn: Vec<Box<dyn CoreObject<TState, TComponentManager>>>,
-    remove_flag: bool
-}
-
-impl<TState, TComponentManager> EventResult<TState, TComponentManager>
-{
-    pub fn new() -> EventResult<TState, TComponentManager>
+    pub fn new() -> EventTracker<T, TState, TComponentManager>
     {
-        return EventResult {
-            to_send: Vec::new(),
-            to_spawn: Vec::new(),
-            remove_flag: false
+        return EventTracker {
+            events: Vec::new()
         };
     }
 
-    pub fn spawn_object<TObject: CoreObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
+    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<TRes>)>(&mut self, handle: Handle, func: TFunc)
     {
-        self.to_spawn.push(Box::from(obj));
+        self.events.push((handle, Box::new(move |this, ctx, data| {
+            if let Some(obj) = data {
+                let o = *obj.downcast().unwrap();
+                func(this, ctx, o);
+            } else {
+                func(this, ctx, None);
+            }
+        })));
     }
 
-    pub fn remove(&mut self)
+    pub fn poll_batch(&mut self, event_manager: &mut EventManager<TState, TComponentManager>) -> EventTrackerBatch<T, TState, TComponentManager>
     {
-        self.remove_flag = true;
+        let mut batch = Vec::new();
+        let mut i = 0;
+        while i < self.events.len() {
+            let (flag, data) = event_manager.track_event(self.events[i].0);
+            if flag {
+                let (_, func) = self.events.remove(i);
+                batch.push((data, func));
+            } else {
+                i += 1;
+            }
+        }
+        return EventTrackerBatch {
+            events: batch
+        };
+    }
+}
+
+pub struct EventTrackerBatch<T, TState, TComponentManager>
+{
+    events: Vec<(Option<Box<dyn Any>>, Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>, Option<Box<dyn Any>>)>)>
+}
+
+impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManager>
+{
+    pub fn run(self, this: &mut T, ctx: &mut CommonContext<TState, TComponentManager, EventManager<TState, TComponentManager>>)
+    {
+        for (data, func) in self.events {
+            func(this, ctx, data);
+        }
+    }
+}
+
+pub struct Event
+{
+    pub sender: Option<ObjectRef>,
+    pub target: Option<ObjectRef>,
+    pub data: Box<dyn Any>,
+    pub tracking: bool,
+    pub handle: Handle,
+}
+
+pub struct EventBuilder
+{
+    ev: Event,
+}
+
+impl EventBuilder
+{
+    pub fn new<TEvent: Any>(event: TEvent) -> EventBuilder
+    {
+        return EventBuilder
+        {
+            ev: Event {
+                sender: None,
+                target: None,
+                data: Box::from(event),
+                tracking: false,
+                handle: 0,
+            }
+        };
     }
 
-    pub fn send<EventType: Any>(&mut self, target: ObjectRef, ev: EventType)
+    pub fn with_sender(mut self, this: ObjectRef) -> EventBuilder
     {
-        self.to_send.push((Some(target), Box::from(ev)));
+        self.ev.sender = Some(this);
+        return self;
     }
 
-    pub fn broadcast<EventType: Any>(&mut self, ev: EventType)
+    pub fn with_target(mut self, target: ObjectRef) -> EventBuilder
     {
-        self.to_send.push((None, Box::from(ev)));
+        self.ev.target = Some(target);
+        return self;
     }
 
-    pub fn consume(
-        self
-    ) -> (
-        bool,
-        Vec<(Option<ObjectRef>, Box<dyn Any>)>,
-        Vec<Box<dyn CoreObject<TState, TComponentManager>>>
-    )
+    pub fn with_tracking(mut self) -> EventBuilder
     {
-        return (self.remove_flag, self.to_send, self.to_spawn);
+        self.ev.tracking = true;
+        return self;
+    }
+
+    pub fn into(self) -> Event
+    {
+        return self.ev;
+    }
+}
+
+pub trait EventHandler<TState, TComponentManager>
+{
+    fn poll_event(&mut self) -> Option<Event>;
+    fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>;
+    fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>);
+}
+
+pub trait EventSender<TState, TComponentManager>
+{
+    fn send(&mut self, event: EventBuilder) -> Handle;
+    fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle;
+    fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>);
+}
+
+pub enum SystemEvent<TState, TComponentManager>
+{
+    EnableUpdate(ObjectRef, bool),
+    Serialize(ObjectRef),
+    Deserialize(ObjectRef, bpx::sd::Object),
+    Spawn(Box<dyn CoreObject<TState, TComponentManager>>),
+    Destroy(ObjectRef),
+}
+
+pub struct EventManager<TState, TComponentManager>
+{
+    events: VecDeque<Event>,
+    system_events: VecDeque<(bool, Handle, SystemEvent<TState, TComponentManager>)>,
+    cur_handle: Handle,
+    event_responses: HashMap<Handle, Option<Box<dyn Any>>>,
+}
+
+impl<TState, TComponentManager> EventManager<TState, TComponentManager>
+{
+    pub fn new() -> EventManager<TState, TComponentManager>
+    {
+        return EventManager {
+            events: VecDeque::new(),
+            system_events: VecDeque::new(),
+            cur_handle: 0,
+            event_responses: HashMap::new(),
+        };
+    }
+}
+
+impl<TState, TComponentManager> EventSender<TState, TComponentManager> for EventManager<TState, TComponentManager>
+{
+    fn send(&mut self, event: EventBuilder) -> Handle
+    {
+        let handle = self.cur_handle;
+        let mut e = event.into();
+        e.handle = handle;
+        self.cur_handle += 1;
+        self.events.push_back(e);
+        return handle;
+    }
+
+    fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle
+    {
+        let handle = self.cur_handle;
+        self.cur_handle += 1;
+        self.system_events.push_back((tracking, handle, event));
+        return handle;
+    }
+
+    fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>)
+    {
+        if let Some(data) = self.event_responses.remove(&handle) {
+            return (true, data);
+        }
+        return (false, None);
+    }
+}
+
+impl<TState, TComponentManager> EventHandler<TState, TComponentManager> for EventManager<TState, TComponentManager>
+{
+    fn poll_event(&mut self) -> Option<Event>
+    {
+        return self.events.pop_front();
+    }
+
+    fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>
+    {
+        return self.system_events.pop_front();
+    }
+
+    fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>)
+    {
+        self.event_responses.insert(handle, response);
     }
 }
