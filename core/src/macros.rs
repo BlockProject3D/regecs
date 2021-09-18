@@ -10,7 +10,7 @@ macro_rules! pool_type {
 
 #[macro_export]
 macro_rules! build_system_list {
-    ($name: ident ( $tstate: ty, $tcomponents: ty ) { $($system: ident),* }) => {
+    ($name: ident ( $tcontext: ty ) { $($system: ident),* }) => {
         use $crate::macros::paste;
         use $crate::macros::impls;
         use $crate::system::SystemProvider;
@@ -39,13 +39,13 @@ macro_rules! build_system_list {
                 }
             )*
 
-            impl SystemList<$tstate, $tcomponents> for $name
+            impl SystemList<$tcontext> for $name
             {
-                fn update(&mut self, ctx: SystemContext<$tstate, $tcomponents>)
+                fn update(&mut self, ctx: & $tcontext, state: & $tcontext::AppState)
                 {
                     $(
-                        if <$system as System<$tstate, $tcomponents>>::UPDATABLE {
-                            //self.[<sys_$system:snake>].update(ctx);
+                        if <$system as System<$tcontext>>::UPDATABLE {
+                            self.[<sys_$system:snake>].update(ctx);
                         }
                     )*
                 }

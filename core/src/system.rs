@@ -31,26 +31,33 @@
 use std::{any::Any, boxed::Box, vec::Vec};
 
 use crate::event::EventManager;
+use crate::component::ComponentManager;
+use std::cell::RefCell;
+use crate::object::ObjectTree;
 
-pub struct Context<'a, TState, TComponentManager>
+pub trait Context
 {
-    pub state: &'a mut TState,
-    pub components: &'a mut TComponentManager,
-    pub event_manager: &'a mut EventManager<TState, TComponentManager>
+    type AppState;
+    type ComponentManager: ComponentManager;
+    type Context: crate::object::Context;
+
+    fn components(&self) -> &RefCell<Self::ComponentManager>;
+    fn event_manager(&self) -> &RefCell<EventManager<Self::Context>>;
+    fn objects(&self) -> &ObjectTree;
 }
 
 /// System interface
-pub trait System<TState, TComponentManager> : Default
+pub trait System<TContext: Context> : Default
 {
     const UPDATABLE: bool = false;
 
-    fn update(&mut self, ctx: &mut Context<TState, TComponentManager>);
+    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
 }
 
 /// System list interface
-pub trait SystemList<TState, TComponentManager>
+pub trait SystemList<TContext: Context>
 {
-    fn update(&mut self, ctx: &mut Context<TState, TComponentManager>);
+    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
 }
 
 pub trait SystemProvider<TSystem>

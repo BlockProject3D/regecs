@@ -37,6 +37,7 @@ use crate::{
 use crate::object::{ObjectStorage, ObjectTree, Context};
 use crate::component::ComponentManager;
 use std::cell::RefCell;
+use crate::system::SystemList;
 
 pub struct Common<TContext: Context>
 {
@@ -45,16 +46,39 @@ pub struct Common<TContext: Context>
     tree: ObjectTree,
 }
 
-pub struct Scene1<TState, TComponentManager: ComponentManager, TSystemList>
+impl<TContext: Context> crate::system::Context for Common<TContext>
+{
+    type AppState = TContext::AppState;
+    type ComponentManager = TContext::ComponentManager;
+    type Context = TContext;
+
+    fn components(&self) -> &RefCell<Self::ComponentManager>
+    {
+        return &self.component_manager;
+    }
+
+    fn event_manager(&self) -> &RefCell<EventManager<Self::Context>>
+    {
+        return &self.event_manager;
+    }
+
+    fn objects(&self) -> &ObjectTree
+    {
+        return &self.tree;
+    }
+}
+
+pub struct Scene1<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>>
 {
     common: Common<Self>,
     systems: RefCell<TSystemList>
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemList> Context for Scene1<TState, TComponentManager, TSystemList>
+impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>> crate::object::Context for Scene1<TState, TComponentManager, TSystemList>
 {
     type AppState = TState;
     type ComponentManager = TComponentManager;
+    type SystemContext = Common<Self>;
     type SystemList = TSystemList;
 
     fn components(&self) -> &RefCell<Self::ComponentManager>
@@ -79,13 +103,13 @@ impl<TState, TComponentManager: ComponentManager, TSystemList> Context for Scene
 }
 
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<TState, TComponentManager: ComponentManager, TSystemList>
+pub struct Scene<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Scene1<TState, TComponentManager, TSystemList>>>>
 {
     scene1: Scene1<TState, TComponentManager, TSystemList>,
     objects: ObjectStorage<Scene1<TState, TComponentManager, TSystemList>>,
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TComponentManager, TSystemList>
+impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Scene1<TState, TComponentManager, TSystemList>>>> Scene<TState, TComponentManager, TSystemList>
 {
     pub fn new(component_manager: TComponentManager, systems: TSystemList) -> Scene<TState, TComponentManager, TSystemList>
     {
@@ -146,6 +170,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TCo
 
     pub fn update(&mut self, state: &TState)
     {
+        self.scene1.systems.get_mut().update(&self.scene1.common, state);
         while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.get_mut().poll_system_event() {
             let res = self.handle_system_event(state, ev);
             if tracking {

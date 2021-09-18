@@ -31,25 +31,19 @@ use std::any::Any;
 use crate::component::ComponentManager;
 use crate::object::ObjectTree;
 use std::cell::RefCell;
+use crate::system::SystemList;
 
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-/*pub struct Context<'a, TState, TComponentManager>
-{
-    pub components: &'a mut TComponentManager,
-    pub event_manager: &'a mut EventManager<TState, TComponentManager>,
-    pub tree: &'a ObjectTree,
-    pub state: &'a mut TState
-}*/
-
 pub trait Context : Sized
 {
     type AppState;
     type ComponentManager: ComponentManager;
-    type SystemList;
+    type SystemContext: crate::system::Context;
+    type SystemList: SystemList<Self::SystemContext>;
 
     fn components(&self) -> &RefCell<Self::ComponentManager>;
     fn systems(&self) -> &RefCell<Self::SystemList>;
