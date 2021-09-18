@@ -38,7 +38,7 @@ use crate::object::{Context, CoreObject, ObjectRef};
 
 pub type Handle = usize;
 
-pub struct EventTracker<T, TState, TComponentManager>
+/*pub struct EventTracker<T, TState, TComponentManager>
 {
     events: Vec<(
         Handle,
@@ -111,7 +111,7 @@ impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManage
             func(this, ctx, data); //TODO: Pass the "this" ObjectRef
         }
     }
-}
+}*/
 
 pub struct Event
 {
@@ -166,26 +166,26 @@ impl EventBuilder
     }
 }
 
-pub enum SystemEvent<TState, TComponentManager>
+pub enum SystemEvent<TContext: Context>
 {
     EnableUpdate(ObjectRef, bool),
     Serialize(ObjectRef),
     Deserialize(ObjectRef, bpx::sd::Object),
-    Spawn(Box<dyn CoreObject<TState, TComponentManager>>),
+    Spawn(Box<dyn CoreObject<TContext>>),
     Destroy(ObjectRef)
 }
 
-pub struct EventManager<TState, TComponentManager>
+pub struct EventManager<TContext: Context>
 {
     events: VecDeque<Event>,
-    system_events: VecDeque<(bool, Handle, SystemEvent<TState, TComponentManager>)>,
+    system_events: VecDeque<(bool, Handle, SystemEvent<TContext>)>,
     cur_handle: Handle,
     event_responses: HashMap<Handle, Option<Box<dyn Any>>>
 }
 
-impl<TState, TComponentManager> EventManager<TState, TComponentManager>
+impl<TContext: Context> EventManager<TContext>
 {
-    pub fn new() -> EventManager<TState, TComponentManager>
+    pub fn new() -> EventManager<TContext>
     {
         return EventManager {
             events: VecDeque::new(),
@@ -205,7 +205,7 @@ impl<TState, TComponentManager> EventManager<TState, TComponentManager>
         return handle;
     }
 
-    pub fn system(&mut self, event: SystemEvent<TState, TComponentManager>, tracking: bool) -> Handle
+    pub fn system(&mut self, event: SystemEvent<TContext>, tracking: bool) -> Handle
     {
         let handle = self.cur_handle;
         self.cur_handle += 1;
@@ -226,7 +226,7 @@ impl<TState, TComponentManager> EventManager<TState, TComponentManager>
         return self.events.pop_front();
     }
 
-    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TState, TComponentManager>)>
+    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TContext>)>
     {
         return self.system_events.pop_front();
     }

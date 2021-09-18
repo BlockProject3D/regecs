@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{CoreObject, ObjectRef};
+use crate::object::{CoreObject, ObjectRef, Context};
 use std::collections::{HashMap, HashSet};
 use std::borrow::Cow;
 use std::ops::{IndexMut, Index};
@@ -104,21 +104,21 @@ impl ObjectTree
     }
 }
 
-pub struct ObjectStorage<TState, TComponentManager>
+pub struct ObjectStorage<TContext: Context>
 {
-    objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
+    objects: Vec<Option<Box<dyn CoreObject<TContext>>>>,
 }
 
-impl<TState, TComponentManager> ObjectStorage<TState, TComponentManager>
+impl<TContext: Context> ObjectStorage<TContext>
 {
-    pub fn new() -> (ObjectStorage<TState, TComponentManager>, ObjectTree)
+    pub fn new() -> (ObjectStorage<TContext>, ObjectTree)
     {
         return (ObjectStorage {
             objects: Vec::new()
         }, ObjectTree::new());
     }
 
-    pub fn insert(&mut self, tree: &mut ObjectTree, obj: Box<dyn CoreObject<TState, TComponentManager>>) -> (ObjectRef, &mut Box<dyn CoreObject<TState, TComponentManager>>)
+    pub fn insert(&mut self, tree: &mut ObjectTree, obj: Box<dyn CoreObject<TContext>>) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
     {
         let empty_slot = {
             let mut id = 0 as usize;
@@ -163,8 +163,8 @@ impl<TState, TComponentManager> ObjectStorage<TState, TComponentManager>
     }
 }
 
-impl<TState, TComponentManager> Index<ObjectRef> for ObjectStorage<TState, TComponentManager> {
-    type Output = Box<dyn CoreObject<TState, TComponentManager>>;
+impl<TContext: Context> Index<ObjectRef> for ObjectStorage<TContext> {
+    type Output = Box<dyn CoreObject<TContext>>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output
     {
@@ -172,7 +172,7 @@ impl<TState, TComponentManager> Index<ObjectRef> for ObjectStorage<TState, TComp
     }
 }
 
-impl<TState, TComponentManager> IndexMut<ObjectRef> for ObjectStorage<TState, TComponentManager>
+impl<TContext: Context> IndexMut<ObjectRef> for ObjectStorage<TContext>
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
     {

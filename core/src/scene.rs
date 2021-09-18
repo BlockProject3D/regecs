@@ -34,10 +34,143 @@ use crate::{
     event::{Event, EventManager, SystemEvent},
     object::{CoreObject, ObjectRef}
 };
-use crate::object::{ObjectStorage, ObjectTree};
+use crate::object::{ObjectStorage, ObjectTree, Context};
+use crate::component::ComponentManager;
+use std::cell::RefCell;
+
+pub struct Common<TContext: Context>
+{
+    component_manager: RefCell<TContext::ComponentManager>,
+    event_manager: RefCell<EventManager<TContext>>,
+    tree: ObjectTree,
+}
+
+pub struct Scene1<TState, TComponentManager: ComponentManager, TSystemList>
+{
+    common: Common<Self>,
+    systems: RefCell<TSystemList>
+}
+
+impl<TState, TComponentManager: ComponentManager, TSystemList> Context for Scene1<TState, TComponentManager, TSystemList>
+{
+    type AppState = TState;
+    type ComponentManager = TComponentManager;
+    type SystemList = TSystemList;
+
+    fn components(&self) -> &RefCell<Self::ComponentManager>
+    {
+        return &self.common.component_manager;
+    }
+
+    fn systems(&self) -> &RefCell<Self::SystemList>
+    {
+        return &self.systems;
+    }
+
+    fn event_manager(&self) -> &RefCell<EventManager<Self>>
+    {
+        return &self.common.event_manager;
+    }
+
+    fn objects(&self) -> &ObjectTree
+    {
+        return &self.common.tree;
+    }
+}
 
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<TState, TComponentManager>
+pub struct Scene<TState, TComponentManager: ComponentManager, TSystemList>
+{
+    scene1: Scene1<TState, TComponentManager, TSystemList>,
+    objects: ObjectStorage<Scene1<TState, TComponentManager, TSystemList>>,
+}
+
+impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TComponentManager, TSystemList>
+{
+    pub fn new(component_manager: TComponentManager, systems: TSystemList) -> Scene<TState, TComponentManager, TSystemList>
+    {
+        let (objects, tree) = ObjectStorage::new();
+        return Scene {
+            scene1: Scene1 {
+                common: Common {
+                    component_manager: RefCell::new(component_manager),
+                    event_manager: RefCell::new(EventManager::new()),
+                    tree
+                },
+                systems: RefCell::new(systems)
+            },
+            objects
+        };
+    }
+
+    fn object_event_call(&mut self, state: &TState, obj_ref: ObjectRef, event: &Event)
+    {
+        let obj = &mut self.objects[obj_ref];
+        let res = obj.on_event(&self.scene1, state,&event.data, event.sender, obj_ref);
+        if event.tracking {
+            self.scene1.common.event_manager.borrow_mut().queue_response(event.handle, res);
+        }
+    }
+
+    fn handle_system_event(&mut self, state: &TState, ev: SystemEvent<Scene1<TState, TComponentManager, TSystemList>>) -> Option<Box<dyn Any>>
+    {
+            return match ev {
+                SystemEvent::EnableUpdate(obj, flag) => {
+                    self.objects.set_updatable(&mut self.scene1.common.tree, obj, flag);
+                    None
+                },
+                SystemEvent::Serialize(obj) => {
+                    let data = self.objects[obj].serialize(&self.scene1, state, obj);
+                    if let Some(d) = data {
+                        Some(Box::from(d))
+                    } else {
+                        None
+                    }
+                },
+                SystemEvent::Deserialize(obj, data) => {
+                    self.objects[obj].deserialize(&self.scene1, state, data, obj);
+                    None
+                },
+                SystemEvent::Spawn(obj) => {
+                    let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
+                    obj.on_init(&self.scene1, state, obj_ref);
+                    Some(Box::new(obj_ref))
+                },
+                SystemEvent::Destroy(target) => {
+                    self.objects[target].on_remove(&self.scene1, state, target);
+                    self.objects.destroy(&mut self.scene1.common.tree, target);
+                    None
+                }
+            };
+    }
+
+    pub fn update(&mut self, state: &TState)
+    {
+        while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.get_mut().poll_system_event() {
+            self.handle_system_event(state, ev); //Impossible RefCell prevents that
+        }
+        for obj in self.scene1.common.tree.get_updatable() {
+            self.objects[*obj].on_update(&self.scene1, state, *obj);
+        }
+        while let Some(event) = self.scene1.common.event_manager.get_mut().poll_event() {
+            if let Some(obj_ref) = event.target {
+                self.object_event_call(state, obj_ref, &event);
+            } else {
+                for i in self.scene1.common.tree.get_all() {
+                    let obj = &mut self.objects[*i];
+                    let res = obj.on_event(&self.scene1, state,&event.data, event.sender, *i);
+                    if event.tracking {
+                        self.scene1.common.event_manager.borrow_mut().queue_response(event.handle, res);
+                    }
+                    //self.object_event_call(state, *i, &event);
+                }
+            }
+        }
+    }
+}
+
+// Represents a scene, provides storage for systems and objects
+/*pub struct Scene<TState, TComponentManager>
 {
     component_manager: TComponentManager,
     //systems: Vec<Box<dyn System<TState, TComponentManager>>>,
@@ -78,41 +211,7 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
             tree: &self.tree,
             state
         };
-        //Use a single context when running objects to lower CPU time by only issuing one set of mov instructions
-        while let Some((tracking, handle, ev)) = ctx.event_manager.poll_system_event() {
-            let res: Option<Box<dyn Any>> = match ev {
-                SystemEvent::EnableUpdate(obj, flag) => {
-                    //self.objects.set_updatable(ctx.tree, obj, flag);
-                    None
-                },
-                SystemEvent::Serialize(obj) => {
-                    let data = self.objects[obj].serialize(&mut ctx, obj);
-                    if let Some(d) = data {
-                        Some(Box::from(d))
-                    } else {
-                        None
-                    }
-                },
-                SystemEvent::Deserialize(obj, data) => {
-                    self.objects[obj].deserialize(&mut ctx, data, obj);
-                    None
-                },
-                SystemEvent::Spawn(obj) => {
-                    //let (obj_ref, obj) = self.objects.insert(ctx.tree, obj);
-                    //obj.on_init(&mut ctx, obj_ref);
-                    //Some(Box::new(obj_ref))
-                    None
-                },
-                SystemEvent::Destroy(target) => {
-                    //self.objects[target].on_remove(&mut ctx, target);
-                    //self.objects.destroy(ctx.tree, target);
-                    None
-                }
-            };
-            if tracking {
-                ctx.event_manager.queue_response(handle, res);
-            }
-        } //Must be slowed down due to rust borrow checker
+ //Must be slowed down due to rust borrow checker
         for obj in self.tree.get_updatable() {
             self.objects[*obj].on_update(&mut ctx, *obj);
         }
@@ -142,4 +241,4 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
     {
         return self.component_manager;
     }
-}
+}*/

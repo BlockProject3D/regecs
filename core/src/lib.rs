@@ -32,5 +32,5 @@ pub mod event;
 pub mod object;
 pub mod reflection;
 pub mod scene;
-pub mod system;
+//pub mod system;
 pub mod macros;
