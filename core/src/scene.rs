@@ -108,7 +108,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TCo
         let obj = &mut self.objects[obj_ref];
         let res = obj.on_event(&self.scene1, state,&event.data, event.sender, obj_ref);
         if event.tracking {
-            self.scene1.common.event_manager.borrow_mut().queue_response(event.handle, res);
+            self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
         }
     }
 
@@ -147,7 +147,10 @@ impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TCo
     pub fn update(&mut self, state: &TState)
     {
         while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.get_mut().poll_system_event() {
-            self.handle_system_event(state, ev); //Impossible RefCell prevents that
+            let res = self.handle_system_event(state, ev);
+            if tracking {
+                self.scene1.common.event_manager.get_mut().queue_response(handle, res);
+            }
         }
         for obj in self.scene1.common.tree.get_updatable() {
             self.objects[*obj].on_update(&self.scene1, state, *obj);
@@ -157,15 +160,26 @@ impl<TState, TComponentManager: ComponentManager, TSystemList> Scene<TState, TCo
                 self.object_event_call(state, obj_ref, &event);
             } else {
                 for i in self.scene1.common.tree.get_all() {
+                    //TODO: Try to avoid code duplication
                     let obj = &mut self.objects[*i];
                     let res = obj.on_event(&self.scene1, state,&event.data, event.sender, *i);
                     if event.tracking {
-                        self.scene1.common.event_manager.borrow_mut().queue_response(event.handle, res);
+                        self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
                     }
                     //self.object_event_call(state, *i, &event);
                 }
             }
         }
+    }
+
+    pub fn spawn_object<TObject: CoreObject<Scene1<TState, TComponentManager, TSystemList>> + 'static>(&mut self, obj: TObject)
+    {
+        self.scene1.common.event_manager.get_mut().system(SystemEvent::Spawn(Box::from(obj)), false);
+    }
+
+    pub fn consume(self) -> TComponentManager
+    {
+        return self.scene1.common.component_manager.into_inner();
     }
 }
 
