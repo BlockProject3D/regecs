@@ -38,24 +38,26 @@ use crate::object::{Context, CoreObject, ObjectRef};
 
 pub type Handle = usize;
 
-/*pub struct EventTracker<T, TState, TComponentManager>
+pub struct EventTracker<T, TContext: Context>
 {
     events: Vec<(
         Handle,
-        Box<dyn Fn(&mut T, &mut Context<TState, TComponentManager>, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &TContext, &TContext::AppState, ObjectRef, Option<Box<dyn Any>>)>
     )>
 }
 
-impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
+impl<T, TContext: Context> EventTracker<T, TContext>
 {
-    pub fn new() -> EventTracker<T, TState, TComponentManager>
+    pub fn new() -> EventTracker<T, TContext>
     {
-        return EventTracker { events: Vec::new() };
+        return EventTracker {
+            events: Vec::new()
+        };
     }
 
     pub fn push<
         TRes: 'static,
-        TFunc: 'static + Fn(&mut T, &mut Context<TState, TComponentManager>, Option<TRes>)
+        TFunc: 'static + Fn(&mut T, &TContext, &TContext::AppState, ObjectRef, Option<TRes>)
     >(
         &mut self,
         handle: Handle,
@@ -64,12 +66,12 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
     {
         self.events.push((
             handle,
-            Box::new(move |this, ctx, data| {
+            Box::new(move |eself, ctx, state, this, data| {
                 if let Some(obj) = data {
                     let o = *obj.downcast().unwrap();
-                    func(this, ctx, o);
+                    func(eself, ctx, state, this, o);
                 } else {
-                    func(this, ctx, None);
+                    func(eself, ctx, state, this, None);
                 }
             })
         ));
@@ -77,13 +79,13 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
 
     pub fn poll_batch(
         &mut self,
-        event_manager: &mut EventManager<TState, TComponentManager>
-    ) -> EventTrackerBatch<T, TState, TComponentManager>
+        ctx: &TContext
+    ) -> EventTrackerBatch<T, TContext>
     {
         let mut batch = Vec::new();
         let mut i = 0;
         while i < self.events.len() {
-            let (flag, data) = event_manager.track_event(self.events[i].0);
+            let (flag, data) = ctx.event_manager().borrow_mut().track_event(self.events[i].0);
             if flag {
                 let (_, func) = self.events.remove(i);
                 batch.push((data, func));
@@ -95,23 +97,23 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
     }
 }
 
-pub struct EventTrackerBatch<T, TState, TComponentManager>
+pub struct EventTrackerBatch<T, TContext: Context>
 {
     events: Vec<(
         Option<Box<dyn Any>>,
-        Box<dyn Fn(&mut T, &mut Context<TState, TComponentManager>, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &TContext, &TContext::AppState, ObjectRef, Option<Box<dyn Any>>)>
     )>
 }
 
-impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManager>
+impl<T, TContext: Context> EventTrackerBatch<T, TContext>
 {
-    pub fn run(self, this: &mut T, ctx: &mut Context<TState, TComponentManager>)
+    pub fn run(self, eself: &mut T, ctx: &TContext, state: &TContext::AppState, this: ObjectRef)
     {
         for (data, func) in self.events {
-            func(this, ctx, data); //TODO: Pass the "this" ObjectRef
+            func(eself, ctx, state, this, data);
         }
     }
-}*/
+}
 
 pub struct Event
 {
