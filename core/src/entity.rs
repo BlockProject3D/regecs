@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    component::interface::{AttachmentProvider, Component, ComponentPool, ComponentProvider},
+    component::{AttachmentProvider, Component, ComponentPool, ComponentProvider},
     object::ObjectRef
 };
 

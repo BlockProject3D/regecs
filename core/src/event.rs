@@ -34,7 +34,7 @@ use std::{
     collections::{HashMap, VecDeque}
 };
 
-use crate::object::{CommonContext, CoreObject, ObjectRef};
+use crate::object::{Context, CoreObject, ObjectRef};
 
 pub type Handle = usize;
 
@@ -42,7 +42,7 @@ pub struct EventTracker<T, TState, TComponentManager>
 {
     events: Vec<(
         Handle,
-        Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &mut Context<TState, TComponentManager>, Option<Box<dyn Any>>)>
     )>
 }
 
@@ -55,7 +55,7 @@ impl<T, TState, TComponentManager> EventTracker<T, TState, TComponentManager>
 
     pub fn push<
         TRes: 'static,
-        TFunc: 'static + Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<TRes>)
+        TFunc: 'static + Fn(&mut T, &mut Context<TState, TComponentManager>, Option<TRes>)
     >(
         &mut self,
         handle: Handle,
@@ -99,16 +99,16 @@ pub struct EventTrackerBatch<T, TState, TComponentManager>
 {
     events: Vec<(
         Option<Box<dyn Any>>,
-        Box<dyn Fn(&mut T, &mut CommonContext<TState, TComponentManager>, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &mut Context<TState, TComponentManager>, Option<Box<dyn Any>>)>
     )>
 }
 
 impl<T, TState, TComponentManager> EventTrackerBatch<T, TState, TComponentManager>
 {
-    pub fn run(self, this: &mut T, ctx: &mut CommonContext<TState, TComponentManager>)
+    pub fn run(self, this: &mut T, ctx: &mut Context<TState, TComponentManager>)
     {
         for (data, func) in self.events {
-            func(this, ctx, data);
+            func(this, ctx, data); //TODO: Pass the "this" ObjectRef
         }
     }
 }

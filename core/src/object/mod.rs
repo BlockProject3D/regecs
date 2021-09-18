@@ -26,68 +26,15 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS component layer
+//! REGECS object and entity layer
 
 mod interface;
-pub use interface::Component;
-pub use interface::ComponentPool;
-pub use interface::ComponentManager;
-pub use interface::ComponentProvider;
-pub use interface::IterableComponentPool;
-pub use interface::AttachmentProvider;
+mod storage;
 
-mod attachments;
-mod basic_pool;
-mod grouped_pool;
+pub use interface::ObjectRef;
+pub use interface::Context;
+pub use interface::CoreObject;
+pub use interface::Object;
 
-pub mod pool
-{
-    pub use super::basic_pool::BasicComponentPool;
-    pub use super::grouped_pool::GroupComponentPool;
-}
-
-pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    comp: TComponent
-) -> usize
-{
-    return mgr.pool_mut().add(comp);
-}
-
-pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager,
-    id: usize
-) -> &TComponent
-{
-    return &mgr.pool()[id];
-}
-
-pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-) -> &mut TComponent
-{
-    return &mut mgr.pool_mut()[id];
-}
-
-pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-)
-{
-    mgr.pool_mut().remove(id);
-}
-
-pub fn get_component_pool_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager
-) -> &mut TComponent::Pool
-{
-    return mgr.pool_mut();
-}
-
-pub fn get_component_pool<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager
-) -> &TComponent::Pool
-{
-    return mgr.pool();
-}
+pub use storage::ObjectTree;
+pub use storage::ObjectStorage;

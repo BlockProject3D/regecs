@@ -36,8 +36,7 @@ use regecs::{
     },
     entity::{ComponentTypeProvider, Entity, EntityPart},
     pool_type,
-    scene::Scene,
-    system::{EventList, System}
+    scene::Scene
 };
 use regecs_codegen::ComponentManager;
 
@@ -45,17 +44,19 @@ use crate::components::ComplexComponent;
 
 mod components
 {
+    use std::any::Any;
+
     use regecs::{
         component::{
             interface::{Component, ComponentProvider, IterableComponentPool},
             BasicComponentPool,
             GroupComponentPool
         },
-        system::{EventList, System}
+        reflection::{class::Class, interface::ClassConnector}
     };
     use regecs_codegen::NonSerializableComponent;
+    use regecs::system::{System, SystemContext};
 
-    #[derive(NonSerializableComponent)]
     pub struct Test
     {
         pub value: i32
@@ -66,7 +67,21 @@ mod components
         type Pool = BasicComponentPool<Test>;
     }
 
-    #[derive(NonSerializableComponent)]
+    impl ClassConnector for Test
+    {
+        fn class() -> Class
+        {
+            /*static CLASS_STORAGE: &'static Class = &Class::new(String::from("Test"), Vec::new(), Test::new_instance);
+            return &CLASS_STORAGE;*/
+            return Class::new(String::from("Test"), Vec::new(), Test::new_instance);
+        }
+
+        fn new_instance() -> Box<dyn Any>
+        {
+            todo!()
+        }
+    }
+
     pub struct Test2
     {
         pub value2: i32
@@ -77,7 +92,6 @@ mod components
         type Pool = BasicComponentPool<Test2>;
     }
 
-    #[derive(NonSerializableComponent)]
     pub struct ComplexComponent
     {
         last_order: u32,
@@ -107,9 +121,9 @@ mod components
         events: Vec<(usize, u32)>
     }
 
-    impl ComplexSystem
+    impl Default for ComplexSystem
     {
-        pub fn new() -> ComplexSystem
+        fn default() -> ComplexSystem
         {
             return ComplexSystem {
                 events: Vec::with_capacity(5)
@@ -119,13 +133,14 @@ mod components
 
     impl<TComponentManager: ComponentProvider<ComplexComponent>> System<i32, TComponentManager> for ComplexSystem
     {
-        fn update(&mut self, _: &mut i32, components: &mut TComponentManager) -> Option<EventList>
-        {
+        const UPDATABLE: bool = true;
+
+        fn update(&mut self, ctx: SystemContext<i32, TComponentManager>) {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
-                components.pool_mut().update_group(component, new_order);
+                ctx.components.pool_mut().update_group(component, new_order);
             }
-            for (i, v) in components.pool_mut().iter_mut() {
+            for (i, v) in ctx.components.pool_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((i, v.order));
@@ -133,24 +148,38 @@ mod components
                 }
                 println!("{}", i);
             }
-            return None;
         }
     }
 }
 
 struct MySystem {}
 
-impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>>
-    System<i32, TComponentManager> for MySystem
+impl Default for MySystem
 {
-    fn update(&mut self, ctx: &mut i32, components: &mut TComponentManager) -> Option<EventList>
+    fn default() -> MySystem
     {
-        get_component_mut::<_, components::Test>(components, 0).value = 12;
-        get_component_mut::<_, components::Test2>(components, 0).value2 = 42;
-        *ctx = 1;
-        return None;
+        return MySystem {}
     }
 }
+
+impl<TComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>> System<i32, TComponentManager> for MySystem
+{
+    const UPDATABLE: bool = true;
+
+    fn update(&mut self, ctx: SystemContext<i32, TComponentManager>)
+    {
+        get_component_mut::<_, components::Test>(ctx.components, 0).value = 12;
+        get_component_mut::<_, components::Test2>(ctx.components, 0).value2 = 42;
+        *ctx.state = 1;
+    }
+}
+
+use regecs::build_system_list;
+
+use components::ComplexSystem;
+use regecs::system::{System, SystemContext};
+
+build_system_list!(TestSystemList (i32, MyComponentManager) {MySystem, ComplexSystem});
 
 #[derive(ComponentManager)]
 struct MyComponentManager
@@ -174,10 +203,10 @@ fn main()
     add_component(&mut mgr, ComplexComponent::new(2, 4));
     add_component(&mut mgr, ComplexComponent::new(1, 2));
     let mut sc: Scene<i32, _> = Scene::new(mgr);
-    sc.add_system(MySystem {});
+    //sc.add_system(MySystem {});
     sc.update(&mut ctx);
     assert_eq!(ctx, 1);
-    sc.add_system(components::ComplexSystem::new());
+    //sc.add_system(components::ComplexSystem::new());
     ctx = 0;
     sc.update(&mut ctx);
     sc.update(&mut ctx);

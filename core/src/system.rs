@@ -30,38 +30,41 @@
 
 use std::{any::Any, boxed::Box, vec::Vec};
 
-use crate::object::ObjectRef;
+use crate::event::EventManager;
+
+pub struct Context<'a, TState, TComponentManager>
+{
+    pub state: &'a mut TState,
+    pub components: &'a mut TComponentManager,
+    pub event_manager: &'a mut EventManager<TState, TComponentManager>
+}
 
 /// System interface
-pub trait System<TState, TComponentManager>
+pub trait System<TState, TComponentManager> : Default
 {
-    fn update(&mut self, ctx: &mut TState, components: &mut TComponentManager) -> Option<EventList>;
+    const UPDATABLE: bool = false;
+
+    fn update(&mut self, ctx: &mut Context<TState, TComponentManager>);
 }
 
-pub struct EventList
+/// System list interface
+pub trait SystemList<TState, TComponentManager>
 {
-    to_send: Vec<(ObjectRef, Box<dyn Any>)>
+    fn update(&mut self, ctx: &mut Context<TState, TComponentManager>);
 }
 
-impl EventList
+pub trait SystemProvider<TSystem>
 {
-    pub fn new() -> EventList
-    {
-        return EventList { to_send: Vec::new() };
-    }
+    fn system(&self) -> &TSystem;
+    fn system_mut(&mut self) -> &mut TSystem;
+}
 
-    pub fn send<EventType: Any>(&mut self, target: ObjectRef, ev: EventType)
-    {
-        self.to_send.push((target, Box::from(ev)));
-    }
+pub fn get_system<TSystemList: SystemProvider<TSystem>, TSystem>(systems: &TSystemList) -> &TSystem
+{
+    return systems.system();
+}
 
-    pub fn send_raw(&mut self, target: ObjectRef, raw: Box<dyn Any>)
-    {
-        self.to_send.push((target, raw));
-    }
-
-    pub fn consume(self) -> Vec<(ObjectRef, Box<dyn Any>)>
-    {
-        return self.to_send;
-    }
+pub fn get_system_mut<TSystemList: SystemProvider<TSystem>, TSystem>(systems: &mut TSystemList) -> &mut TSystem
+{
+    return systems.system_mut();
 }

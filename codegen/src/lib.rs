@@ -42,6 +42,12 @@ fn workarround_unprintable_path(path: &syn::Path) -> String
     return s;
 }
 
+#[proc_macro_derive(ClassConnector, attributes(property))]
+pub fn class_connector(input: TokenStream) -> TokenStream
+{
+    todo!();
+}
+
 #[proc_macro_derive(SerializableComponent)]
 pub fn serializable_component(input: TokenStream) -> TokenStream
 {

@@ -34,8 +34,8 @@ use std::{
 
 use crate::{
     component::{
-        interface::{AttachmentProvider, Component, ComponentPool, IterableComponentPool},
-        BasicComponentPool
+        AttachmentProvider, Component, ComponentPool, IterableComponentPool,
+        pool::BasicComponentPool
     },
     object::ObjectRef
 };

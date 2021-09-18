@@ -34,7 +34,7 @@ use std::{
 use crate::{
     component::{
         attachments::AttachmentsManager,
-        interface::{AttachmentProvider, Component, ComponentPool, IterableComponentPool}
+        AttachmentProvider, Component, ComponentPool, IterableComponentPool
     },
     object::ObjectRef
 };

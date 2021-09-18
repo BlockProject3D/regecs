@@ -1,0 +1,181 @@
+// Copyright (c) 2021, BlockProject 3D
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//     * Redistributions of source code must retain the above copyright notice,
+//       this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright notice,
+//       this list of conditions and the following disclaimer in the documentation
+//       and/or other materials provided with the distribution.
+//     * Neither the name of BlockProject 3D nor the names of its contributors
+//       may be used to endorse or promote products derived from this software
+//       without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+use crate::object::{CoreObject, ObjectRef};
+use std::collections::{HashMap, HashSet};
+use std::borrow::Cow;
+use std::ops::{IndexMut, Index};
+
+pub struct ObjectTree
+{
+    updatable: HashSet<ObjectRef>,
+    by_class: HashMap<String, Vec<ObjectRef>>,
+    by_id: HashSet<ObjectRef>,
+    count: usize
+}
+
+impl ObjectTree
+{
+    pub fn is_updatable(&self, obj: ObjectRef) -> bool
+    {
+        return self.updatable.contains(&obj);
+    }
+
+    pub fn exists(&self, obj: ObjectRef) -> bool
+    {
+        return self.by_id.contains(&obj);
+    }
+
+    pub fn get_count(&self) -> usize
+    {
+        return self.count;
+    }
+
+    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef>
+    {
+        return self.by_id.iter();
+    }
+
+    pub fn get_updatable(&self) -> impl Iterator<Item = &ObjectRef>
+    {
+        return self.updatable.iter();
+    }
+
+    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]>
+    {
+        if let Some(v) = self.by_class.get(class)
+        {
+            return Cow::from(v);
+        }
+        return Cow::from(Vec::new());
+    }
+
+    fn insert(&mut self, obj: ObjectRef, class: &str)
+    {
+        self.by_id.insert(obj);
+        let var = self.by_class.entry(String::from(class)).or_insert(Vec::new());
+        var.push(obj);
+        self.count += 1;
+    }
+
+    fn remove(&mut self, obj: ObjectRef, class: &str)
+    {
+        self.by_id.remove(&obj);
+        self.updatable.remove(&obj);
+        if let Some(v) = self.by_class.get_mut(class) {
+            v.retain(|s| *s != obj);
+        }
+        self.count -= 1;
+    }
+
+    fn new() -> ObjectTree
+    {
+        return ObjectTree {
+            updatable: HashSet::new(),
+            by_class: HashMap::new(),
+            by_id: HashSet::new(),
+            count: 0
+        };
+    }
+}
+
+pub struct ObjectStorage<TState, TComponentManager>
+{
+    objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
+}
+
+impl<TState, TComponentManager> ObjectStorage<TState, TComponentManager>
+{
+    pub fn new() -> (ObjectStorage<TState, TComponentManager>, ObjectTree)
+    {
+        return (ObjectStorage {
+            objects: Vec::new()
+        }, ObjectTree::new());
+    }
+
+    pub fn insert(&mut self, tree: &mut ObjectTree, obj: Box<dyn CoreObject<TState, TComponentManager>>) -> (ObjectRef, &mut Box<dyn CoreObject<TState, TComponentManager>>)
+    {
+        let empty_slot = {
+            let mut id = 0 as usize;
+            while id < self.objects.len() && self.objects[id].is_some() {
+                id += 1;
+            }
+            if id == self.objects.len() {
+                None
+            } else {
+                Some(id)
+            }
+        };
+
+        let obj_ref;
+        if let Some(slot) = empty_slot {
+            self.objects[slot] = Some(obj);
+            obj_ref = slot as ObjectRef;
+        } else {
+            let id = self.objects.len() as ObjectRef;
+            self.objects.push(Some(obj));
+            obj_ref = id;
+        }
+        let o = self.objects[obj_ref as usize].as_ref().unwrap();
+        tree.insert(obj_ref, o.class());
+        return (obj_ref, &mut self[obj_ref]);
+    }
+
+    pub fn destroy(&mut self, tree: &mut ObjectTree, obj: ObjectRef)
+    {
+        let o = self.objects[obj as usize].as_ref().unwrap();
+        tree.remove(obj, o.class());
+        self.objects[obj as usize] = None;
+    }
+
+    pub fn set_updatable(&mut self, tree: &mut ObjectTree, obj: ObjectRef, updatable: bool)
+    {
+        if updatable {
+            tree.updatable.insert(obj);
+        } else {
+            tree.updatable.remove(&obj);
+        }
+    }
+}
+
+impl<TState, TComponentManager> Index<ObjectRef> for ObjectStorage<TState, TComponentManager> {
+    type Output = Box<dyn CoreObject<TState, TComponentManager>>;
+
+    fn index(&self, index: ObjectRef) -> &Self::Output
+    {
+        return self.objects[index as usize].as_ref().unwrap();
+    }
+}
+
+impl<TState, TComponentManager> IndexMut<ObjectRef> for ObjectStorage<TState, TComponentManager>
+{
+    fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
+    {
+        return self.objects[index as usize].as_mut().unwrap();
+    }
+}

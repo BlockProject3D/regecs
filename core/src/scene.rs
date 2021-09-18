@@ -32,17 +32,19 @@ use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
     event::{Event, EventManager, SystemEvent},
-    object::{CommonContext, CoreObject, EventContext, ObjectRef},
-    system::System
+    object::{CoreObject, ObjectRef}
 };
+use crate::object::{ObjectStorage, ObjectTree};
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<TState, TComponentManager>
 {
     component_manager: TComponentManager,
-    systems: Vec<Box<dyn System<TState, TComponentManager>>>,
-    objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
-    updatables: HashSet<ObjectRef>,
+    //systems: Vec<Box<dyn System<TState, TComponentManager>>>,
+    objects: ObjectStorage<TState, TComponentManager>,
+    tree: ObjectTree,
+    //objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
+    //updatables: HashSet<ObjectRef>,
     event_manager: EventManager<TState, TComponentManager>
 }
 
@@ -50,162 +52,78 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
 {
     pub fn new(component_manager: TComponentManager) -> Scene<TState, TComponentManager>
     {
+        let (objects, tree) = ObjectStorage::new();
         return Scene {
             component_manager,
-            systems: Vec::new(),
-            objects: Vec::new(),
-            updatables: HashSet::new(),
+            //systems: Vec::new(),
+            objects,
+            tree,
             event_manager: EventManager::new()
         };
     }
 
-    fn object_event_call(&mut self, ctx: &mut TState, obj_ref: ObjectRef, event: &Event)
+    fn object_event_call(ctx: &mut crate::object::Context<TState, TComponentManager>, obj: &mut Box<dyn CoreObject<TState, TComponentManager>>, obj_ref: ObjectRef, event: &Event)
     {
-        let obj = self.objects[obj_ref as usize].as_mut().unwrap();
-        let res = obj.on_event(
-            EventContext {
-                components: &mut self.component_manager,
-                event_manager: &mut self.event_manager,
-                this: obj_ref,
-                sender: event.sender,
-                state: ctx
-            },
-            &event.data
-        );
+        let res = obj.on_event(ctx, &event.data, event.sender, obj_ref);
         if event.tracking {
-            self.event_manager.queue_response(event.handle, res);
+            ctx.event_manager.queue_response(event.handle, res);
         }
     }
 
-    fn handle_system_event(
-        &mut self,
-        ctx: &mut TState,
-        ev: SystemEvent<TState, TComponentManager>
-    ) -> Option<Box<dyn Any>>
+    pub fn update(&mut self, state: &mut TState)
     {
-        return match ev {
-            SystemEvent::EnableUpdate(obj, flag) => {
-                if flag {
-                    self.updatables.insert(obj);
-                } else {
-                    self.updatables.remove(&obj);
-                }
-                None
-            },
-            SystemEvent::Serialize(obj) => {
-                let o = self.objects[obj as usize].as_mut().unwrap();
-                let data = o.serialize(CommonContext {
-                    components: &mut self.component_manager,
-                    event_manager: &mut self.event_manager,
-                    this: obj,
-                    state: ctx
-                });
-                if let Some(d) = data {
-                    Some(Box::from(d))
-                } else {
-                    None
-                }
-            },
-            SystemEvent::Deserialize(obj, data) => {
-                let o = self.objects[obj as usize].as_mut().unwrap();
-                o.deserialize(
-                    CommonContext {
-                        components: &mut self.component_manager,
-                        event_manager: &mut self.event_manager,
-                        this: obj,
-                        state: ctx
-                    },
-                    data
-                );
-                None
-            },
-            SystemEvent::Spawn(obj) => Some(Box::new(self.spawn_object_internal(ctx, obj))),
-            SystemEvent::Destroy(target) => {
-                self.delete_object(ctx, target);
-                None
-            }
-        };
-    }
-
-    pub fn update(&mut self, ctx: &mut TState)
-    {
-        while let Some((tracking, handle, sys)) = self.event_manager.poll_system_event() {
-            let res = self.handle_system_event(ctx, sys);
-            if tracking {
-                self.event_manager.queue_response(handle, res);
-            }
-        }
-        for obj in &self.updatables {
-            let o = self.objects[*obj as usize].as_mut().unwrap();
-            o.on_update(CommonContext {
-                components: &mut self.component_manager,
-                event_manager: &mut self.event_manager,
-                this: *obj,
-                state: ctx
-            });
-        }
-        while let Some(event) = self.event_manager.poll_event() {
-            if let Some(obj) = event.target {
-                self.object_event_call(ctx, obj, &event);
-            } else {
-                for i in 0..self.objects.len() {
-                    if self.objects[i].is_some() {
-                        self.object_event_call(ctx, i as ObjectRef, &event);
-                    }
-                }
-            }
-        }
-    }
-
-    fn delete_object(&mut self, ctx: &mut TState, target: ObjectRef)
-    {
-        {
-            let obj = self.objects[target as usize].as_mut().unwrap();
-            obj.on_remove(CommonContext {
-                components: &mut self.component_manager,
-                event_manager: &mut self.event_manager,
-                this: target,
-                state: ctx
-            });
-        }
-        self.objects[target as usize] = None;
-    }
-
-    fn spawn_object_internal(
-        &mut self,
-        ctx: &mut TState,
-        mut obj: Box<dyn CoreObject<TState, TComponentManager>>
-    ) -> ObjectRef
-    {
-        let empty_slot = {
-            let mut id = 0 as usize;
-            while id < self.objects.len() && self.objects[id].is_some() {
-                id += 1;
-            }
-            if id == self.objects.len() {
-                None
-            } else {
-                Some(id)
-            }
-        };
-
-        let mut initpayload = CommonContext {
+        let mut ctx = crate::object::Context {
             components: &mut self.component_manager,
             event_manager: &mut self.event_manager,
-            this: 0,
-            state: ctx
+            tree: &self.tree,
+            state
         };
-        if let Some(slot) = empty_slot {
-            initpayload.this = slot as ObjectRef;
-            obj.on_init(initpayload);
-            self.objects[slot] = Some(obj);
-            return slot as ObjectRef;
-        } else {
-            let id = self.objects.len() as ObjectRef;
-            initpayload.this = id;
-            obj.on_init(initpayload);
-            self.objects.push(Some(obj));
-            return id;
+        //Use a single context when running objects to lower CPU time by only issuing one set of mov instructions
+        while let Some((tracking, handle, ev)) = ctx.event_manager.poll_system_event() {
+            let res: Option<Box<dyn Any>> = match ev {
+                SystemEvent::EnableUpdate(obj, flag) => {
+                    //self.objects.set_updatable(ctx.tree, obj, flag);
+                    None
+                },
+                SystemEvent::Serialize(obj) => {
+                    let data = self.objects[obj].serialize(&mut ctx, obj);
+                    if let Some(d) = data {
+                        Some(Box::from(d))
+                    } else {
+                        None
+                    }
+                },
+                SystemEvent::Deserialize(obj, data) => {
+                    self.objects[obj].deserialize(&mut ctx, data, obj);
+                    None
+                },
+                SystemEvent::Spawn(obj) => {
+                    //let (obj_ref, obj) = self.objects.insert(ctx.tree, obj);
+                    //obj.on_init(&mut ctx, obj_ref);
+                    //Some(Box::new(obj_ref))
+                    None
+                },
+                SystemEvent::Destroy(target) => {
+                    //self.objects[target].on_remove(&mut ctx, target);
+                    //self.objects.destroy(ctx.tree, target);
+                    None
+                }
+            };
+            if tracking {
+                ctx.event_manager.queue_response(handle, res);
+            }
+        } //Must be slowed down due to rust borrow checker
+        for obj in self.tree.get_updatable() {
+            self.objects[*obj].on_update(&mut ctx, *obj);
+        }
+        while let Some(event) = ctx.event_manager.poll_event() {
+            if let Some(obj_ref) = event.target {
+                Self::object_event_call(&mut ctx, &mut self.objects[obj_ref], obj_ref, &event);
+            } else {
+                for i in self.tree.get_all() {
+                    Self::object_event_call(&mut ctx, &mut self.objects[*i], *i, &event);
+                }
+            }
         }
     }
 
@@ -214,11 +132,11 @@ impl<TState, TComponentManager> Scene<TState, TComponentManager>
         self.event_manager.system(SystemEvent::Spawn(Box::from(obj)), false);
     }
 
-    pub fn add_system<TSystem: 'static + System<TState, TComponentManager>>(&mut self, system: TSystem)
+    /*pub fn add_system<TSystem: 'static + System<TState, TComponentManager>>(&mut self, system: TSystem)
     {
         let b = Box::new(system);
         self.systems.push(b);
-    }
+    }*/
 
     pub fn consume(self) -> TComponentManager
     {
