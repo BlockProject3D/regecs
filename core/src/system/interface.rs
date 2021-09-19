@@ -26,8 +26,6 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS system layer
-
 use std::{any::Any, boxed::Box, vec::Vec};
 
 use crate::event::EventManager;
@@ -64,14 +62,4 @@ pub trait SystemProvider<TSystem>
 {
     fn system(&self) -> &TSystem;
     fn system_mut(&mut self) -> &mut TSystem;
-}
-
-pub fn get_system<TSystemList: SystemProvider<TSystem>, TSystem>(systems: &TSystemList) -> &TSystem
-{
-    return systems.system();
-}
-
-pub fn get_system_mut<TSystemList: SystemProvider<TSystem>, TSystem>(systems: &mut TSystemList) -> &mut TSystem
-{
-    return systems.system_mut();
 }
