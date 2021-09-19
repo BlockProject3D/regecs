@@ -9,4 +9,4 @@ publish = false
 
 [dependencies]
 regecs = { path = "../core" }
-regecs-codegen = { path = "../codegen" }
+#regecs-codegen = { path = "../codegen" }
