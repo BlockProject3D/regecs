@@ -49,7 +49,7 @@ macro_rules! build_component_manager {
 
             impl regecs::component::ComponentManager for [<$name ComponentManager>]
             {
-                fn clear_components(&mut self, entity: ObjectRef)
+                fn clear_components(&mut self, entity: regecs::object::ObjectRef)
                 {
                     use regecs::component::AttachmentProvider;
                     macro_rules! attachment_call {
@@ -112,5 +112,13 @@ macro_rules! build_system_list {
                 }
             }
         }
+    };
+}
+
+#[macro_export]
+macro_rules! object_not_serializable {
+    ($tcontext: ident) => {
+        fn serialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, this: regecs::object::ObjectRef) -> Option<bpx::sd::Object>;
+        fn deserialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, obj: bpx::sd::Object, this: regecs::object::ObjectRef);
     };
 }
