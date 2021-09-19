@@ -47,7 +47,7 @@ pub trait Context
 }
 
 /// System interface
-pub trait System<TContext: Context> : Default
+pub trait System<TContext: Context>
 {
     const UPDATABLE: bool = false;
 
