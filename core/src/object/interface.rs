@@ -51,8 +51,14 @@ pub trait Context : Sized
     fn objects(&self) -> &ObjectTree;
 }
 
+pub trait Serializable<TContext: Context>
+{
+    fn serialize(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef) -> Option<bpx::sd::Object>;
+    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object, this: ObjectRef);
+}
+
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait CoreObject<TContext: Context>
+pub trait CoreObject<TContext: Context> : Serializable<TContext>
 {
     fn on_event(
         &mut self,
@@ -65,8 +71,6 @@ pub trait CoreObject<TContext: Context>
     fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
     fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
     fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn serialize(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object, this: ObjectRef);
     fn class(&self) -> &str;
 }
 
@@ -86,14 +90,12 @@ pub trait Object<TContext: Context>
     fn init(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
     fn remove(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
     fn update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn serialize(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object, this: ObjectRef);
 }
 
 impl<
     TContext: Context,
     EventType: Any,
-    O: Object<TContext, EventType=EventType>
+    O: Object<TContext, EventType=EventType> + Serializable<TContext>
 > CoreObject<TContext> for O
 {
     fn on_event(
@@ -125,16 +127,6 @@ impl<
     fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef)
     {
         self.update(ctx, state, this);
-    }
-
-    fn serialize(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef) -> Option<bpx::sd::Object>
-    {
-        return self.serialize(ctx, state, this);
-    }
-
-    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object, this: ObjectRef)
-    {
-        self.deserialize(ctx, state, obj, this);
     }
 
     fn class(&self) -> &str

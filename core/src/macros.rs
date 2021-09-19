@@ -117,8 +117,17 @@ macro_rules! build_system_list {
 
 #[macro_export]
 macro_rules! object_not_serializable {
-    ($tcontext: ident) => {
-        fn serialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, this: regecs::object::ObjectRef) -> Option<bpx::sd::Object>;
-        fn deserialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, obj: bpx::sd::Object, this: regecs::object::ObjectRef);
+    ($tcontext: ty, $object: ty) => {
+        impl Serializable<$tcontext> for $object
+        {
+            fn serialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, _: regecs::object::ObjectRef) -> Option<bpx::sd::Object>
+            {
+                return None;
+            }
+
+            fn deserialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, _: bpx::sd::Object, _: regecs::object::ObjectRef);
+            {
+            }
+        }
     };
 }
