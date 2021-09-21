@@ -34,7 +34,7 @@ use crate::{
     event::{Event, EventManager, SystemEvent},
     object::{CoreObject, ObjectRef}
 };
-use crate::object::{ObjectStorage, ObjectTree, Context};
+use crate::object::{ObjectStorage, ObjectTree, Context, ObjectFactory};
 use crate::component::ComponentManager;
 use std::cell::RefCell;
 use crate::system::SystemList;
@@ -130,7 +130,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
     fn object_event_call(&mut self, state: &TState, obj_ref: ObjectRef, event: &Event)
     {
         let obj = &mut self.objects[obj_ref];
-        let res = obj.on_event(&self.scene1, state,&event.data, event.sender, obj_ref);
+        let res = obj.on_event(&self.scene1, state,&event.data, event.sender);
         if event.tracking {
             self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
         }
@@ -144,7 +144,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
                     None
                 },
                 SystemEvent::Serialize(obj) => {
-                    let data = self.objects[obj].serialize(&self.scene1, state, obj);
+                    let data = self.objects[obj].serialize(&self.scene1, state);
                     if let Some(d) = data {
                         Some(Box::from(d))
                     } else {
@@ -152,16 +152,16 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
                     }
                 },
                 SystemEvent::Deserialize(obj, data) => {
-                    self.objects[obj].deserialize(&self.scene1, state, data, obj);
+                    self.objects[obj].deserialize(&self.scene1, state, data);
                     None
                 },
                 SystemEvent::Spawn(obj) => {
                     let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
-                    obj.on_init(&self.scene1, state, obj_ref);
+                    obj.on_init(&self.scene1, state);
                     Some(Box::new(obj_ref))
                 },
                 SystemEvent::Destroy(target) => {
-                    self.objects[target].on_remove(&self.scene1, state, target);
+                    self.objects[target].on_remove(&self.scene1, state);
                     self.objects.destroy(&mut self.scene1.common.tree, target);
                     None
                 }
@@ -178,7 +178,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
             }
         }
         for obj in self.scene1.common.tree.get_updatable() {
-            self.objects[*obj].on_update(&self.scene1, state, *obj);
+            self.objects[*obj].on_update(&self.scene1, state);
         }
         while let Some(event) = self.scene1.common.event_manager.get_mut().poll_event() {
             if let Some(obj_ref) = event.target {
@@ -187,7 +187,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
                 for i in self.scene1.common.tree.get_all() {
                     //TODO: Try to avoid code duplication
                     let obj = &mut self.objects[*i];
-                    let res = obj.on_event(&self.scene1, state,&event.data, event.sender, *i);
+                    let res = obj.on_event(&self.scene1, state,&event.data, event.sender);
                     if event.tracking {
                         self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
                     }
@@ -197,9 +197,9 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
         }
     }
 
-    pub fn spawn_object<TObject: CoreObject<SceneContext<TState, TComponentManager, TSystemList>> + 'static>(&mut self, obj: TObject)
+    pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemList>>)
     {
-        self.scene1.common.event_manager.get_mut().system(SystemEvent::Spawn(Box::from(obj)), false);
+        self.scene1.common.event_manager.get_mut().system(SystemEvent::Spawn(factory), false);
     }
 
     pub fn consume(self) -> TComponentManager

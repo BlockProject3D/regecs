@@ -38,3 +38,26 @@ pub use interface::Object;
 
 pub use storage::ObjectTree;
 pub use storage::ObjectStorage;
+
+pub struct ObjectFactory<TContext: Context>
+{
+    factory: Box<dyn Fn (ObjectRef) -> Box<dyn CoreObject<TContext>>>
+}
+
+impl<TContext: Context> ObjectFactory<TContext>
+{
+    pub fn invoke(self, this: ObjectRef) -> Box<dyn CoreObject<TContext>>
+    {
+        return (self.factory)(this);
+    }
+}
+
+impl<TContext: Context, TFunc: 'static + Fn (ObjectRef) -> Box<dyn CoreObject<TContext>>> From<TFunc> for ObjectFactory<TContext>
+{
+    fn from(func: TFunc) -> Self
+    {
+        return ObjectFactory {
+            factory: Box::new(func)
+        };
+    }
+}

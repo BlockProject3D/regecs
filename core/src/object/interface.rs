@@ -53,8 +53,13 @@ pub trait Context : Sized
 
 pub trait Serializable<TContext: Context>
 {
-    fn serialize(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object, this: ObjectRef);
+    fn serialize(&self, ctx: &TContext, state: &TContext::AppState) -> Option<bpx::sd::Object>;
+    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object);
+}
+
+pub trait Index
+{
+    fn index(&self) -> ObjectRef;
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
@@ -65,12 +70,11 @@ pub trait CoreObject<TContext: Context> : Serializable<TContext>
         ctx: &TContext,
         state: &TContext::AppState,
         event: &Box<dyn Any>,
-        sender: Option<ObjectRef>,
-        this: ObjectRef,
+        sender: Option<ObjectRef>
     ) -> Option<Box<dyn Any>>;
-    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
+    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState);
     fn class(&self) -> &str;
 }
 
@@ -84,18 +88,17 @@ pub trait Object<TContext: Context>
         ctx: &TContext,
         state: &TContext::AppState,
         event: &Self::EventType,
-        sender: Option<ObjectRef>,
-        this: ObjectRef,
+        sender: Option<ObjectRef>
     ) -> Option<T>;
-    fn init(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn remove(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
-    fn update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef);
+    fn init(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn remove(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
 }
 
 impl<
     TContext: Context,
     EventType: Any,
-    O: Object<TContext, EventType=EventType> + Serializable<TContext>
+    O: Object<TContext, EventType=EventType> + Serializable<TContext> + Index
 > CoreObject<TContext> for O
 {
     fn on_event(
@@ -103,30 +106,29 @@ impl<
         ctx: &TContext,
         state: &TContext::AppState,
         event: &Box<dyn Any>,
-        sender: Option<ObjectRef>,
-        this: ObjectRef,
+        sender: Option<ObjectRef>
     ) -> Option<Box<dyn Any>>
     {
         if let Some(ev) = event.downcast_ref::<EventType>() {
-            return self.handle_event(ctx, state, &ev, sender, this);
+            return self.handle_event(ctx, state, &ev, sender);
         }
         return None;
     }
 
-    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef)
+    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState)
     {
-        self.init(ctx, state, this);
+        self.init(ctx, state);
     }
 
-    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef)
+    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState)
     {
-        ctx.components().borrow_mut().clear_components(this);
-        self.remove(ctx, state, this);
+        ctx.components().borrow_mut().clear_components(self.index());
+        self.remove(ctx, state);
     }
 
-    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState, this: ObjectRef)
+    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState)
     {
-        self.update(ctx, state, this);
+        self.update(ctx, state);
     }
 
     fn class(&self) -> &str

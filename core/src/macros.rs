@@ -120,12 +120,12 @@ macro_rules! object_not_serializable {
     ($tcontext: ty, $object: ty) => {
         impl Serializable<$tcontext> for $object
         {
-            fn serialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, _: regecs::object::ObjectRef) -> Option<bpx::sd::Object>
+            fn serialize(&self, _: & $tcontext, _: & <$tcontext as Context>::AppState) -> Option<bpx::sd::Object>
             {
                 return None;
             }
 
-            fn deserialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, _: bpx::sd::Object, _: regecs::object::ObjectRef);
+            fn deserialize(&mut self, _: & $tcontext, _: & <$tcontext as Context>::AppState, _: bpx::sd::Object);
             {
             }
         }

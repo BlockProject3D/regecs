@@ -34,7 +34,7 @@ use std::{
     collections::{HashMap, VecDeque}
 };
 
-use crate::object::{Context, CoreObject, ObjectRef};
+use crate::object::{Context, CoreObject, ObjectRef, ObjectFactory};
 
 pub type Handle = usize;
 
@@ -42,7 +42,7 @@ pub struct EventTracker<T, TContext, TState>
 {
     events: Vec<(
         Handle,
-        Box<dyn Fn(&mut T, &TContext, &TState, ObjectRef, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
     )>
 }
 
@@ -57,7 +57,7 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
 
     pub fn push<
         TRes: 'static,
-        TFunc: 'static + Fn(&mut T, &TContext, &TState, ObjectRef, Option<TRes>)
+        TFunc: 'static + Fn(&mut T, &TContext, &TState, Option<TRes>)
     >(
         &mut self,
         handle: Handle,
@@ -66,12 +66,12 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
     {
         self.events.push((
             handle,
-            Box::new(move |eself, ctx, state, this, data| {
+            Box::new(move |me, ctx, state, data| {
                 if let Some(obj) = data {
                     let o = *obj.downcast().unwrap();
-                    func(eself, ctx, state, this, o);
+                    func(me, ctx, state, o);
                 } else {
-                    func(eself, ctx, state, this, None);
+                    func(me, ctx, state, None);
                 }
             })
         ));
@@ -101,16 +101,16 @@ pub struct EventTrackerBatch<T, TContext, TState>
 {
     events: Vec<(
         Option<Box<dyn Any>>,
-        Box<dyn Fn(&mut T, &TContext, &TState, ObjectRef, Option<Box<dyn Any>>)>
+        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
     )>
 }
 
 impl<T, TContext, TState> EventTrackerBatch<T, TContext, TState>
 {
-    pub fn run(self, eself: &mut T, ctx: &TContext, state: &TState, this: ObjectRef)
+    pub fn run(self, me: &mut T, ctx: &TContext, state: &TState)
     {
         for (data, func) in self.events {
-            func(eself, ctx, state, this, data);
+            func(me, ctx, state, data);
         }
     }
 }
@@ -173,7 +173,7 @@ pub enum SystemEvent<TContext: Context>
     EnableUpdate(ObjectRef, bool),
     Serialize(ObjectRef),
     Deserialize(ObjectRef, bpx::sd::Object),
-    Spawn(Box<dyn CoreObject<TContext>>),
+    Spawn(ObjectFactory<TContext>),
     Destroy(ObjectRef)
 }
 

@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{CoreObject, ObjectRef, Context};
+use crate::object::{CoreObject, ObjectRef, Context, ObjectFactory};
 use std::collections::{HashMap, HashSet};
 use std::borrow::Cow;
 use std::ops::{IndexMut, Index};
@@ -118,7 +118,7 @@ impl<TContext: Context> ObjectStorage<TContext>
         }, ObjectTree::new());
     }
 
-    pub fn insert(&mut self, tree: &mut ObjectTree, obj: Box<dyn CoreObject<TContext>>) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
+    pub fn insert(&mut self, tree: &mut ObjectTree, obj: ObjectFactory<TContext>) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
     {
         let empty_slot = {
             let mut id = 0 as usize;
@@ -134,12 +134,12 @@ impl<TContext: Context> ObjectStorage<TContext>
 
         let obj_ref;
         if let Some(slot) = empty_slot {
-            self.objects[slot] = Some(obj);
             obj_ref = slot as ObjectRef;
+            self.objects[slot] = Some(obj.invoke(obj_ref));
         } else {
             let id = self.objects.len() as ObjectRef;
-            self.objects.push(Some(obj));
             obj_ref = id;
+            self.objects.push(Some(obj.invoke(obj_ref)));
         }
         let o = self.objects[obj_ref as usize].as_ref().unwrap();
         tree.insert(obj_ref, o.class());
