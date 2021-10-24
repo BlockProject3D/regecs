@@ -33,7 +33,7 @@ use std::ops::{IndexMut, Index};
 
 pub struct ObjectTree
 {
-    updatable: HashSet<ObjectRef>,
+    enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
     by_id: HashSet<ObjectRef>,
     count: usize
@@ -41,9 +41,9 @@ pub struct ObjectTree
 
 impl ObjectTree
 {
-    pub fn is_updatable(&self, obj: ObjectRef) -> bool
+    pub fn is_enabled(&self, obj: ObjectRef) -> bool
     {
-        return self.updatable.contains(&obj);
+        return self.enabled.contains(&obj);
     }
 
     pub fn exists(&self, obj: ObjectRef) -> bool
@@ -58,12 +58,12 @@ impl ObjectTree
 
     pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef>
     {
-        return self.by_id.iter();
+        return self.enabled.iter();
     }
 
-    pub fn get_updatable(&self) -> impl Iterator<Item = &ObjectRef>
+    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef>
     {
-        return self.updatable.iter();
+        return self.by_id.iter();
     }
 
     pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]>
@@ -86,7 +86,7 @@ impl ObjectTree
     fn remove(&mut self, obj: ObjectRef, class: &str)
     {
         self.by_id.remove(&obj);
-        self.updatable.remove(&obj);
+        self.enabled.remove(&obj);
         if let Some(v) = self.by_class.get_mut(class) {
             v.retain(|s| *s != obj);
         }
@@ -96,7 +96,7 @@ impl ObjectTree
     fn new() -> ObjectTree
     {
         return ObjectTree {
-            updatable: HashSet::new(),
+            enabled: HashSet::new(),
             by_class: HashMap::new(),
             by_id: HashSet::new(),
             count: 0
@@ -106,7 +106,7 @@ impl ObjectTree
 
 pub struct ObjectStorage<TContext: Context>
 {
-    objects: Vec<Option<Box<dyn CoreObject<TContext>>>>,
+    objects: Vec<Option<Box<dyn CoreObject<TContext>>>>
 }
 
 impl<TContext: Context> ObjectStorage<TContext>
@@ -153,12 +153,17 @@ impl<TContext: Context> ObjectStorage<TContext>
         self.objects[obj as usize] = None;
     }
 
-    pub fn set_updatable(&mut self, tree: &mut ObjectTree, obj: ObjectRef, updatable: bool)
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn CoreObject<TContext>>>>
     {
-        if updatable {
-            tree.updatable.insert(obj);
+        return self.objects.iter_mut();
+    }
+
+    pub fn set_enabled(&mut self, tree: &mut ObjectTree, obj: ObjectRef, enabled: bool)
+    {
+        if enabled {
+            tree.enabled.insert(obj);
         } else {
-            tree.updatable.remove(&obj);
+            tree.enabled.remove(&obj);
         }
     }
 }

@@ -32,17 +32,16 @@ use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
     event::{Event, EventManager, SystemEvent},
-    object::{CoreObject, ObjectRef}
+    object::ObjectRef
 };
 use crate::object::{ObjectStorage, ObjectTree, Context, ObjectFactory};
 use crate::component::ComponentManager;
-use std::cell::RefCell;
 use crate::system::SystemList;
 
 pub struct Common<TContext: Context>
 {
-    component_manager: RefCell<TContext::ComponentManager>,
-    event_manager: RefCell<EventManager<TContext>>,
+    component_manager: TContext::ComponentManager,
+    event_manager: EventManager<TContext>,
     tree: ObjectTree,
 }
 
@@ -52,14 +51,19 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
     type ComponentManager = TContext::ComponentManager;
     type Context = TContext;
 
-    fn components(&self) -> &RefCell<Self::ComponentManager>
+    fn components(&self) -> &Self::ComponentManager
     {
         return &self.component_manager;
     }
 
-    fn event_manager(&self) -> &RefCell<EventManager<Self::Context>>
+    fn components_mut(&mut self) -> &mut Self::ComponentManager
     {
-        return &self.event_manager;
+        return &mut self.component_manager;
+    }
+
+    fn event_manager(&mut self) -> &mut EventManager<Self::Context>
+    {
+        return &mut self.event_manager;
     }
 
     fn objects(&self) -> &ObjectTree
@@ -71,7 +75,7 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
 pub struct SceneContext<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>>
 {
     common: Common<Self>,
-    systems: RefCell<TSystemList>
+    systems: TSystemList
 }
 
 impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>> crate::object::Context for SceneContext<TState, TComponentManager, TSystemList>
@@ -81,19 +85,29 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
     type SystemContext = Common<Self>;
     type SystemList = TSystemList;
 
-    fn components(&self) -> &RefCell<Self::ComponentManager>
+    fn components(&self) -> &Self::ComponentManager
     {
         return &self.common.component_manager;
     }
 
-    fn systems(&self) -> &RefCell<Self::SystemList>
+    fn components_mut(&mut self) -> &mut Self::ComponentManager
+    {
+        return &mut self.common.component_manager;
+    }
+
+    fn event_manager(&mut self) -> &mut EventManager<Self>
+    {
+        return &mut self.common.event_manager;
+    }
+
+    fn systems(&self) -> &Self::SystemList
     {
         return &self.systems;
     }
 
-    fn event_manager(&self) -> &RefCell<EventManager<Self>>
+    fn systems_mut(&mut self) -> &mut Self::SystemList
     {
-        return &self.common.event_manager;
+        return &mut self.systems;
     }
 
     fn objects(&self) -> &ObjectTree
@@ -107,6 +121,8 @@ pub struct Scene<TState, TComponentManager: ComponentManager, TSystemList: Syste
 {
     scene1: SceneContext<TState, TComponentManager, TSystemList>,
     objects: ObjectStorage<SceneContext<TState, TComponentManager, TSystemList>>,
+    updatable: HashSet<ObjectRef>,
+    init_updatable: HashSet<ObjectRef>
 }
 
 impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<SceneContext<TState, TComponentManager, TSystemList>>>> Scene<TState, TComponentManager, TSystemList>
@@ -117,30 +133,40 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
         return Scene {
             scene1: SceneContext {
                 common: Common {
-                    component_manager: RefCell::new(component_manager),
-                    event_manager: RefCell::new(EventManager::new()),
+                    component_manager,
+                    event_manager: EventManager::new(),
                     tree
                 },
-                systems: RefCell::new(systems)
+                systems
             },
-            objects
+            objects,
+            updatable: HashSet::new(),
+            init_updatable: HashSet::new()
         };
     }
 
     fn object_event_call(&mut self, state: &TState, obj_ref: ObjectRef, event: &Event)
     {
+        if !self.scene1.common.tree.is_enabled(obj_ref) { //Non enabled objects are not allowed to handle any event
+            return;
+        }
         let obj = &mut self.objects[obj_ref];
-        let res = obj.on_event(&self.scene1, state,&event.data, event.sender);
+        let res = obj.on_event(&mut self.scene1, state,&event.data, event.sender);
         if event.tracking {
-            self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
+            self.scene1.common.event_manager.queue_response(event.handle, res);
         }
     }
 
     fn handle_system_event(&mut self, state: &TState, ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemList>>) -> Option<Box<dyn Any>>
     {
             return match ev {
-                SystemEvent::EnableUpdate(obj, flag) => {
-                    self.objects.set_updatable(&mut self.scene1.common.tree, obj, flag);
+                SystemEvent::Enable(obj, flag) => {
+                    self.objects.set_enabled(&mut self.scene1.common.tree, obj, flag);
+                    if !flag {
+                        self.updatable.remove(&obj);
+                    } else if flag && self.init_updatable.contains(&obj) {
+                        self.updatable.insert(obj);
+                    }
                     None
                 },
                 SystemEvent::Serialize(obj) => {
@@ -152,16 +178,20 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
                     }
                 },
                 SystemEvent::Deserialize(obj, data) => {
-                    self.objects[obj].deserialize(&self.scene1, state, data);
+                    self.objects[obj].deserialize(&mut self.scene1, state, data);
                     None
                 },
                 SystemEvent::Spawn(obj) => {
                     let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
-                    obj.on_init(&self.scene1, state);
+                    let updatable = obj.on_init(&mut self.scene1, state);
+                    if updatable {
+                        self.updatable.insert(obj_ref);
+                        self.init_updatable.insert(obj_ref);
+                    }
                     Some(Box::new(obj_ref))
                 },
                 SystemEvent::Destroy(target) => {
-                    self.objects[target].on_remove(&self.scene1, state);
+                    self.objects[target].on_remove(&mut self.scene1, state);
                     self.objects.destroy(&mut self.scene1.common.tree, target);
                     None
                 }
@@ -170,28 +200,29 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
 
     pub fn update(&mut self, state: &TState)
     {
-        self.scene1.systems.get_mut().update(&self.scene1.common, state);
-        while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.get_mut().poll_system_event() {
+        self.scene1.systems.update(&mut self.scene1.common, state);
+        while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.poll_system_event() {
             let res = self.handle_system_event(state, ev);
             if tracking {
-                self.scene1.common.event_manager.get_mut().queue_response(handle, res);
+                self.scene1.common.event_manager.queue_response(handle, res);
             }
         }
-        for obj in self.scene1.common.tree.get_updatable() {
-            self.objects[*obj].on_update(&self.scene1, state);
+        for obj in &self.updatable {
+            self.objects[*obj].on_update(&mut self.scene1, state);
         }
-        while let Some(event) = self.scene1.common.event_manager.get_mut().poll_event() {
+        while let Some(event) = self.scene1.common.event_manager.poll_event() {
             if let Some(obj_ref) = event.target {
                 self.object_event_call(state, obj_ref, &event);
             } else {
-                for i in self.scene1.common.tree.get_all() {
-                    //TODO: Try to avoid code duplication
-                    let obj = &mut self.objects[*i];
-                    let res = obj.on_event(&self.scene1, state,&event.data, event.sender);
-                    if event.tracking {
-                        self.scene1.common.event_manager.get_mut().queue_response(event.handle, res);
+                for (obj_ref, obj) in self.objects.objects().enumerate() {
+                    if let Some(o) = obj.as_mut() {
+                        if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
+                            let res = o.on_event(&mut self.scene1, state,&event.data, event.sender);
+                            if event.tracking {
+                                self.scene1.common.event_manager.queue_response(event.handle, res);
+                            }
+                        }
                     }
-                    //self.object_event_call(state, *i, &event);
                 }
             }
         }
@@ -199,12 +230,12 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
 
     pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemList>>)
     {
-        self.scene1.common.event_manager.get_mut().system(SystemEvent::Spawn(factory), false);
+        self.scene1.common.event_manager.system(SystemEvent::Spawn(factory), false);
     }
 
     pub fn consume(self) -> TComponentManager
     {
-        return self.scene1.common.component_manager.into_inner();
+        return self.scene1.common.component_manager;
     }
 }
 

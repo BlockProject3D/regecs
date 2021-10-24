@@ -26,11 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::{any::Any, boxed::Box, vec::Vec};
-
 use crate::event::EventManager;
 use crate::component::ComponentManager;
-use std::cell::RefCell;
 use crate::object::ObjectTree;
 
 pub trait Context
@@ -39,8 +36,9 @@ pub trait Context
     type ComponentManager: ComponentManager;
     type Context: crate::object::Context;
 
-    fn components(&self) -> &RefCell<Self::ComponentManager>;
-    fn event_manager(&self) -> &RefCell<EventManager<Self::Context>>;
+    fn components(&self) -> &Self::ComponentManager;
+    fn components_mut(&mut self) -> &mut Self::ComponentManager;
+    fn event_manager(&mut self) -> &mut EventManager<Self::Context>;
     fn objects(&self) -> &ObjectTree;
 }
 
@@ -49,13 +47,13 @@ pub trait System<TContext: Context>
 {
     const UPDATABLE: bool = false;
 
-    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
 
 /// System list interface
 pub trait SystemList<TContext: Context>
 {
-    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
+    fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
 
 pub trait SystemProvider<TSystem>

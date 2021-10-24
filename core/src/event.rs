@@ -34,7 +34,7 @@ use std::{
     collections::{HashMap, VecDeque}
 };
 
-use crate::object::{Context, CoreObject, ObjectRef, ObjectFactory};
+use crate::object::{Context, ObjectRef, ObjectFactory};
 
 pub type Handle = usize;
 
@@ -170,7 +170,7 @@ impl EventBuilder
 
 pub enum SystemEvent<TContext: Context>
 {
-    EnableUpdate(ObjectRef, bool),
+    Enable(ObjectRef, bool),
     Serialize(ObjectRef),
     Deserialize(ObjectRef, bpx::sd::Object),
     Spawn(ObjectFactory<TContext>),

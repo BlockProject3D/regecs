@@ -30,7 +30,6 @@ use crate::event::EventManager;
 use std::any::Any;
 use crate::component::ComponentManager;
 use crate::object::ObjectTree;
-use std::cell::RefCell;
 use crate::system::SystemList;
 
 /// Type alias for object references
@@ -45,16 +44,18 @@ pub trait Context : Sized
     type SystemContext: crate::system::Context;
     type SystemList: SystemList<Self::SystemContext>;
 
-    fn components(&self) -> &RefCell<Self::ComponentManager>;
-    fn systems(&self) -> &RefCell<Self::SystemList>;
-    fn event_manager(&self) -> &RefCell<EventManager<Self>>;
+    fn components(&self) -> &Self::ComponentManager;
+    fn components_mut(&mut self) -> &mut Self::ComponentManager;
+    fn event_manager(&mut self) -> &mut EventManager<Self>;
+    fn systems(&self) -> &Self::SystemList;
+    fn systems_mut(&mut self) -> &mut Self::SystemList;
     fn objects(&self) -> &ObjectTree;
 }
 
 pub trait Serializable<TContext: Context>
 {
     fn serialize(&self, ctx: &TContext, state: &TContext::AppState) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, ctx: &TContext, state: &TContext::AppState, obj: bpx::sd::Object);
+    fn deserialize(&mut self, ctx: &mut TContext, state: &TContext::AppState, obj: bpx::sd::Object);
 }
 
 pub trait Index
@@ -67,14 +68,15 @@ pub trait CoreObject<TContext: Context> : Serializable<TContext>
 {
     fn on_event(
         &mut self,
-        ctx: &TContext,
+        ctx: &mut TContext,
         state: &TContext::AppState,
         event: &Box<dyn Any>,
         sender: Option<ObjectRef>
     ) -> Option<Box<dyn Any>>;
-    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState);
-    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState);
-    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState);
+    /// Return true to enable updates on this object
+    fn on_init(&mut self, ctx: &mut TContext, state: &TContext::AppState) -> bool;
+    fn on_remove(&mut self, ctx: &mut TContext, state: &TContext::AppState);
+    fn on_update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
     fn class(&self) -> &str;
 }
 
@@ -85,14 +87,15 @@ pub trait Object<TContext: Context>
 
     fn handle_event<T: Any>(
         &mut self,
-        ctx: &TContext,
+        ctx: &mut TContext,
         state: &TContext::AppState,
         event: &Self::EventType,
         sender: Option<ObjectRef>
     ) -> Option<T>;
-    fn init(&mut self, ctx: &TContext, state: &TContext::AppState);
-    fn remove(&mut self, ctx: &TContext, state: &TContext::AppState);
-    fn update(&mut self, ctx: &TContext, state: &TContext::AppState);
+    /// Return true to enable updates on this object
+    fn init(&mut self, ctx: &mut TContext, state: &TContext::AppState) -> bool;
+    fn remove(&mut self, ctx: &mut TContext, state: &TContext::AppState);
+    fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
 
 impl<
@@ -103,7 +106,7 @@ impl<
 {
     fn on_event(
         &mut self,
-        ctx: &TContext,
+        ctx: &mut TContext,
         state: &TContext::AppState,
         event: &Box<dyn Any>,
         sender: Option<ObjectRef>
@@ -115,18 +118,18 @@ impl<
         return None;
     }
 
-    fn on_init(&mut self, ctx: &TContext, state: &TContext::AppState)
+    fn on_init(&mut self, ctx: &mut TContext, state: &TContext::AppState) -> bool
     {
-        self.init(ctx, state);
+        return self.init(ctx, state);
     }
 
-    fn on_remove(&mut self, ctx: &TContext, state: &TContext::AppState)
+    fn on_remove(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
-        ctx.components().borrow_mut().clear_components(self.index());
+        ctx.components_mut().clear_components(self.index());
         self.remove(ctx, state);
     }
 
-    fn on_update(&mut self, ctx: &TContext, state: &TContext::AppState)
+    fn on_update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
         self.update(ctx, state);
     }
