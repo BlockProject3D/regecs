@@ -107,9 +107,9 @@ pub struct BasicComponentPool<TComponent: Component>
     attachments: AttachmentsManager
 }
 
-impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
+impl<TComponent: Component> Default for BasicComponentPool<TComponent>
 {
-    fn new() -> Self
+    fn default() -> Self
     {
         return BasicComponentPool {
             comps: Vec::new(),
@@ -117,7 +117,10 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
             attachments: AttachmentsManager::new()
         };
     }
+}
 
+impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
+{
     fn add(&mut self, comp: TComponent) -> usize
     {
         let mut i = 0;

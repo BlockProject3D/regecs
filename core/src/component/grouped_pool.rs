@@ -152,18 +152,21 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponen
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool<TComponent>
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Default for GroupComponentPool<K, TComponent>
 {
-    fn new() -> Self
+    fn default() -> Self
     {
         return GroupComponentPool {
-            comps: BasicComponentPool::new(),
+            comps: BasicComponentPool::default(),
             group_map: HashMap::new(),
             map: HashMap::new()
         };
     }
+}
 
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool<TComponent>
+    for GroupComponentPool<K, TComponent>
+{
     fn add(&mut self, comp: TComponent) -> usize
     {
         let id = self.comps.add(comp);
