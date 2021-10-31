@@ -43,10 +43,11 @@ pub trait Context
 }
 
 /// System interface
-pub trait System<TContext: Context>
-{
-    const UPDATABLE: bool = false;
+pub trait System {}
 
+/// System interface
+pub trait Updatable<TContext: Context>
+{
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
 
