@@ -38,7 +38,7 @@ use regecs::{
     scene::Scene
 };
 use regecs::build_system_list;
-use regecs::system::System;
+use regecs::system::{System, SystemPart, Updatable};
 use std::ops::{DerefMut, Deref};
 use components::ComplexSystem;
 
@@ -54,10 +54,11 @@ mod components
             pool::BasicComponentPool,
             pool::GroupComponentPool
         },
-        reflection::{class::Class, interface::ClassConnector}
+        //reflection::{class::Class, interface::ClassConnector}
     };
-    use regecs::system::{System};
+    use regecs::system::{System, Updatable};
     use regecs::build_component_manager;
+    use regecs::macros::build_component_manager1;
     use regecs::object::ObjectRef;
 
     pub struct Test
@@ -70,20 +71,20 @@ mod components
         type Pool = BasicComponentPool<Test>;
     }
 
-    impl ClassConnector for Test
-    {
-        fn class() -> Class
-        {
+    //impl ClassConnector for Test
+    //{
+    //    fn class() -> Class
+    //    {
             /*static CLASS_STORAGE: &'static Class = &Class::new(String::from("Test"), Vec::new(), Test::new_instance);
             return &CLASS_STORAGE;*/
-            return Class::new(String::from("Test"), Vec::new(), Test::new_instance);
-        }
+    //        return Class::new(String::from("Test"), Vec::new(), Test::new_instance);
+    //    }
 
-        fn new_instance() -> Box<dyn Any>
-        {
-            todo!()
-        }
-    }
+    //    fn new_instance() -> Box<dyn Any>
+    //    {
+    //        todo!()
+    //    }
+    //}
 
     pub struct Test2
     {
@@ -119,7 +120,15 @@ mod components
         type Pool = GroupComponentPool<u32, ComplexComponent>;
     }
 
-    build_component_manager!(Test {Test A, Test2 A, ComplexComponent A});
+    //build_component_manager!(Test {Test A, Test2 A, ComplexComponent A});
+    build_component_manager1!(
+        #[derive(Default)]
+        pub TestComponentManager {
+            (attachments) tests: Test,
+            test2s: Test2,
+            complexes: ComplexComponent
+        };
+    );
 
     pub struct ComplexSystem
     {
@@ -136,17 +145,16 @@ mod components
         }
     }
 
-    impl<TContext: regecs::system::Context> System<TContext> for ComplexSystem where TContext::ComponentManager: ComponentProvider<ComplexComponent>
-    {
-        const UPDATABLE: bool = true;
+    impl System for ComplexSystem {}
 
-        fn update(&mut self, ctx: &TContext, _: &TContext::AppState) {
+    impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem where TContext::ComponentManager: ComponentProvider<ComplexComponent>
+    {
+        fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState) {
             println!("____");
-            let mut components = ctx.components().borrow_mut();
             while let Some((component, new_order)) = self.events.pop() {
-                components.pool_mut().update_group(component, new_order);
+                ctx.components_mut().pool_mut().update_group(component, new_order);
             }
-            for (i, v) in components.pool_mut().iter_mut() {
+            for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((i, v.order));
@@ -158,26 +166,25 @@ mod components
     }
 }
 
-struct MySystem {}
+struct MySystem {pub val: i32}
 
 impl Default for MySystem
 {
     fn default() -> MySystem
     {
-        return MySystem {}
+        return MySystem {val: 0}
     }
 }
 
-impl<TContext: regecs::system::Context<AppState = i32>> System<TContext> for MySystem where TContext::ComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>
-{
-    const UPDATABLE: bool = true;
+impl System for MySystem {}
 
-    fn update(&mut self, ctx: &TContext, state: &TContext::AppState)
+impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem where TContext::ComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>
+{
+    fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
-        let mut comps = ctx.components().borrow_mut();
-        get_component_mut::<_, components::Test>(comps.deref_mut(), 0).value = 12;
-        get_component_mut::<_, components::Test2>(comps.deref_mut(), 0).value2 = 42;
-        assert_eq!(get_component::<_, components::Test2>(comps.deref(), 0).value2, 42);
+        get_component_mut::<_, components::Test>(ctx.components_mut(), 0).value = 12;
+        get_component_mut::<_, components::Test2>(ctx.components_mut(), 0).value2 = 42;
+        assert_eq!(get_component::<_, components::Test2>(ctx.components_mut(), 0).value2, 42);
         assert_eq!(*state, 42);
     }
 }
@@ -198,17 +205,22 @@ impl TestSystemList
 fn main()
 {
     let ctx = 42;
-    let mut mgr = components::TestComponentManager::new();
+    let mut mgr = components::TestComponentManager::default();
     let mut entity = Entity::new(&mut mgr, 0);
     entity.add(components::Test { value: 12 });
-    entity.get_mut(components::Test::ctype(), 0).value = 1;
+    entity.get_mut(components::Test::class(), 0).value = 1;
     add_component(&mut mgr, components::Test { value: 0 });
     add_component(&mut mgr, components::Test2 { value2: 0 });
     add_component(&mut mgr, ComplexComponent::new(2, 3));
     add_component(&mut mgr, ComplexComponent::new(1, 1));
     add_component(&mut mgr, ComplexComponent::new(2, 4));
     add_component(&mut mgr, ComplexComponent::new(1, 2));
-    let mut sc: Scene<i32, _, _> = Scene::new(mgr, TestSystemList::new());
+    let mut systems = TestSystemList::new();
+    {
+        use regecs::system::SystemTypeProvider;
+        systems.get_mut(MySystem::class()).val = 42;
+    }
+    let mut sc: Scene<i32, _, _> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
     mgr = sc.consume();
