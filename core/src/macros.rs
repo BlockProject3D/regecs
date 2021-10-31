@@ -2,13 +2,6 @@ pub use impls::impls;
 pub use paste::paste;
 
 #[macro_export]
-macro_rules! pool_type {
-    ($i: ty) => {
-        <$i as regecs::component::Component>::Pool
-    };
-}
-
-#[macro_export]
 macro_rules! build_component_manager {
     ($name: ident { $($component: ident $($suffix: ident)?),* }) => {
         use $crate::macros::paste;
@@ -68,6 +61,70 @@ macro_rules! build_component_manager {
 }
 
 #[macro_export]
+macro_rules! build_component_manager1 {
+    (
+        $(#[$outer:meta])*
+        $access: ident $name: ident
+        {
+            $(
+                $(#[$pouter:meta])*
+                $(($poption: ident))? $pname: ident : $ptype: ty
+            ),*
+        };
+        $(into ($($types: ty),*) => ($($fields: ident),*));*
+    ) => {
+        $(#[$outer])*
+        $access struct $name
+        {
+            $(
+                $(#[$pouter])*
+                $pname: <$ptype as regecs::component::Component>::Pool
+            ),*
+        }
+
+        $(
+            impl ComponentProvider<$ptype> for $name
+            {
+                fn pool(&self) -> & <$ptype as regecs::component::Component>::Pool
+                {
+                    return &self.$pname;
+                }
+
+                fn pool_mut(&mut self) -> &mut <$ptype as regecs::component::Component>::Pool
+                {
+                    return &mut self.$pname;
+                }
+            }
+        )*
+
+        impl regecs::component::ComponentManager for $name
+        {
+            fn clear_components(&mut self, entity: regecs::object::ObjectRef)
+            {
+                use regecs::component::AttachmentProvider;
+                macro_rules! attachment_call {
+                    (attachments $afsb: ident) => {
+                        self.$afsb.clear(entity);
+                    };
+                    ($afsb: ident) => {};
+                }
+                $(attachment_call!($($poption)? $pname);)*
+            }
+        }
+
+        $(
+            impl Into<($($types),*)> for $name
+            {
+                fn into(self) -> ($($types),*)
+                {
+                    return ($(self.$fields),*);
+                }
+            }
+        )*
+    };
+}
+
+#[macro_export]
 macro_rules! build_system_list {
     ($name: ident ( $tstate: ty, $tcomponents: ty ) { $($system: ident),* }) => {
         use $crate::macros::paste;
@@ -102,12 +159,10 @@ macro_rules! build_system_list {
 
             impl SystemList<[<$name SystemCtx>]> for [<$name SystemList>]
             {
-                fn update(&mut self, ctx: & [<$name SystemCtx>], state: & $tstate)
+                fn update(&mut self, ctx: &mut [<$name SystemCtx>], state: & $tstate)
                 {
                     $(
-                        if <$system as System<[<$name SystemCtx>]>>::UPDATABLE {
-                            self.[<sys_$system:snake>].update(ctx, state);
-                        }
+                        self.[<sys_$system:snake>].update(ctx, state);
                     )*
                 }
             }
@@ -131,3 +186,5 @@ macro_rules! object_not_serializable {
         }
     };
 }
+
+pub use build_component_manager1;
