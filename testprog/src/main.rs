@@ -120,14 +120,14 @@ mod components
         type Pool = GroupComponentPool<u32, ComplexComponent>;
     }
 
-    //build_component_manager!(Test {Test A, Test2 A, ComplexComponent A});
     build_component_manager1!(
         #[derive(Default)]
         pub TestComponentManager {
             (attachments) tests: Test,
             test2s: Test2,
             complexes: ComplexComponent
-        };
+        }
+        {into (Test, Test2) => (tests, test2s)}
     );
 
     pub struct ComplexSystem

@@ -70,8 +70,8 @@ macro_rules! build_component_manager1 {
                 $(#[$pouter:meta])*
                 $(($poption: ident))? $pname: ident : $ptype: ty
             ),*
-        };
-        $(into ($($types: ty),*) => ($($fields: ident),*));*
+        }
+        $({into ($($types: ty),*) => ($($fields: ident),*)})*
     ) => {
         $(#[$outer])*
         $access struct $name
@@ -113,9 +113,9 @@ macro_rules! build_component_manager1 {
         }
 
         $(
-            impl Into<($($types),*)> for $name
+            impl Into<($(<$types as regecs::component::Component>::Pool),*)> for $name
             {
-                fn into(self) -> ($($types),*)
+                fn into(self) -> ($(<$types as regecs::component::Component>::Pool),*)
                 {
                     return ($(self.$fields),*);
                 }
