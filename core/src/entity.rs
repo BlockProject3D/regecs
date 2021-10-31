@@ -107,12 +107,12 @@ impl<TComponent: Component> ComponentType<TComponent>
 
 pub trait ComponentTypeProvider<TComponent: Component>
 {
-    fn ctype() -> ComponentType<TComponent>;
+    fn class() -> ComponentType<TComponent>;
 }
 
 impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
 {
-    fn ctype() -> ComponentType<TComponent>
+    fn class() -> ComponentType<TComponent>
     {
         return ComponentType::<TComponent>::new();
     }
