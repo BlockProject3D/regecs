@@ -26,8 +26,6 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ops::{Deref, DerefMut};
-
 use components::ComplexSystem;
 use regecs::{
     component::{
@@ -48,18 +46,14 @@ use crate::components::ComplexComponent;
 
 mod components
 {
-    use std::any::Any;
-
     use regecs::{
         component::{
             pool::{BasicComponentPool, GroupComponentPool},
             Component,
-            ComponentPool,
             ComponentProvider,
             IterableComponentPool
         },
         macros::build_component_manager,
-        object::ObjectRef,
         system::{System, Updatable}
     };
 
