@@ -125,6 +125,74 @@ macro_rules! build_component_manager1 {
 }
 
 #[macro_export]
+macro_rules! build_system_list1 {
+    (
+        $(#[$outer:meta])*
+        $access: ident $name: ident < $tstate: ty, $tcomponents: ty >
+        {
+            $(
+                $(#[$pouter:meta])*
+                $(($poption: ident))? $pname: ident : $ptype: ty
+            ),*
+        }
+        $({into ($($types: ty),*) => ($($fields: ident),*)})*
+    ) => {
+        $(#[$outer])*
+        $access struct $name
+        {
+            $(
+                $(#[$pouter])*
+                $pname: $ptype
+            ),*
+        }
+
+        use $crate::system::SystemProvider;
+        $(
+            impl SystemProvider<$ptype> for $name
+            {
+                fn system(&self) -> & $ptype
+                {
+                    return &self.$pname;
+                }
+
+                fn system_mut(&mut self) -> &mut $ptype
+                {
+                    return &mut self.$pname;
+                }
+            }
+        )*
+
+        use $crate::system::SystemList;
+        use $crate::scene::Common;
+        use $crate::scene::SceneContext;
+        impl SystemList<Common<SceneContext<$tstate, $tcomponents, $name>>> for $name
+        {
+            fn update(&mut self, ctx: &mut Common<SceneContext<$tstate, $tcomponents, $name>>, state: & $tstate)
+            {
+                use regecs::system::Updatable;
+                macro_rules! update_call {
+                    (updates $afsb: ident) => {
+                        self.$afsb.update(ctx, state);
+                    };
+                    ($afsb: ident) => {};
+                }
+                $(update_call!($($poption)? $pname);)*
+            }
+        }
+
+        $(
+            impl Into<($($types),*)> for $name
+            {
+                fn into(self) -> ($($types),*)
+                {
+                    return ($(self.$fields),*);
+                }
+            }
+        )*
+    };
+}
+
+#[macro_export]
 macro_rules! build_system_list {
     ($name: ident ( $tstate: ty, $tcomponents: ty ) { $($system: ident),* }) => {
         use $crate::macros::paste;
@@ -188,3 +256,4 @@ macro_rules! object_not_serializable {
 }
 
 pub use build_component_manager1;
+pub use build_system_list1;
