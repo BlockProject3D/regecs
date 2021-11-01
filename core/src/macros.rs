@@ -64,7 +64,7 @@ macro_rules! build_component_manager {
 macro_rules! build_component_manager1 {
     (
         $(#[$outer:meta])*
-        $access: ident $name: ident
+        $access: vis $name: ident
         {
             $(
                 $(#[$pouter:meta])*
@@ -83,7 +83,7 @@ macro_rules! build_component_manager1 {
         }
 
         $(
-            impl ComponentProvider<$ptype> for $name
+            impl regecs::component::ComponentProvider<$ptype> for $name
             {
                 fn pool(&self) -> & <$ptype as regecs::component::Component>::Pool
                 {
@@ -101,14 +101,13 @@ macro_rules! build_component_manager1 {
         {
             fn clear_components(&mut self, entity: regecs::object::ObjectRef)
             {
-                use regecs::component::AttachmentProvider;
                 macro_rules! attachment_call {
-                    (attachments $afsb: ident) => {
-                        self.$afsb.clear(entity);
+                    (attachments $afsb: ident $afsb1: ty) => {
+                        <$afsb1 as regecs::component::AttachmentProvider>::clear(&mut self.$afsb, entity);
                     };
-                    ($afsb: ident) => {};
+                    ($afsb: ident $afsb1: ty) => {};
                 }
-                $(attachment_call!($($poption)? $pname);)*
+                $(attachment_call!($($poption)? $pname <$ptype as regecs::component::Component>::Pool);)*
             }
         }
 
@@ -128,13 +127,17 @@ macro_rules! build_component_manager1 {
 macro_rules! build_system_manager {
     (
         $(#[$outer:meta])*
-        $access: ident $name: ident < $tstate: ty, $tcomponents: ty >
+        $access: vis $name: ident < $tstate: ty, $tcomponents: ty >
         {
             $(
                 $(#[$pouter:meta])*
                 $(($poption: ident))? $pname: ident : $ptype: ty
             ),*
         }
+        $(
+            $(#[$ctxouter:meta])*
+            context $ctxname: ident;
+        )?
         $({into ($($types: ty),*) => ($($fields: ident),*)})*
     ) => {
         $(#[$outer])*
@@ -146,9 +149,8 @@ macro_rules! build_system_manager {
             ),*
         }
 
-        use $crate::system::SystemProvider;
         $(
-            impl SystemProvider<$ptype> for $name
+            impl $crate::system::SystemProvider<$ptype> for $name
             {
                 fn system(&self) -> & $ptype
                 {
@@ -162,23 +164,24 @@ macro_rules! build_system_manager {
             }
         )*
 
-        use $crate::system::SystemManager;
-        use $crate::scene::Common;
-        use $crate::scene::SceneContext;
-        impl SystemManager<Common<SceneContext<$tstate, $tcomponents, $name>>> for $name
+        impl $crate::system::SystemManager<$crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>> for $name
         {
-            fn update(&mut self, ctx: &mut Common<SceneContext<$tstate, $tcomponents, $name>>, state: & $tstate)
+            fn update(&mut self, ctx: &mut $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>, state: & $tstate)
             {
-                use regecs::system::Updatable;
                 macro_rules! update_call {
-                    (updates $afsb: ident) => {
-                        self.$afsb.update(ctx, state);
+                    (updates $afsb: ident $afsb1: ty) => {
+                        <$afsb1 as regecs::system::Updatable<$crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>>>::update(&mut self.$afsb, ctx, state);
                     };
-                    ($afsb: ident) => {};
+                    ($afsb: ident $afsb1: ty) => {};
                 }
-                $(update_call!($($poption)? $pname);)*
+                $(update_call!($($poption)? $pname $ptype);)*
             }
         }
+
+        $(
+            $(#[$ctxouter])*
+            $access type $ctxname = $crate::scene::SceneContext<$tstate, $tcomponents, $name>;
+        )?
 
         $(
             impl Into<($($types),*)> for $name

@@ -31,10 +31,7 @@
 mod interface;
 mod storage;
 
-pub use interface::ObjectRef;
-pub use interface::Context;
-pub use interface::CoreObject;
-pub use interface::Object;
+pub use interface::*;
 
 pub use storage::ObjectTree;
 pub use storage::ObjectStorage;

@@ -190,13 +190,20 @@ impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for 
     }
 }
 
+#[derive(Default)]
+struct MySystem2 {}
+
+impl System for MySystem2 {}
+
 build_system_manager!(
     #[derive(Default)]
     pub TestSystemManager<i32, components::TestComponentManager>
     {
         (updates) my: MySystem,
-        (updates) complex: ComplexSystem
+        (updates) complex: ComplexSystem,
+        my2: MySystem2
     }
+    context MyContext;
     {into (MySystem, ComplexSystem) => (my, complex)}
     {into (MySystem) => (my)}
     {into (ComplexSystem) => (complex)}

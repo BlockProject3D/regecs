@@ -36,7 +36,7 @@ use crate::{
 };
 use crate::object::{ObjectStorage, ObjectTree, Context, ObjectFactory};
 use crate::component::ComponentManager;
-use crate::system::SystemList;
+use crate::system::SystemManager;
 
 pub struct Common<TContext: Context>
 {
@@ -72,18 +72,18 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
     }
 }
 
-pub struct SceneContext<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>>
+pub struct SceneContext<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>>
 {
     common: Common<Self>,
-    systems: TSystemList
+    systems: TSystemManager
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<Self>>> crate::object::Context for SceneContext<TState, TComponentManager, TSystemList>
+impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>> crate::object::Context for SceneContext<TState, TComponentManager, TSystemManager>
 {
     type AppState = TState;
     type ComponentManager = TComponentManager;
     type SystemContext = Common<Self>;
-    type SystemList = TSystemList;
+    type SystemManager = TSystemManager;
 
     fn components(&self) -> &Self::ComponentManager
     {
@@ -100,12 +100,12 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
         return &mut self.common.event_manager;
     }
 
-    fn systems(&self) -> &Self::SystemList
+    fn systems(&self) -> &Self::SystemManager
     {
         return &self.systems;
     }
 
-    fn systems_mut(&mut self) -> &mut Self::SystemList
+    fn systems_mut(&mut self) -> &mut Self::SystemManager
     {
         return &mut self.systems;
     }
@@ -117,17 +117,17 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
 }
 
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<SceneContext<TState, TComponentManager, TSystemList>>>>
+pub struct Scene<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>>
 {
-    scene1: SceneContext<TState, TComponentManager, TSystemList>,
-    objects: ObjectStorage<SceneContext<TState, TComponentManager, TSystemList>>,
+    scene1: SceneContext<TState, TComponentManager, TSystemManager>,
+    objects: ObjectStorage<SceneContext<TState, TComponentManager, TSystemManager>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common<SceneContext<TState, TComponentManager, TSystemList>>>> Scene<TState, TComponentManager, TSystemList>
+impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>> Scene<TState, TComponentManager, TSystemManager>
 {
-    pub fn new(component_manager: TComponentManager, systems: TSystemList) -> Scene<TState, TComponentManager, TSystemList>
+    pub fn new(component_manager: TComponentManager, systems: TSystemManager) -> Scene<TState, TComponentManager, TSystemManager>
     {
         let (objects, tree) = ObjectStorage::new();
         return Scene {
@@ -157,7 +157,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
         }
     }
 
-    fn handle_system_event(&mut self, state: &TState, ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemList>>) -> Option<Box<dyn Any>>
+    fn handle_system_event(&mut self, state: &TState, ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemManager>>) -> Option<Box<dyn Any>>
     {
             return match ev {
                 SystemEvent::Enable(obj, flag) => {
@@ -228,7 +228,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemList: SystemList<Common
         }
     }
 
-    pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemList>>)
+    pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemManager>>)
     {
         self.scene1.common.event_manager.system(SystemEvent::Spawn(factory), false);
     }
