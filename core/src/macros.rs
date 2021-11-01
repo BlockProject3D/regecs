@@ -164,13 +164,19 @@ macro_rules! build_system_manager {
             }
         )*
 
-        impl $crate::system::SystemManager<$crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>> for $name
+        impl $crate::system::SystemManager<
+            $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>
+        > for $name
         {
-            fn update(&mut self, ctx: &mut $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>, state: & $tstate)
+            fn update(&mut self,
+                ctx: &mut $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>,
+                state: & $tstate)
             {
                 macro_rules! update_call {
                     (updates $afsb: ident $afsb1: ty) => {
-                        <$afsb1 as regecs::system::Updatable<$crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>>>::update(&mut self.$afsb, ctx, state);
+                        <$afsb1 as regecs::system::Updatable<
+                            $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, $name>>>>
+                        ::update(&mut self.$afsb, ctx, state);
                     };
                     ($afsb: ident $afsb1: ty) => {};
                 }
