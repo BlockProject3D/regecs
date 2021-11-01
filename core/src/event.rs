@@ -38,12 +38,12 @@ use crate::object::{Context, ObjectFactory, ObjectRef};
 
 pub type Handle = usize;
 
+type EventTrackerValue = Option<Box<dyn Any>>;
+type EventTrackerFunc<T, TContext, TState> = Box<dyn FnOnce(&mut T, &mut TContext, &TState, EventTrackerValue)>;
+
 pub struct EventTracker<T, TContext, TState>
 {
-    events: Vec<(
-        Handle,
-        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
-    )>
+    events: Vec<(Handle, EventTrackerFunc<T, TContext, TState>)>
 }
 
 impl<T, TContext, TState> EventTracker<T, TContext, TState>
@@ -53,7 +53,7 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
         return EventTracker { events: Vec::new() };
     }
 
-    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &TContext, &TState, Option<TRes>)>(
+    pub fn push<TRes: 'static, TFunc: 'static + FnOnce(&mut T, &mut TContext, &TState, Option<TRes>)>(
         &mut self,
         handle: Handle,
         func: TFunc
@@ -61,7 +61,7 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
     {
         self.events.push((
             handle,
-            Box::new(move |me, ctx, state, data| {
+            Box::new(|me, ctx, state, data| {
                 if let Some(obj) = data {
                     let o = *obj.downcast().unwrap();
                     func(me, ctx, state, o);
@@ -94,15 +94,12 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
 
 pub struct EventTrackerBatch<T, TContext, TState>
 {
-    events: Vec<(
-        Option<Box<dyn Any>>,
-        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
-    )>
+    events: Vec<(EventTrackerValue, EventTrackerFunc<T, TContext, TState>)>
 }
 
 impl<T, TContext, TState> EventTrackerBatch<T, TContext, TState>
 {
-    pub fn run(self, me: &mut T, ctx: &TContext, state: &TState)
+    pub fn run(self, me: &mut T, ctx: &mut TContext, state: &TState)
     {
         for (data, func) in self.events {
             func(me, ctx, state, data);
