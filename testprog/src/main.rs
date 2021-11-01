@@ -30,7 +30,6 @@ use std::ops::{Deref, DerefMut};
 
 use components::ComplexSystem;
 use regecs::{
-    build_system_list,
     component::{
         add_component,
         get_component,
@@ -52,7 +51,6 @@ mod components
     use std::any::Any;
 
     use regecs::{
-        build_component_manager,
         component::{
             pool::{BasicComponentPool, GroupComponentPool},
             Component,
@@ -60,7 +58,7 @@ mod components
             ComponentProvider,
             IterableComponentPool
         },
-        macros::build_component_manager1,
+        macros::build_component_manager,
         object::ObjectRef,
         system::{System, Updatable}
     };
@@ -124,7 +122,7 @@ mod components
         type Pool = GroupComponentPool<u32, ComplexComponent>;
     }
 
-    build_component_manager1!(
+    build_component_manager!(
         #[derive(Default)]
         pub TestComponentManager {
             (attachments) tests: Test,

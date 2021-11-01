@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! build_component_manager1 {
+macro_rules! build_component_manager {
     (
         $(#[$outer:meta])*
         $access: vis $name: ident
@@ -139,5 +139,5 @@ macro_rules! build_system_manager {
     };
 }
 
-pub use build_component_manager1;
+pub use build_component_manager;
 pub use build_system_manager;
