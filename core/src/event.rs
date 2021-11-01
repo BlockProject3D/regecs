@@ -34,31 +34,23 @@ use std::{
     collections::{HashMap, VecDeque}
 };
 
-use crate::object::{Context, ObjectRef, ObjectFactory};
+use crate::object::{Context, ObjectFactory, ObjectRef};
 
 pub type Handle = usize;
 
 pub struct EventTracker<T, TContext, TState>
 {
-    events: Vec<(
-        Handle,
-        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
-    )>
+    events: Vec<(Handle, Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>)>
 }
 
 impl<T, TContext, TState> EventTracker<T, TContext, TState>
 {
     pub fn new() -> EventTracker<T, TContext, TState>
     {
-        return EventTracker {
-            events: Vec::new()
-        };
+        return EventTracker { events: Vec::new() };
     }
 
-    pub fn push<
-        TRes: 'static,
-        TFunc: 'static + Fn(&mut T, &TContext, &TState, Option<TRes>)
-    >(
+    pub fn push<TRes: 'static, TFunc: 'static + Fn(&mut T, &TContext, &TState, Option<TRes>)>(
         &mut self,
         handle: Handle,
         func: TFunc

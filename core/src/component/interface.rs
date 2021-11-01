@@ -43,7 +43,8 @@ pub trait Component: Sized
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
 pub trait ComponentPool<TComponent: Component>: Index<usize, Output = TComponent> + IndexMut<usize>
-    where Self: Sized
+where
+    Self: Sized
 {
     /// Stores a new component in this pool
     ///

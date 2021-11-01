@@ -26,9 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::EventManager;
-use crate::component::ComponentManager;
-use crate::object::ObjectTree;
+use crate::{component::ComponentManager, event::EventManager, object::ObjectTree};
 
 pub trait Context
 {
@@ -43,7 +41,9 @@ pub trait Context
 }
 
 /// System interface
-pub trait System {}
+pub trait System
+{
+}
 
 /// System interface
 pub trait Updatable<TContext: Context>

@@ -26,10 +26,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{CoreObject, ObjectRef, Context, ObjectFactory};
-use std::collections::{HashMap, HashSet};
-use std::borrow::Cow;
-use std::ops::{IndexMut, Index};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    ops::{Index, IndexMut}
+};
+
+use crate::object::{Context, CoreObject, ObjectFactory, ObjectRef};
 
 pub struct ObjectTree
 {
@@ -68,8 +71,7 @@ impl ObjectTree
 
     pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]>
     {
-        if let Some(v) = self.by_class.get(class)
-        {
+        if let Some(v) = self.by_class.get(class) {
             return Cow::from(v);
         }
         return Cow::from(Vec::new());
@@ -113,12 +115,14 @@ impl<TContext: Context> ObjectStorage<TContext>
 {
     pub fn new() -> (ObjectStorage<TContext>, ObjectTree)
     {
-        return (ObjectStorage {
-            objects: Vec::new()
-        }, ObjectTree::new());
+        return (ObjectStorage { objects: Vec::new() }, ObjectTree::new());
     }
 
-    pub fn insert(&mut self, tree: &mut ObjectTree, obj: ObjectFactory<TContext>) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
+    pub fn insert(
+        &mut self,
+        tree: &mut ObjectTree,
+        obj: ObjectFactory<TContext>
+    ) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
     {
         let empty_slot = {
             let mut id = 0 as usize;
@@ -168,7 +172,8 @@ impl<TContext: Context> ObjectStorage<TContext>
     }
 }
 
-impl<TContext: Context> Index<ObjectRef> for ObjectStorage<TContext> {
+impl<TContext: Context> Index<ObjectRef> for ObjectStorage<TContext>
+{
     type Output = Box<dyn CoreObject<TContext>>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output

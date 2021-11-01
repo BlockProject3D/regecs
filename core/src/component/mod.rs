@@ -29,12 +29,14 @@
 //! REGECS component layer
 
 mod interface;
-pub use interface::Component;
-pub use interface::ComponentPool;
-pub use interface::ComponentManager;
-pub use interface::ComponentProvider;
-pub use interface::IterableComponentPool;
-pub use interface::AttachmentProvider;
+pub use interface::{
+    AttachmentProvider,
+    Component,
+    ComponentManager,
+    ComponentPool,
+    ComponentProvider,
+    IterableComponentPool
+};
 
 mod attachments;
 mod basic_pool;
@@ -42,8 +44,7 @@ mod grouped_pool;
 
 pub mod pool
 {
-    pub use super::basic_pool::BasicComponentPool;
-    pub use super::grouped_pool::GroupComponentPool;
+    pub use super::{basic_pool::BasicComponentPool, grouped_pool::GroupComponentPool};
 }
 
 pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(

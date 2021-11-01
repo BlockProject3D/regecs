@@ -26,22 +26,17 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use regecs::{
-    component::{
-        add_component,
-        get_component,
-        get_component_mut,
-        ComponentPool, ComponentProvider,
-        remove_component
-    },
-    entity::{ComponentTypeProvider, Entity, EntityPart},
-    scene::Scene
-};
-use regecs::build_system_list;
-use regecs::macros::build_system_manager;
-use regecs::system::{System, SystemPart, Updatable};
-use std::ops::{DerefMut, Deref};
+use std::ops::{Deref, DerefMut};
+
 use components::ComplexSystem;
+use regecs::{
+    build_system_list,
+    component::{add_component, get_component, get_component_mut, remove_component, ComponentPool, ComponentProvider},
+    entity::{ComponentTypeProvider, Entity, EntityPart},
+    macros::build_system_manager,
+    scene::Scene,
+    system::{System, SystemPart, Updatable}
+};
 
 use crate::components::ComplexComponent;
 
@@ -50,17 +45,18 @@ mod components
     use std::any::Any;
 
     use regecs::{
+        build_component_manager,
         component::{
-            Component, ComponentProvider, IterableComponentPool, ComponentPool,
-            pool::BasicComponentPool,
-            pool::GroupComponentPool
+            pool::{BasicComponentPool, GroupComponentPool},
+            Component,
+            ComponentPool,
+            ComponentProvider,
+            IterableComponentPool
         },
-        //reflection::{class::Class, interface::ClassConnector}
+        macros::build_component_manager1,
+        object::ObjectRef,
+        system::{System, Updatable}
     };
-    use regecs::system::{System, Updatable};
-    use regecs::build_component_manager;
-    use regecs::macros::build_component_manager1;
-    use regecs::object::ObjectRef;
 
     pub struct Test
     {
@@ -76,8 +72,8 @@ mod components
     //{
     //    fn class() -> Class
     //    {
-            /*static CLASS_STORAGE: &'static Class = &Class::new(String::from("Test"), Vec::new(), Test::new_instance);
-            return &CLASS_STORAGE;*/
+    /*static CLASS_STORAGE: &'static Class = &Class::new(String::from("Test"), Vec::new(), Test::new_instance);
+    return &CLASS_STORAGE;*/
     //        return Class::new(String::from("Test"), Vec::new(), Test::new_instance);
     //    }
 
@@ -148,9 +144,12 @@ mod components
 
     impl System for ComplexSystem {}
 
-    impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem where TContext::ComponentManager: ComponentProvider<ComplexComponent>
+    impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem
+    where
+        TContext::ComponentManager: ComponentProvider<ComplexComponent>
     {
-        fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState) {
+        fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState)
+        {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut().pool_mut().update_group(component, new_order);
@@ -167,25 +166,33 @@ mod components
     }
 }
 
-struct MySystem {pub val: i32}
+struct MySystem
+{
+    pub val: i32
+}
 
 impl Default for MySystem
 {
     fn default() -> MySystem
     {
-        return MySystem {val: 0}
+        return MySystem { val: 0 };
     }
 }
 
 impl System for MySystem {}
 
-impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem where TContext::ComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>
+impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem
+where
+    TContext::ComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>
 {
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
         get_component_mut::<_, components::Test>(ctx.components_mut(), 0).value = 12;
         get_component_mut::<_, components::Test2>(ctx.components_mut(), 0).value2 = 42;
-        assert_eq!(get_component::<_, components::Test2>(ctx.components_mut(), 0).value2, 42);
+        assert_eq!(
+            get_component::<_, components::Test2>(ctx.components_mut(), 0).value2,
+            42
+        );
         assert_eq!(*state, 42);
     }
 }

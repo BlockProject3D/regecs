@@ -26,18 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::EventManager;
 use std::any::Any;
-use crate::component::ComponentManager;
-use crate::object::ObjectTree;
-use crate::system::SystemManager;
+
+use crate::{component::ComponentManager, event::EventManager, object::ObjectTree, system::SystemManager};
 
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context : Sized
+pub trait Context: Sized
 {
     type AppState;
     type ComponentManager: ComponentManager;
@@ -64,7 +62,7 @@ pub trait Index
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait CoreObject<TContext: Context> : Serializable<TContext>
+pub trait CoreObject<TContext: Context>: Serializable<TContext>
 {
     fn on_event(
         &mut self,
@@ -99,10 +97,10 @@ pub trait Object<TContext: Context>
 }
 
 impl<
-    TContext: Context,
-    EventType: Any,
-    O: Object<TContext, EventType=EventType> + Serializable<TContext> + Index
-> CoreObject<TContext> for O
+        TContext: Context,
+        EventType: Any,
+        O: Object<TContext, EventType = EventType> + Serializable<TContext> + Index
+    > CoreObject<TContext> for O
 {
     fn on_event(
         &mut self,

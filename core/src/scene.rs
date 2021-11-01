@@ -31,18 +31,17 @@
 use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
+    component::ComponentManager,
     event::{Event, EventManager, SystemEvent},
-    object::ObjectRef
+    object::{Context, ObjectFactory, ObjectRef, ObjectStorage, ObjectTree},
+    system::SystemManager
 };
-use crate::object::{ObjectStorage, ObjectTree, Context, ObjectFactory};
-use crate::component::ComponentManager;
-use crate::system::SystemManager;
 
 pub struct Common<TContext: Context>
 {
     component_manager: TContext::ComponentManager,
     event_manager: EventManager<TContext>,
-    tree: ObjectTree,
+    tree: ObjectTree
 }
 
 impl<TContext: Context> crate::system::Context for Common<TContext>
@@ -78,7 +77,8 @@ pub struct SceneContext<TState, TComponentManager: ComponentManager, TSystemMana
     systems: TSystemManager
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>> crate::object::Context for SceneContext<TState, TComponentManager, TSystemManager>
+impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>> crate::object::Context
+    for SceneContext<TState, TComponentManager, TSystemManager>
 {
     type AppState = TState;
     type ComponentManager = TComponentManager;
@@ -117,17 +117,27 @@ impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<
 }
 
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>>
-{
+pub struct Scene<
+    TState,
+    TComponentManager: ComponentManager,
+    TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
+> {
     scene1: SceneContext<TState, TComponentManager, TSystemManager>,
     objects: ObjectStorage<SceneContext<TState, TComponentManager, TSystemManager>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>> Scene<TState, TComponentManager, TSystemManager>
+impl<
+        TState,
+        TComponentManager: ComponentManager,
+        TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
+    > Scene<TState, TComponentManager, TSystemManager>
 {
-    pub fn new(component_manager: TComponentManager, systems: TSystemManager) -> Scene<TState, TComponentManager, TSystemManager>
+    pub fn new(
+        component_manager: TComponentManager,
+        systems: TSystemManager
+    ) -> Scene<TState, TComponentManager, TSystemManager>
     {
         let (objects, tree) = ObjectStorage::new();
         return Scene {
@@ -147,55 +157,60 @@ impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<
 
     fn object_event_call(&mut self, state: &TState, obj_ref: ObjectRef, event: &Event)
     {
-        if !self.scene1.common.tree.is_enabled(obj_ref) { //Non enabled objects are not allowed to handle any event
+        if !self.scene1.common.tree.is_enabled(obj_ref) {
+            //Non enabled objects are not allowed to handle any event
             return;
         }
         let obj = &mut self.objects[obj_ref];
-        let res = obj.on_event(&mut self.scene1, state,&event.data, event.sender);
+        let res = obj.on_event(&mut self.scene1, state, &event.data, event.sender);
         if event.tracking {
             self.scene1.common.event_manager.queue_response(event.handle, res);
         }
     }
 
-    fn handle_system_event(&mut self, state: &TState, ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemManager>>) -> Option<Box<dyn Any>>
+    fn handle_system_event(
+        &mut self,
+        state: &TState,
+        ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemManager>>
+    ) -> Option<Box<dyn Any>>
     {
-            return match ev {
-                SystemEvent::Enable(obj, flag) => {
-                    self.objects.set_enabled(&mut self.scene1.common.tree, obj, flag);
-                    if !flag {
-                        self.updatable.remove(&obj);
-                    } else if flag && self.init_updatable.contains(&obj) {
-                        self.updatable.insert(obj);
-                    }
-                    None
-                },
-                SystemEvent::Serialize(obj) => {
-                    let data = self.objects[obj].serialize(&self.scene1, state);
-                    if let Some(d) = data {
-                        Some(Box::from(d))
-                    } else {
-                        None
-                    }
-                },
-                SystemEvent::Deserialize(obj, data) => {
-                    self.objects[obj].deserialize(&mut self.scene1, state, data);
-                    None
-                },
-                SystemEvent::Spawn(obj) => {
-                    let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
-                    let updatable = obj.on_init(&mut self.scene1, state);
-                    if updatable {
-                        self.updatable.insert(obj_ref);
-                        self.init_updatable.insert(obj_ref);
-                    }
-                    Some(Box::new(obj_ref))
-                },
-                SystemEvent::Destroy(target) => {
-                    self.objects[target].on_remove(&mut self.scene1, state);
-                    self.objects.destroy(&mut self.scene1.common.tree, target);
+        return match ev {
+            SystemEvent::Enable(obj, flag) => {
+                self.objects.set_enabled(&mut self.scene1.common.tree, obj, flag);
+                if !flag {
+                    self.updatable.remove(&obj);
+                } else if flag && self.init_updatable.contains(&obj) {
+                    self.updatable.insert(obj);
+                }
+                None
+            },
+            SystemEvent::Serialize(obj) => {
+                let data = self.objects[obj].serialize(&self.scene1, state);
+                if let Some(d) = data {
+                    Some(Box::from(d))
+                } else {
                     None
                 }
-            };
+            },
+            SystemEvent::Deserialize(obj, data) => {
+                self.objects[obj].deserialize(&mut self.scene1, state, data);
+                None
+            },
+            SystemEvent::Spawn(obj) => {
+                let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
+                let updatable = obj.on_init(&mut self.scene1, state);
+                if updatable {
+                    self.updatable.insert(obj_ref);
+                    self.init_updatable.insert(obj_ref);
+                }
+                Some(Box::new(obj_ref))
+            },
+            SystemEvent::Destroy(target) => {
+                self.objects[target].on_remove(&mut self.scene1, state);
+                self.objects.destroy(&mut self.scene1.common.tree, target);
+                None
+            }
+        };
     }
 
     pub fn update(&mut self, state: &TState)
@@ -217,7 +232,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<
                 for (obj_ref, obj) in self.objects.objects().enumerate() {
                     if let Some(o) = obj.as_mut() {
                         if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
-                            let res = o.on_event(&mut self.scene1, state,&event.data, event.sender);
+                            let res = o.on_event(&mut self.scene1, state, &event.data, event.sender);
                             if event.tracking {
                                 self.scene1.common.event_manager.queue_response(event.handle, res);
                             }
@@ -230,7 +245,10 @@ impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<
 
     pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemManager>>)
     {
-        self.scene1.common.event_manager.system(SystemEvent::Spawn(factory), false);
+        self.scene1
+            .common
+            .event_manager
+            .system(SystemEvent::Spawn(factory), false);
     }
 
     pub fn consume(self) -> TComponentManager

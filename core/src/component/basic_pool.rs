@@ -32,10 +32,7 @@ use std::{
 };
 
 use crate::{
-    component::{
-        attachments::AttachmentsManager,
-        AttachmentProvider, Component, ComponentPool, IterableComponentPool
-    },
+    component::{attachments::AttachmentsManager, AttachmentProvider, Component, ComponentPool, IterableComponentPool},
     object::ObjectRef
 };
 
