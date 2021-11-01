@@ -30,7 +30,7 @@ use crate::event::EventManager;
 use std::any::Any;
 use crate::component::ComponentManager;
 use crate::object::ObjectTree;
-use crate::system::SystemList;
+use crate::system::SystemManager;
 
 /// Type alias for object references
 ///
@@ -42,13 +42,13 @@ pub trait Context : Sized
     type AppState;
     type ComponentManager: ComponentManager;
     type SystemContext: crate::system::Context;
-    type SystemList: SystemList<Self::SystemContext>;
+    type SystemManager: SystemManager<Self::SystemContext>;
 
     fn components(&self) -> &Self::ComponentManager;
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
     fn event_manager(&mut self) -> &mut EventManager<Self>;
-    fn systems(&self) -> &Self::SystemList;
-    fn systems_mut(&mut self) -> &mut Self::SystemList;
+    fn systems(&self) -> &Self::SystemManager;
+    fn systems_mut(&mut self) -> &mut Self::SystemManager;
     fn objects(&self) -> &ObjectTree;
 }
 

@@ -125,7 +125,7 @@ macro_rules! build_component_manager1 {
 }
 
 #[macro_export]
-macro_rules! build_system_list1 {
+macro_rules! build_system_manager {
     (
         $(#[$outer:meta])*
         $access: ident $name: ident < $tstate: ty, $tcomponents: ty >
@@ -162,10 +162,10 @@ macro_rules! build_system_list1 {
             }
         )*
 
-        use $crate::system::SystemList;
+        use $crate::system::SystemManager;
         use $crate::scene::Common;
         use $crate::scene::SceneContext;
-        impl SystemList<Common<SceneContext<$tstate, $tcomponents, $name>>> for $name
+        impl SystemManager<Common<SceneContext<$tstate, $tcomponents, $name>>> for $name
         {
             fn update(&mut self, ctx: &mut Common<SceneContext<$tstate, $tcomponents, $name>>, state: & $tstate)
             {
@@ -198,9 +198,9 @@ macro_rules! build_system_list {
         use $crate::macros::paste;
         use $crate::macros::impls;
         use $crate::system::SystemProvider;
-        use $crate::system::SystemList;
+        use $crate::system::SystemManager;
         paste! {
-            pub struct [<$name SystemList>]
+            pub struct [<$name SystemManager>]
             {
                 $(
                     [<sys_$system:snake>]: $system,
@@ -208,7 +208,7 @@ macro_rules! build_system_list {
             }
 
             $(
-                impl SystemProvider<$system> for [<$name SystemList>]
+                impl SystemProvider<$system> for [<$name SystemManager>]
                 {
                     fn system(&self) -> & $system
                     {
@@ -222,10 +222,10 @@ macro_rules! build_system_list {
                 }
             )*
 
-            pub type [<$name SystemCtx>] = $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, [<$name SystemList>]>>;
-            pub type [<$name Ctx>] = $crate::scene::SceneContext<$tstate, $tcomponents, [<$name SystemList>]>;
+            pub type [<$name SystemCtx>] = $crate::scene::Common<$crate::scene::SceneContext<$tstate, $tcomponents, [<$name SystemManager>]>>;
+            pub type [<$name Ctx>] = $crate::scene::SceneContext<$tstate, $tcomponents, [<$name SystemManager>]>;
 
-            impl SystemList<[<$name SystemCtx>]> for [<$name SystemList>]
+            impl SystemManager<[<$name SystemCtx>]> for [<$name SystemManager>]
             {
                 fn update(&mut self, ctx: &mut [<$name SystemCtx>], state: & $tstate)
                 {
@@ -256,4 +256,4 @@ macro_rules! object_not_serializable {
 }
 
 pub use build_component_manager1;
-pub use build_system_list1;
+pub use build_system_manager;

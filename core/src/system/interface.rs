@@ -51,8 +51,8 @@ pub trait Updatable<TContext: Context>
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
 
-/// System list interface
-pub trait SystemList<TContext: Context>
+/// System manager interface
+pub trait SystemManager<TContext: Context>
 {
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState);
 }
@@ -61,4 +61,51 @@ pub trait SystemProvider<TSystem>
 {
     fn system(&self) -> &TSystem;
     fn system_mut(&mut self) -> &mut TSystem;
+}
+
+pub struct SystemType<TSystem: System>
+{
+    useless: std::marker::PhantomData<TSystem>
+}
+
+impl<TSystem: System> SystemType<TSystem>
+{
+    pub fn new() -> SystemType<TSystem>
+    {
+        return SystemType {
+            useless: std::marker::PhantomData::default()
+        };
+    }
+}
+
+pub trait SystemTypeProvider<TSystem: System>
+{
+    fn class() -> SystemType<TSystem>;
+}
+
+impl<TSystem: System> SystemTypeProvider<TSystem> for TSystem
+{
+    fn class() -> SystemType<TSystem>
+    {
+        return SystemType::<TSystem>::new();
+    }
+}
+
+pub trait SystemPart<TSystem: System>
+{
+    fn get(&self, _: SystemType<TSystem>) -> &TSystem;
+    fn get_mut(&mut self, _: SystemType<TSystem>) -> &mut TSystem;
+}
+
+impl<TSystem: System, TSystemManager: SystemProvider<TSystem>> SystemPart<TSystem> for TSystemManager
+{
+    fn get(&self, _: SystemType<TSystem>) -> &TSystem
+    {
+        return self.system();
+    }
+
+    fn get_mut(&mut self, _: SystemType<TSystem>) -> &mut TSystem
+    {
+        return self.system_mut();
+    }
 }

@@ -38,7 +38,7 @@ use regecs::{
     scene::Scene
 };
 use regecs::build_system_list;
-use regecs::macros::build_system_list1;
+use regecs::macros::build_system_manager;
 use regecs::system::{System, SystemPart, Updatable};
 use std::ops::{DerefMut, Deref};
 use components::ComplexSystem;
@@ -125,8 +125,8 @@ mod components
         #[derive(Default)]
         pub TestComponentManager {
             (attachments) tests: Test,
-            test2s: Test2,
-            complexes: ComplexComponent
+            (attachments) test2s: Test2,
+            (attachments) complexes: ComplexComponent
         }
         {into (Test, Test2) => (tests, test2s)}
     );
@@ -190,9 +190,9 @@ impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for 
     }
 }
 
-build_system_list1!(
+build_system_manager!(
     #[derive(Default)]
-    pub TestSystemList<i32, components::TestComponentManager>
+    pub TestSystemManager<i32, components::TestComponentManager>
     {
         (updates) my: MySystem,
         (updates) complex: ComplexSystem
@@ -215,7 +215,7 @@ fn main()
     add_component(&mut mgr, ComplexComponent::new(1, 1));
     add_component(&mut mgr, ComplexComponent::new(2, 4));
     add_component(&mut mgr, ComplexComponent::new(1, 2));
-    let mut systems = TestSystemList::default();
+    let mut systems = TestSystemManager::default();
     {
         use regecs::system::SystemTypeProvider;
         systems.get_mut(MySystem::class()).val = 42;
