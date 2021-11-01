@@ -80,7 +80,10 @@ impl ObjectTree
     fn insert(&mut self, obj: ObjectRef, class: &str)
     {
         self.by_id.insert(obj);
-        let var = self.by_class.entry(String::from(class)).or_insert(Vec::new());
+        let var = self
+            .by_class
+            .entry(String::from(class))
+            .or_insert(Vec::new());
         var.push(obj);
         self.count += 1;
     }
@@ -115,7 +118,12 @@ impl<TContext: Context> ObjectStorage<TContext>
 {
     pub fn new() -> (ObjectStorage<TContext>, ObjectTree)
     {
-        return (ObjectStorage { objects: Vec::new() }, ObjectTree::new());
+        return (
+            ObjectStorage {
+                objects: Vec::new()
+            },
+            ObjectTree::new()
+        );
     }
 
     pub fn insert(

@@ -71,14 +71,17 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
     }
 }
 
-pub struct SceneContext<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>>
-{
+pub struct SceneContext<
+    TState,
+    TComponentManager: ComponentManager,
+    TSystemManager: SystemManager<Common<Self>>
+> {
     common: Common<Self>,
     systems: TSystemManager
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>> crate::object::Context
-    for SceneContext<TState, TComponentManager, TSystemManager>
+impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>>
+    crate::object::Context for SceneContext<TState, TComponentManager, TSystemManager>
 {
     type AppState = TState;
     type ComponentManager = TComponentManager;
@@ -164,7 +167,10 @@ impl<
         let obj = &mut self.objects[obj_ref];
         let res = obj.on_event(&mut self.scene1, state, &event.data, event.sender);
         if event.tracking {
-            self.scene1.common.event_manager.queue_response(event.handle, res);
+            self.scene1
+                .common
+                .event_manager
+                .queue_response(event.handle, res);
         }
     }
 
@@ -176,7 +182,8 @@ impl<
     {
         return match ev {
             SystemEvent::Enable(obj, flag) => {
-                self.objects.set_enabled(&mut self.scene1.common.tree, obj, flag);
+                self.objects
+                    .set_enabled(&mut self.scene1.common.tree, obj, flag);
                 if !flag {
                     self.updatable.remove(&obj);
                 } else if flag && self.init_updatable.contains(&obj) {
@@ -216,7 +223,9 @@ impl<
     pub fn update(&mut self, state: &TState)
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
-        while let Some((tracking, handle, ev)) = self.scene1.common.event_manager.poll_system_event() {
+        while let Some((tracking, handle, ev)) =
+            self.scene1.common.event_manager.poll_system_event()
+        {
             let res = self.handle_system_event(state, ev);
             if tracking {
                 self.scene1.common.event_manager.queue_response(handle, res);
@@ -232,9 +241,13 @@ impl<
                 for (obj_ref, obj) in self.objects.objects().enumerate() {
                     if let Some(o) = obj.as_mut() {
                         if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
-                            let res = o.on_event(&mut self.scene1, state, &event.data, event.sender);
+                            let res =
+                                o.on_event(&mut self.scene1, state, &event.data, event.sender);
                             if event.tracking {
-                                self.scene1.common.event_manager.queue_response(event.handle, res);
+                                self.scene1
+                                    .common
+                                    .event_manager
+                                    .queue_response(event.handle, res);
                             }
                         }
                     }
@@ -243,7 +256,10 @@ impl<
         }
     }
 
-    pub fn spawn_object(&mut self, factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemManager>>)
+    pub fn spawn_object(
+        &mut self,
+        factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemManager>>
+    )
     {
         self.scene1
             .common

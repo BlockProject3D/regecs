@@ -124,7 +124,10 @@ pub fn component_manager(input: TokenStream) -> TokenStream
                                 panic!("How is it possible that you get no identifier???!!!");
                             }
                         },
-                        _ => panic!("Could not identify type of component for field {:?}", f.ident)
+                        _ => panic!(
+                            "Could not identify type of component for field {:?}",
+                            f.ident
+                        )
                     }
                 }
             },

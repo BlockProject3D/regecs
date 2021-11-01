@@ -31,7 +31,14 @@ use std::ops::{Deref, DerefMut};
 use components::ComplexSystem;
 use regecs::{
     build_system_list,
-    component::{add_component, get_component, get_component_mut, remove_component, ComponentPool, ComponentProvider},
+    component::{
+        add_component,
+        get_component,
+        get_component_mut,
+        remove_component,
+        ComponentPool,
+        ComponentProvider
+    },
     entity::{ComponentTypeProvider, Entity, EntityPart},
     macros::build_system_manager,
     scene::Scene,
@@ -152,7 +159,9 @@ mod components
         {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
-                ctx.components_mut().pool_mut().update_group(component, new_order);
+                ctx.components_mut()
+                    .pool_mut()
+                    .update_group(component, new_order);
             }
             for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
                 if v.last_order != v.order {
@@ -183,7 +192,8 @@ impl System for MySystem {}
 
 impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem
 where
-    TContext::ComponentManager: ComponentProvider<components::Test> + ComponentProvider<components::Test2>
+    TContext::ComponentManager:
+        ComponentProvider<components::Test> + ComponentProvider<components::Test2>
 {
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
@@ -239,14 +249,23 @@ fn main()
     sc.update(&ctx);
     mgr = sc.consume();
     assert_eq!(get_component::<_, components::Test>(&mut mgr, 0).value, 12);
-    assert_eq!(get_component::<_, components::Test2>(&mut mgr, 0).value2, 42);
+    assert_eq!(
+        get_component::<_, components::Test2>(&mut mgr, 0).value2,
+        42
+    );
     remove_component::<_, components::Test>(&mut mgr, 0);
     remove_component::<_, components::Test2>(&mut mgr, 0);
-    let test = <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr).size();
-    let test1 = <components::TestComponentManager as ComponentProvider<components::Test2>>::pool(&mut mgr).size();
+    let test =
+        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr)
+            .size();
+    let test1 =
+        <components::TestComponentManager as ComponentProvider<components::Test2>>::pool(&mut mgr)
+            .size();
     assert_eq!(test, 1);
     assert_eq!(test1, 0);
     remove_component::<_, components::Test>(&mut mgr, 1);
-    let test = <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr).size();
+    let test =
+        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr)
+            .size();
     assert_eq!(test, 0);
 }

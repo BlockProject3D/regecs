@@ -40,7 +40,10 @@ pub type Handle = usize;
 
 pub struct EventTracker<T, TContext, TState>
 {
-    events: Vec<(Handle, Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>)>
+    events: Vec<(
+        Handle,
+        Box<dyn Fn(&mut T, &TContext, &TState, Option<Box<dyn Any>>)>
+    )>
 }
 
 impl<T, TContext, TState> EventTracker<T, TContext, TState>

@@ -33,7 +33,13 @@ use std::{
 };
 
 use crate::{
-    component::{pool::BasicComponentPool, AttachmentProvider, Component, ComponentPool, IterableComponentPool},
+    component::{
+        pool::BasicComponentPool,
+        AttachmentProvider,
+        Component,
+        ComponentPool,
+        IterableComponentPool
+    },
     object::ObjectRef
 };
 
@@ -149,7 +155,8 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponen
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Default for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Default
+    for GroupComponentPool<K, TComponent>
 {
     fn default() -> Self
     {
@@ -213,8 +220,8 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentPro
     }
 }
 
-impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
-    for GroupComponentPool<K, TComponent>
+impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component>
+    IterableComponentPool<'a, TComponent> for GroupComponentPool<K, TComponent>
 {
     type Iter = GcpIterator<'a, K, TComponent>;
     type IterMut = GcpIteratorMut<'a, K, TComponent>;
@@ -230,7 +237,8 @@ impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component>
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Index<usize> for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Index<usize>
+    for GroupComponentPool<K, TComponent>
 {
     type Output = TComponent;
 
@@ -240,7 +248,8 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Index<usize> 
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> IndexMut<usize> for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> IndexMut<usize>
+    for GroupComponentPool<K, TComponent>
 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output
     {

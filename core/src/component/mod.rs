@@ -79,7 +79,10 @@ pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TCompo
     mgr.pool_mut().remove(id);
 }
 
-pub fn get_component_pool_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+pub fn get_component_pool_mut<
+    TComponentManager: ComponentProvider<TComponent>,
+    TComponent: Component
+>(
     mgr: &mut TComponentManager
 ) -> &mut TComponent::Pool
 {

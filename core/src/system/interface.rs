@@ -97,7 +97,8 @@ pub trait SystemPart<TSystem: System>
     fn get_mut(&mut self, _: SystemType<TSystem>) -> &mut TSystem;
 }
 
-impl<TSystem: System, TSystemManager: SystemProvider<TSystem>> SystemPart<TSystem> for TSystemManager
+impl<TSystem: System, TSystemManager: SystemProvider<TSystem>> SystemPart<TSystem>
+    for TSystemManager
 {
     fn get(&self, _: SystemType<TSystem>) -> &TSystem
     {

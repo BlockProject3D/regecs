@@ -42,7 +42,8 @@ pub trait Component: Sized
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<TComponent: Component>: Index<usize, Output = TComponent> + IndexMut<usize>
+pub trait ComponentPool<TComponent: Component>:
+    Index<usize, Output = TComponent> + IndexMut<usize>
 where
     Self: Sized
 {

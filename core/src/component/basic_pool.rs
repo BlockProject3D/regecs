@@ -32,7 +32,13 @@ use std::{
 };
 
 use crate::{
-    component::{attachments::AttachmentsManager, AttachmentProvider, Component, ComponentPool, IterableComponentPool},
+    component::{
+        attachments::AttachmentsManager,
+        AttachmentProvider,
+        Component,
+        ComponentPool,
+        IterableComponentPool
+    },
     object::ObjectRef
 };
 
@@ -174,7 +180,8 @@ impl<TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent
     }
 }
 
-impl<'a, TComponent: 'a + Component> IterableComponentPool<'a, TComponent> for BasicComponentPool<TComponent>
+impl<'a, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
+    for BasicComponentPool<TComponent>
 {
     type Iter = BcpIterator<'a, TComponent>;
     type IterMut = BcpIteratorMut<'a, TComponent>;

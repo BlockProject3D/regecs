@@ -47,8 +47,11 @@ impl<TContext: Context> ObjectFactory<TContext>
     }
 }
 
-impl<TContext: Context, TObject: 'static + CoreObject<TContext>, TFunc: 'static + FnOnce(ObjectRef) -> TObject>
-    From<TFunc> for ObjectFactory<TContext>
+impl<
+        TContext: Context,
+        TObject: 'static + CoreObject<TContext>,
+        TFunc: 'static + FnOnce(ObjectRef) -> TObject
+    > From<TFunc> for ObjectFactory<TContext>
 {
     fn from(func: TFunc) -> Self
     {

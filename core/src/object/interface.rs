@@ -28,7 +28,12 @@
 
 use std::any::Any;
 
-use crate::{component::ComponentManager, event::EventManager, object::ObjectTree, system::SystemManager};
+use crate::{
+    component::ComponentManager,
+    event::EventManager,
+    object::ObjectTree,
+    system::SystemManager
+};
 
 /// Type alias for object references
 ///
