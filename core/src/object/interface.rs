@@ -116,7 +116,7 @@ impl<
     ) -> Option<Box<dyn Any>>
     {
         if let Some(ev) = event.downcast_ref::<EventType>() {
-            return self.handle_event(ctx, state, &ev, sender);
+            return self.handle_event(ctx, state, ev, sender);
         }
         return None;
     }

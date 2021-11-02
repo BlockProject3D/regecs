@@ -46,13 +46,13 @@ macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
         pub struct $name<'a, TComponent: Component>
         {
-            comps: &'a $($su)? Vec<Option<TComponent>>,
+            comps: &'a $($su)? [Option<TComponent>],
             pos: usize,
         }
 
         impl<'a, TComponent: Component> $name<'a, TComponent>
         {
-            fn new(comps: &'a $($su)? Vec<Option<TComponent>>) -> $name<'a, TComponent>
+            fn new(comps: &'a $($su)? [Option<TComponent>]) -> $name<'a, TComponent>
             {
                 return $name
                 {

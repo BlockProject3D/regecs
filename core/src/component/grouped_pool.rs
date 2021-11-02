@@ -143,14 +143,14 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponen
             if *prev == new_group {
                 return;
             }
-            let val = self.map.entry(*prev).or_insert(Vec::new());
+            let val = self.map.entry(*prev).or_insert_with(Vec::new);
             val.retain(|val| *val != id);
-            if val.len() == 0 {
+            if val.is_empty() { // if val.len() == 0 then remove group
                 self.map.remove(prev);
             }
         }
         self.group_map.insert(id, new_group);
-        let val = self.map.entry(new_group).or_insert(Vec::new());
+        let val = self.map.entry(new_group).or_insert_with(Vec::new);
         val.push(id);
     }
 }
@@ -183,7 +183,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool
         if let Some(group) = self.group_map.get(&id) {
             let map = self.map.get_mut(group).unwrap();
             map.retain(|val| *val != id);
-            if map.len() == 0 {
+            if map.is_empty() { // if map.len() == 0 then remove group (map refers to a group of components)
                 self.map.remove(group);
             }
             self.group_map.remove(&id);

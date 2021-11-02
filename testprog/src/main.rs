@@ -240,24 +240,24 @@ fn main()
     sc.update(&ctx);
     sc.update(&ctx);
     mgr = sc.consume();
-    assert_eq!(get_component::<_, components::Test>(&mut mgr, 0).value, 12);
+    assert_eq!(get_component::<_, components::Test>(&mgr, 0).value, 12);
     assert_eq!(
-        get_component::<_, components::Test2>(&mut mgr, 0).value2,
+        get_component::<_, components::Test2>(&mgr, 0).value2,
         42
     );
     remove_component::<_, components::Test>(&mut mgr, 0);
     remove_component::<_, components::Test2>(&mut mgr, 0);
     let test =
-        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr)
+        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mgr)
             .size();
     let test1 =
-        <components::TestComponentManager as ComponentProvider<components::Test2>>::pool(&mut mgr)
+        <components::TestComponentManager as ComponentProvider<components::Test2>>::pool(&mgr)
             .size();
     assert_eq!(test, 1);
     assert_eq!(test1, 0);
     remove_component::<_, components::Test>(&mut mgr, 1);
     let test =
-        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mut mgr)
+        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mgr)
             .size();
     assert_eq!(test, 0);
 }

@@ -83,7 +83,7 @@ impl ObjectTree
         let var = self
             .by_class
             .entry(String::from(class))
-            .or_insert(Vec::new());
+            .or_insert_with(Vec::new);
         var.push(obj);
         self.count += 1;
     }
@@ -133,7 +133,7 @@ impl<TContext: Context> ObjectStorage<TContext>
     ) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
     {
         let empty_slot = {
-            let mut id = 0 as usize;
+            let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
                 id += 1;
             }
