@@ -123,7 +123,7 @@ mod components
             (attachments) test2s: Test2,
             (attachments) complexes: ComplexComponent
         }
-        {into (Test, Test2) => (tests, test2s)}
+        into (Test, Test2) => (tests, test2s)
     );
 
     pub struct ComplexSystem
@@ -212,10 +212,10 @@ build_system_manager!(
         (updates) complex: ComplexSystem,
         my2: MySystem2
     }
-    context MyContext;
-    {into (MySystem, ComplexSystem) => (my, complex)}
-    {into (MySystem) => (my)}
-    {into (ComplexSystem) => (complex)}
+    into (MySystem, ComplexSystem) => (my, complex)
+    into (MySystem) => (my)
+    into (ComplexSystem) => (complex)
+    context MyContext
 );
 
 fn main()

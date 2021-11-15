@@ -9,7 +9,7 @@ macro_rules! build_component_manager {
                 $(($poption: ident))? $pname: ident : $ptype: ty
             ),*
         }
-        $({into ($($types: ty),*) => ($($fields: ident),*)})*
+        $(into ($($types: ty),*) => ($($fields: ident),*))*
     ) => {
         $(#[$outer])*
         $access struct $name
@@ -72,11 +72,12 @@ macro_rules! build_system_manager {
                 $(($poption: ident))? $pname: ident : $ptype: ty
             ),*
         }
+        $(into ($($types: ty),*) => ($($fields: ident),*))*
+
         $(
             $(#[$ctxouter:meta])*
-            context $ctxname: ident;
+            context $ctxname: ident
         )?
-        $({into ($($types: ty),*) => ($($fields: ident),*)})*
     ) => {
         $(#[$outer])*
         $access struct $name
@@ -123,11 +124,6 @@ macro_rules! build_system_manager {
         }
 
         $(
-            $(#[$ctxouter])*
-            $access type $ctxname = $crate::scene::SceneContext<$tstate, $tcomponents, $name>;
-        )?
-
-        $(
             impl Into<($($types),*)> for $name
             {
                 fn into(self) -> ($($types),*)
@@ -136,6 +132,11 @@ macro_rules! build_system_manager {
                 }
             }
         )*
+
+        $(
+            $(#[$ctxouter])*
+            $access type $ctxname = $crate::scene::SceneContext<$tstate, $tcomponents, $name>;
+        )?
     };
 }
 
