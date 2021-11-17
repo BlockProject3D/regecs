@@ -37,18 +37,18 @@ use crate::{
     system::SystemManager
 };
 
-pub struct Common<TContext: Context>
+pub struct Common<C: Context>
 {
-    component_manager: TContext::ComponentManager,
-    event_manager: EventManager<TContext>,
+    component_manager: C::ComponentManager,
+    event_manager: EventManager<C>,
     tree: ObjectTree
 }
 
-impl<TContext: Context> crate::system::Context for Common<TContext>
+impl<C: Context> crate::system::Context for Common<C>
 {
-    type AppState = TContext::AppState;
-    type ComponentManager = TContext::ComponentManager;
-    type Context = TContext;
+    type AppState = C::AppState;
+    type ComponentManager = C::ComponentManager;
+    type Context = C;
 
     fn components(&self) -> &Self::ComponentManager
     {
@@ -72,19 +72,19 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
 }
 
 pub struct SceneContext<
-    TState,
-    TComponentManager: Clear,
+    State,
+    ComponentManager: Clear,
     TSystemManager: SystemManager<Common<Self>>
 > {
     common: Common<Self>,
     systems: TSystemManager
 }
 
-impl<TState, TComponentManager: Clear, TSystemManager: SystemManager<Common<Self>>>
-    crate::object::Context for SceneContext<TState, TComponentManager, TSystemManager>
+impl<State, ComponentManager: Clear, TSystemManager: SystemManager<Common<Self>>>
+    crate::object::Context for SceneContext<State, ComponentManager, TSystemManager>
 {
-    type AppState = TState;
-    type ComponentManager = TComponentManager;
+    type AppState = State;
+    type ComponentManager = ComponentManager;
     type SystemContext = Common<Self>;
     type SystemManager = TSystemManager;
 
@@ -121,26 +121,26 @@ impl<TState, TComponentManager: Clear, TSystemManager: SystemManager<Common<Self
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<
-    TState,
-    TComponentManager: Clear,
-    TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
+    State,
+    ComponentManager: Clear,
+    TSystemManager: SystemManager<Common<SceneContext<State, ComponentManager, TSystemManager>>>
 > {
-    scene1: SceneContext<TState, TComponentManager, TSystemManager>,
-    objects: ObjectStorage<SceneContext<TState, TComponentManager, TSystemManager>>,
+    scene1: SceneContext<State, ComponentManager, TSystemManager>,
+    objects: ObjectStorage<SceneContext<State, ComponentManager, TSystemManager>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
 
 impl<
-        TState,
-        TComponentManager: Clear,
-        TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
-    > Scene<TState, TComponentManager, TSystemManager>
+        State,
+        ComponentManager: Clear,
+        TSystemManager: SystemManager<Common<SceneContext<State, ComponentManager, TSystemManager>>>
+    > Scene<State, ComponentManager, TSystemManager>
 {
     pub fn new(
-        component_manager: TComponentManager,
+        component_manager: ComponentManager,
         systems: TSystemManager
-    ) -> Scene<TState, TComponentManager, TSystemManager>
+    ) -> Scene<State, ComponentManager, TSystemManager>
     {
         let (objects, tree) = ObjectStorage::new();
         return Scene {
@@ -158,7 +158,7 @@ impl<
         };
     }
 
-    fn object_event_call(&mut self, state: &TState, obj_ref: ObjectRef, event: &Event)
+    fn object_event_call(&mut self, state: &State, obj_ref: ObjectRef, event: &Event)
     {
         if !self.scene1.common.tree.is_enabled(obj_ref) {
             //Non enabled objects are not allowed to handle any event
@@ -176,8 +176,8 @@ impl<
 
     fn handle_system_event(
         &mut self,
-        state: &TState,
-        ev: SystemEvent<SceneContext<TState, TComponentManager, TSystemManager>>
+        state: &State,
+        ev: SystemEvent<SceneContext<State, ComponentManager, TSystemManager>>
     ) -> Option<Box<dyn Any>>
     {
         return match ev {
@@ -220,7 +220,7 @@ impl<
         };
     }
 
-    pub fn update(&mut self, state: &TState)
+    pub fn update(&mut self, state: &State)
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
         while let Some((tracking, handle, ev)) =
@@ -258,7 +258,7 @@ impl<
 
     pub fn spawn_object(
         &mut self,
-        factory: ObjectFactory<SceneContext<TState, TComponentManager, TSystemManager>>
+        factory: ObjectFactory<SceneContext<State, ComponentManager, TSystemManager>>
     )
     {
         self.scene1
@@ -267,82 +267,8 @@ impl<
             .system(SystemEvent::Spawn(factory), false);
     }
 
-    pub fn consume(self) -> TComponentManager
+    pub fn consume(self) -> ComponentManager
     {
         return self.scene1.common.component_manager;
     }
 }
-
-// Represents a scene, provides storage for systems and objects
-/*pub struct Scene<TState, TComponentManager>
-{
-    component_manager: TComponentManager,
-    //systems: Vec<Box<dyn System<TState, TComponentManager>>>,
-    objects: ObjectStorage<TState, TComponentManager>,
-    tree: ObjectTree,
-    //objects: Vec<Option<Box<dyn CoreObject<TState, TComponentManager>>>>,
-    //updatables: HashSet<ObjectRef>,
-    event_manager: EventManager<TState, TComponentManager>
-}
-
-impl<TState, TComponentManager> Scene<TState, TComponentManager>
-{
-    pub fn new(component_manager: TComponentManager) -> Scene<TState, TComponentManager>
-    {
-        let (objects, tree) = ObjectStorage::new();
-        return Scene {
-            component_manager,
-            //systems: Vec::new(),
-            objects,
-            tree,
-            event_manager: EventManager::new()
-        };
-    }
-
-    fn object_event_call(ctx: &mut crate::object::Context<TState, TComponentManager>, obj: &mut Box<dyn CoreObject<TState, TComponentManager>>, obj_ref: ObjectRef, event: &Event)
-    {
-        let res = obj.on_event(ctx, &event.data, event.sender, obj_ref);
-        if event.tracking {
-            ctx.event_manager.queue_response(event.handle, res);
-        }
-    }
-
-    pub fn update(&mut self, state: &mut TState)
-    {
-        let mut ctx = crate::object::Context {
-            components: &mut self.component_manager,
-            event_manager: &mut self.event_manager,
-            tree: &self.tree,
-            state
-        };
- //Must be slowed down due to rust borrow checker
-        for obj in self.tree.get_updatable() {
-            self.objects[*obj].on_update(&mut ctx, *obj);
-        }
-        while let Some(event) = ctx.event_manager.poll_event() {
-            if let Some(obj_ref) = event.target {
-                Self::object_event_call(&mut ctx, &mut self.objects[obj_ref], obj_ref, &event);
-            } else {
-                for i in self.tree.get_all() {
-                    Self::object_event_call(&mut ctx, &mut self.objects[*i], *i, &event);
-                }
-            }
-        }
-    }
-
-    pub fn spawn_object<TObject: CoreObject<TState, TComponentManager> + 'static>(&mut self, obj: TObject)
-    {
-        self.event_manager.system(SystemEvent::Spawn(Box::from(obj)), false);
-    }
-
-    /*pub fn add_system<TSystem: 'static + System<TState, TComponentManager>>(&mut self, system: TSystem)
-    {
-        let b = Box::new(system);
-        self.systems.push(b);
-    }*/
-
-    pub fn consume(self) -> TComponentManager
-    {
-        return self.component_manager;
-    }
-}*/

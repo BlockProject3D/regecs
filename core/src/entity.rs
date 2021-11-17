@@ -33,14 +33,14 @@ use crate::{
 use crate::component::ComponentRef;
 use crate::component::pool::{Attachments, ComponentManager};
 
-pub struct ComponentType<TComponent: Component>
+pub struct ComponentType<T: Component>
 {
-    useless: std::marker::PhantomData<TComponent>
+    useless: std::marker::PhantomData<T>
 }
 
-impl<TComponent: Component> ComponentType<TComponent>
+impl<T: Component> ComponentType<T>
 {
-    pub fn new() -> ComponentType<TComponent>
+    pub fn new() -> ComponentType<T>
     {
         return ComponentType {
             useless: std::marker::PhantomData::default()
@@ -48,28 +48,28 @@ impl<TComponent: Component> ComponentType<TComponent>
     }
 }
 
-pub trait ComponentTypeProvider<TComponent: Component>
+pub trait ComponentTypeProvider<T: Component>
 {
-    fn class() -> ComponentType<TComponent>;
+    fn class() -> ComponentType<T>;
 }
 
-impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
+impl<T: Component> ComponentTypeProvider<T> for T
 {
-    fn class() -> ComponentType<TComponent>
+    fn class() -> ComponentType<T>
     {
-        return ComponentType::<TComponent>::new();
+        return ComponentType::<T>::new();
     }
 }
 
-pub struct Entity<'a, TComponentManager>
+pub struct Entity<'a, ComponentManager>
 {
-    mgr: &'a mut TComponentManager,
+    mgr: &'a mut ComponentManager,
     entity: ObjectRef
 }
 
-impl<'a, TComponentManager> Entity<'a, TComponentManager>
+impl<'a, ComponentManager> Entity<'a, ComponentManager>
 {
-    pub fn aquire(&mut self, other: ObjectRef) -> Entity<TComponentManager>
+    pub fn aquire(&mut self, other: ObjectRef) -> Entity<ComponentManager>
     {
         return Entity {
             mgr: self.mgr,
@@ -78,7 +78,7 @@ impl<'a, TComponentManager> Entity<'a, TComponentManager>
     }
 }
 
-pub trait EntityPart<T: Component, Provider: ComponentManager<T>>
+pub trait EntityPart<T: Component, CM: ComponentManager<T>>
 {
     fn add(&mut self, comp: T) -> ComponentRef<T>;
     fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T;
@@ -89,8 +89,8 @@ pub trait EntityPart<T: Component, Provider: ComponentManager<T>>
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, Provider: ComponentManager<T>>
-    EntityPart<T, Provider> for Entity<'a, Provider>
+impl<'a, T: Component, CM: ComponentManager<T>>
+    EntityPart<T, CM> for Entity<'a, CM>
 where
     T::Pool: Attachments<T>
 {
@@ -132,9 +132,9 @@ where
     }
 }
 
-impl<'a, TComponentManager> Entity<'a, TComponentManager>
+impl<'a, ComponentManager> Entity<'a, ComponentManager>
 {
-    pub fn new(mgr: &'a mut TComponentManager, entity: ObjectRef) -> Entity<'a, TComponentManager>
+    pub fn new(mgr: &'a mut ComponentManager, entity: ObjectRef) -> Entity<'a, ComponentManager>
     {
         return Entity { mgr, entity };
     }
