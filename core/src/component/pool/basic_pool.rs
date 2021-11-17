@@ -30,18 +30,10 @@ use std::{
     ops::{Index, IndexMut},
     vec::Vec
 };
-
-use crate::{
-    component::{
-        attachments::AttachmentsManager,
-        AttachmentProvider,
-        Component,
-        ComponentPool,
-        IterableComponentPool
-    },
-    object::ObjectRef
-};
-use crate::component::ComponentRef;
+use crate::component::attachments::AttachmentsManager;
+use crate::component::{Component, ComponentRef};
+use crate::component::pool::{Attachments, ComponentPool, Iter};
+use crate::object::ObjectRef;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -158,7 +150,7 @@ impl<T: Component> ComponentPool<T> for BasicComponentPool<T>
     }
 }
 
-impl<T: Component> AttachmentProvider<T> for BasicComponentPool<T>
+impl<T: Component> Attachments<T> for BasicComponentPool<T>
 {
     fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
@@ -199,8 +191,7 @@ impl<T: Component> AttachmentProvider<T> for BasicComponentPool<T>
     }
 }
 
-impl<'a, T: 'a + Component> IterableComponentPool<'a, T>
-    for BasicComponentPool<T>
+impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T>
 {
     type Iter = BcpIterator<'a, T>;
     type IterMut = BcpIteratorMut<'a, T>;

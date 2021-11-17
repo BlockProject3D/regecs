@@ -27,10 +27,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    component::{AttachmentProvider, Component, ComponentPoolProvider},
+    component::{Component},
     object::ObjectRef
 };
 use crate::component::ComponentRef;
+use crate::component::pool::{Attachments, ComponentManager};
 
 pub struct ComponentType<TComponent: Component>
 {
@@ -77,7 +78,7 @@ impl<'a, TComponentManager> Entity<'a, TComponentManager>
     }
 }
 
-pub trait EntityPart<T: Component, Provider: ComponentPoolProvider<T>>
+pub trait EntityPart<T: Component, Provider: ComponentManager<T>>
 {
     fn add(&mut self, comp: T) -> ComponentRef<T>;
     fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T;
@@ -88,10 +89,10 @@ pub trait EntityPart<T: Component, Provider: ComponentPoolProvider<T>>
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, Provider: ComponentPoolProvider<T>>
+impl<'a, T: Component, Provider: ComponentManager<T>>
     EntityPart<T, Provider> for Entity<'a, Provider>
 where
-    T::Pool: AttachmentProvider<T>
+    T::Pool: Attachments<T>
 {
     fn add(&mut self, comp: T) -> ComponentRef<T>
     {

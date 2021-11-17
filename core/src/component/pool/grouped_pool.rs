@@ -31,18 +31,9 @@ use std::{
     hash::Hash,
     ops::{Index, IndexMut}
 };
-
-use crate::{
-    component::{
-        pool::BasicComponentPool,
-        AttachmentProvider,
-        Component,
-        ComponentPool,
-        IterableComponentPool
-    },
-    object::ObjectRef
-};
-use crate::component::ComponentRef;
+use crate::component::{Component, ComponentRef};
+use crate::component::pool::{Attachments, BasicComponentPool, ComponentPool, Iter};
+use crate::object::ObjectRef;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -198,8 +189,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> ComponentPool<T>
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> AttachmentProvider<T>
-    for GroupComponentPool<K, T>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T> for GroupComponentPool<K, T>
 {
     fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
@@ -231,8 +221,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> AttachmentProvider<T>
     }
 }
 
-impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component>
-    IterableComponentPool<'a, T> for GroupComponentPool<K, T>
+impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component> Iter<'a, T> for GroupComponentPool<K, T>
 {
     type Iter = GcpIterator<'a, K, T>;
     type IterMut = GcpIteratorMut<'a, K, T>;

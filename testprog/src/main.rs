@@ -28,16 +28,14 @@
 
 use components::ComplexSystem;
 use regecs::{
-    component::{
-        ComponentPool,
-        ComponentPoolProvider
-    },
     entity::{Entity, EntityPart},
     macros::build_system_manager,
     scene::Scene,
     system::{System, SystemPart, Updatable}
 };
 use regecs::component::ComponentRef;
+use regecs::component::pool::ComponentManager;
+use regecs::component::pool::ComponentPool;
 
 use crate::components::{ComplexComponent, TestComponentManager};
 
@@ -46,14 +44,13 @@ mod components
     use regecs::{
         component::{
             pool::{BasicComponentPool, GroupComponentPool},
-            Component,
-            ComponentPoolProvider,
-            IterableComponentPool
+            Component
         },
         macros::build_component_manager,
         system::{System, Updatable}
     };
     use regecs::component::ComponentRef;
+    use regecs::component::pool::{ComponentManager, Iter};
 
     pub struct Test
     {
@@ -143,7 +140,7 @@ mod components
 
     impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem
     where
-        TContext::ComponentManager: ComponentPoolProvider<ComplexComponent>
+        TContext::ComponentManager: ComponentManager<ComplexComponent>
     {
         fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState)
         {
@@ -181,7 +178,7 @@ impl System for MySystem {}
 impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem
 where
     TContext::ComponentManager:
-        ComponentPoolProvider<components::Test> + ComponentPoolProvider<components::Test2>
+        ComponentManager<components::Test> + ComponentManager<components::Test2>
 {
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
@@ -245,11 +242,11 @@ fn main()
     );
     mgr.remove_component(test);
     mgr.remove_component(test2);
-    let sfdk = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).len();
-    let fh = <TestComponentManager as ComponentPoolProvider<components::Test2>>::get(&mgr).len();
+    let sfdk = <TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
+    let fh = <TestComponentManager as ComponentManager<components::Test2>>::get(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
     mgr.remove_component(test1);
-    let test = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).len();
+    let test = <TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
     assert_eq!(test, 0);
 }

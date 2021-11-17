@@ -26,12 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{component::ComponentManager, event::EventManager, object::ObjectTree};
+use crate::{component::Clear, event::EventManager, object::ObjectTree};
 
 pub trait Context
 {
     type AppState;
-    type ComponentManager: ComponentManager;
+    type ComponentManager: Clear;
     type Context: crate::object::Context;
 
     fn components(&self) -> &Self::ComponentManager;

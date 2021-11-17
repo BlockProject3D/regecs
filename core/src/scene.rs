@@ -31,7 +31,7 @@
 use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
-    component::ComponentManager,
+    component::Clear,
     event::{Event, EventManager, SystemEvent},
     object::{Context, ObjectFactory, ObjectRef, ObjectStorage, ObjectTree},
     system::SystemManager
@@ -73,14 +73,14 @@ impl<TContext: Context> crate::system::Context for Common<TContext>
 
 pub struct SceneContext<
     TState,
-    TComponentManager: ComponentManager,
+    TComponentManager: Clear,
     TSystemManager: SystemManager<Common<Self>>
 > {
     common: Common<Self>,
     systems: TSystemManager
 }
 
-impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<Common<Self>>>
+impl<TState, TComponentManager: Clear, TSystemManager: SystemManager<Common<Self>>>
     crate::object::Context for SceneContext<TState, TComponentManager, TSystemManager>
 {
     type AppState = TState;
@@ -122,7 +122,7 @@ impl<TState, TComponentManager: ComponentManager, TSystemManager: SystemManager<
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<
     TState,
-    TComponentManager: ComponentManager,
+    TComponentManager: Clear,
     TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
 > {
     scene1: SceneContext<TState, TComponentManager, TSystemManager>,
@@ -133,7 +133,7 @@ pub struct Scene<
 
 impl<
         TState,
-        TComponentManager: ComponentManager,
+        TComponentManager: Clear,
         TSystemManager: SystemManager<Common<SceneContext<TState, TComponentManager, TSystemManager>>>
     > Scene<TState, TComponentManager, TSystemManager>
 {

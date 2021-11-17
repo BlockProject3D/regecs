@@ -21,7 +21,7 @@ macro_rules! build_component_manager {
         }
 
         $(
-            impl regecs::component::ComponentPoolProvider<$ptype> for $name
+            impl regecs::component::pool::ComponentManager<$ptype> for $name
             {
                 fn get(&self) -> & <$ptype as regecs::component::Component>::Pool
                 {
@@ -35,13 +35,13 @@ macro_rules! build_component_manager {
             }
         )*
 
-        impl regecs::component::ComponentManager for $name
+        impl regecs::component::Clear for $name
         {
-            fn clear_components(&mut self, entity: regecs::object::ObjectRef)
+            fn clear(&mut self, entity: regecs::object::ObjectRef)
             {
                 macro_rules! attachment_call {
                     (attachments $afsb: ident $afsb1: ty) => {
-                        <<$afsb1 as regecs::component::Component>::Pool as regecs::component::AttachmentProvider<$afsb1>>::clear(&mut self.$afsb, entity);
+                        <<$afsb1 as regecs::component::Component>::Pool as regecs::component::pool::Attachments<$afsb1>>::clear(&mut self.$afsb, entity);
                     };
                     ($afsb: ident $afsb1: ty) => {};
                 }

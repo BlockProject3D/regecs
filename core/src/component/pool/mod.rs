@@ -26,60 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS component layer
-
-pub mod pool;
-
+mod basic_pool;
+mod grouped_pool;
 mod interface;
+
 pub use interface::*;
 
-mod attachments;
-
-/*pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    comp: TComponent
-) -> usize
-{
-    return mgr.pool_mut().add(comp);
-}
-
-pub fn get_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager,
-    id: usize
-) -> &TComponent
-{
-    return &mgr.pool()[id];
-}
-
-pub fn get_component_mut<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-) -> &mut TComponent
-{
-    return &mut mgr.pool_mut()[id];
-}
-
-pub fn remove_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &mut TComponentManager,
-    id: usize
-)
-{
-    mgr.pool_mut().remove(id);
-}
-
-pub fn get_component_pool_mut<
-    TComponentManager: ComponentProvider<TComponent>,
-    TComponent: Component
->(
-    mgr: &mut TComponentManager
-) -> &mut TComponent::Pool
-{
-    return mgr.pool_mut();
-}
-
-pub fn get_component_pool<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
-    mgr: &TComponentManager
-) -> &TComponent::Pool
-{
-    return mgr.pool();
-}*/
+pub use basic_pool::BasicComponentPool;
+pub use grouped_pool::GroupComponentPool;

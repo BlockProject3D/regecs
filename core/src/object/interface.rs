@@ -29,11 +29,11 @@
 use std::any::Any;
 
 use crate::{
-    component::ComponentManager,
     event::EventManager,
     object::ObjectTree,
     system::SystemManager
 };
+use crate::component::Clear;
 
 /// Type alias for object references
 ///
@@ -43,7 +43,7 @@ pub type ObjectRef = u32;
 pub trait Context: Sized
 {
     type AppState;
-    type ComponentManager: ComponentManager;
+    type ComponentManager: Clear;
     type SystemContext: crate::system::Context;
     type SystemManager: SystemManager<Self::SystemContext>;
 
@@ -128,7 +128,7 @@ impl<
 
     fn on_remove(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
-        ctx.components_mut().clear_components(self.index());
+        ctx.components_mut().clear(self.index());
         self.remove(ctx, state);
     }
 

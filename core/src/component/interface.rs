@@ -30,7 +30,7 @@
 
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::ops::{Index, IndexMut};
+use crate::component::pool::ComponentPool;
 
 use crate::object::ObjectRef;
 
@@ -105,135 +105,8 @@ impl<T: Component> ComponentRef<T>
     }
 }
 
-/// Represents an allocation pool for a given type of component
-///
-/// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<T: Component>: Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
-where
-    Self: Sized
-{
-    /// Stores a new component in this pool
-    ///
-    /// # Arguments
-    ///
-    /// * `comp` - the component to store
-    ///
-    /// # Returns
-    ///
-    /// * a reference to the new stored component
-    fn add(&mut self, comp: T) -> ComponentRef<T>;
-
-    /// Removes a component from this pool
-    ///
-    /// # Arguments
-    ///
-    /// * `r` - a reference to the component to remove
-    fn remove(&mut self, r: ComponentRef<T>);
-
-    /// Returns the number of components stored in this pool
-    ///
-    /// # Returns
-    ///
-    /// * the component count
-    fn len(&self) -> usize;
-
-    /// Returns true if this component pool is empty
-    fn is_empty(&self) -> bool
-    {
-        self.len() == 0
-    }
-}
-
-/// Allows a component pool to be iterated
-///
-/// *All iterators in component pools returns indices of components*
-/// *to get the actual component instance use index or index_mut*
-pub trait IterableComponentPool<'a, T: 'a + Component>
-{
-    /// The type of immutable iterator
-    type Iter: Iterator<Item = (ComponentRef<T>, &'a T)>;
-
-    /// The type of mutable iterator
-    type IterMut: Iterator<Item = (ComponentRef<T>, &'a mut T)>;
-
-    /// Returns an iterator into this pool
-    ///
-    /// # Returns
-    ///
-    /// * a new immutable iterator instance
-    fn iter(&'a self) -> Self::Iter;
-
-    /// Returns an iterator into this pool
-    ///
-    /// # Returns
-    ///
-    /// * a new mutable iterator instance
-    fn iter_mut(&'a mut self) -> Self::IterMut;
-}
-
-pub trait AttachmentProvider<T: Component>
-{
-    /// Attach a new component
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to attach the component to
-    /// * `component` - the component index to attach
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>);
-
-    /// Lists all attachments of a given entity
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to list
-    ///
-    /// # Returns
-    ///
-    /// * the list of all components attached to the given entity
-    /// * None if the entity does not exist or that the entity does not have any attachements
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>;
-
-    /// Removes all components attached to a given entity
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to clear
-    fn clear(&mut self, entity: ObjectRef);
-
-    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>;
-
-    fn get_first(&self, entity: ObjectRef) -> Option<&T>;
-}
-
-pub trait ComponentPoolProvider<T: Component>
-{
-    fn get(&self) -> &T::Pool;
-    fn get_mut(&mut self) -> &mut T::Pool;
-
-    fn get_component(&self, r: ComponentRef<T>) -> &T
-    {
-        &self.get()[r]
-    }
-
-    fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T
-    {
-        &mut self.get_mut()[r]
-    }
-
-    fn add_component(&mut self, comp: T) -> ComponentRef<T>
-    {
-        self.get_mut().add(comp)
-    }
-
-    fn remove_component(&mut self, r: ComponentRef<T>)
-    {
-        self.get_mut().remove(r);
-    }
-}
-
-/// Base trait to represent the container of all component pools
-pub trait ComponentManager
+pub trait Clear
 {
     /// Clears all components attached to the given entity
-    fn clear_components(&mut self, entity: ObjectRef);
+    fn clear(&mut self, entity: ObjectRef);
 }
