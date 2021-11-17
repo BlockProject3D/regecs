@@ -109,14 +109,14 @@ impl ObjectTree
     }
 }
 
-pub struct ObjectStorage<TContext: Context>
+pub struct ObjectStorage<C: Context>
 {
-    objects: Vec<Option<Box<dyn CoreObject<TContext>>>>
+    objects: Vec<Option<Box<dyn CoreObject<C>>>>
 }
 
-impl<TContext: Context> ObjectStorage<TContext>
+impl<C: Context> ObjectStorage<C>
 {
-    pub fn new() -> (ObjectStorage<TContext>, ObjectTree)
+    pub fn new() -> (ObjectStorage<C>, ObjectTree)
     {
         return (
             ObjectStorage {
@@ -129,8 +129,8 @@ impl<TContext: Context> ObjectStorage<TContext>
     pub fn insert(
         &mut self,
         tree: &mut ObjectTree,
-        obj: ObjectFactory<TContext>
-    ) -> (ObjectRef, &mut Box<dyn CoreObject<TContext>>)
+        obj: ObjectFactory<C>
+    ) -> (ObjectRef, &mut Box<dyn CoreObject<C>>)
     {
         let empty_slot = {
             let mut id = 0;
@@ -165,7 +165,7 @@ impl<TContext: Context> ObjectStorage<TContext>
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn CoreObject<TContext>>>>
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn CoreObject<C>>>>
     {
         return self.objects.iter_mut();
     }
@@ -180,9 +180,9 @@ impl<TContext: Context> ObjectStorage<TContext>
     }
 }
 
-impl<TContext: Context> Index<ObjectRef> for ObjectStorage<TContext>
+impl<C: Context> Index<ObjectRef> for ObjectStorage<C>
 {
-    type Output = Box<dyn CoreObject<TContext>>;
+    type Output = Box<dyn CoreObject<C>>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output
     {
@@ -190,7 +190,7 @@ impl<TContext: Context> Index<ObjectRef> for ObjectStorage<TContext>
     }
 }
 
-impl<TContext: Context> IndexMut<ObjectRef> for ObjectStorage<TContext>
+impl<C: Context> IndexMut<ObjectRef> for ObjectStorage<C>
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
     {

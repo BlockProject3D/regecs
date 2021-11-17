@@ -34,26 +34,26 @@ mod storage;
 pub use interface::*;
 pub use storage::{ObjectStorage, ObjectTree};
 
-pub struct ObjectFactory<TContext: Context>
+pub struct ObjectFactory<C: Context>
 {
-    factory: Box<dyn FnOnce(ObjectRef) -> Box<dyn CoreObject<TContext>>>
+    factory: Box<dyn FnOnce(ObjectRef) -> Box<dyn CoreObject<C>>>
 }
 
-impl<TContext: Context> ObjectFactory<TContext>
+impl<C: Context> ObjectFactory<C>
 {
-    pub fn invoke(self, this: ObjectRef) -> Box<dyn CoreObject<TContext>>
+    pub fn invoke(self, this: ObjectRef) -> Box<dyn CoreObject<C>>
     {
         return (self.factory)(this);
     }
 }
 
 impl<
-        TContext: Context,
-        TObject: 'static + CoreObject<TContext>,
-        TFunc: 'static + FnOnce(ObjectRef) -> TObject
-    > From<TFunc> for ObjectFactory<TContext>
+        C: Context,
+        O: 'static + CoreObject<C>,
+        F: 'static + FnOnce(ObjectRef) -> O
+    > From<F> for ObjectFactory<C>
 {
-    fn from(func: TFunc) -> Self
+    fn from(func: F) -> Self
     {
         return ObjectFactory {
             factory: Box::new(|this| Box::new(func(this)))

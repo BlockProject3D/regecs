@@ -138,11 +138,11 @@ mod components
 
     impl System for ComplexSystem {}
 
-    impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem
+    impl<C: regecs::system::Context> Updatable<C> for ComplexSystem
     where
-        TContext::ComponentManager: ComponentManager<ComplexComponent>
+        C::ComponentManager: ComponentManager<ComplexComponent>
     {
-        fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState)
+        fn update(&mut self, ctx: &mut C, _: &C::AppState)
         {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
@@ -175,12 +175,12 @@ impl Default for MySystem
 
 impl System for MySystem {}
 
-impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem
+impl<C: regecs::system::Context<AppState = i32>> Updatable<C> for MySystem
 where
-    TContext::ComponentManager:
+    C::ComponentManager:
         ComponentManager<components::Test> + ComponentManager<components::Test2>
 {
-    fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
+    fn update(&mut self, ctx: &mut C, state: &C::AppState)
     {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);

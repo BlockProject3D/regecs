@@ -39,24 +39,24 @@ use crate::object::{Context, ObjectFactory, ObjectRef};
 pub type Handle = usize;
 
 type EventTrackerValue = Option<Box<dyn Any>>;
-type EventTrackerFunc<T, TContext, TState> = Box<dyn FnOnce(&mut T, &mut TContext, &TState, EventTrackerValue)>;
+type EventTrackerFunc<T, C, State> = Box<dyn FnOnce(&mut T, &mut C, &State, EventTrackerValue)>;
 
-pub struct EventTracker<T, TContext, TState>
+pub struct EventTracker<T, C, State>
 {
-    events: Vec<(Handle, EventTrackerFunc<T, TContext, TState>)>
+    events: Vec<(Handle, EventTrackerFunc<T, C, State>)>
 }
 
-impl<T, TContext, TState> EventTracker<T, TContext, TState>
+impl<T, C, State> EventTracker<T, C, State>
 {
-    pub fn new() -> EventTracker<T, TContext, TState>
+    pub fn new() -> EventTracker<T, C, State>
     {
         return EventTracker { events: Vec::new() };
     }
 
-    pub fn push<TRes: 'static, TFunc: 'static + FnOnce(&mut T, &mut TContext, &TState, Option<TRes>)>(
+    pub fn push<R: 'static, F: 'static + FnOnce(&mut T, &mut C, &State, Option<R>)>(
         &mut self,
         handle: Handle,
-        func: TFunc
+        func: F
     )
     {
         self.events.push((
@@ -72,10 +72,10 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
         ));
     }
 
-    pub fn poll_batch<TEventContext: Context>(
+    pub fn poll_batch<EventContext: Context>(
         &mut self,
-        event_manager: &mut EventManager<TEventContext>
-    ) -> EventTrackerBatch<T, TContext, TState>
+        event_manager: &mut EventManager<EventContext>
+    ) -> EventTrackerBatch<T, C, State>
     {
         let mut batch = Vec::new();
         let mut i = 0;
@@ -92,14 +92,14 @@ impl<T, TContext, TState> EventTracker<T, TContext, TState>
     }
 }
 
-pub struct EventTrackerBatch<T, TContext, TState>
+pub struct EventTrackerBatch<T, C, State>
 {
-    events: Vec<(EventTrackerValue, EventTrackerFunc<T, TContext, TState>)>
+    events: Vec<(EventTrackerValue, EventTrackerFunc<T, C, State>)>
 }
 
-impl<T, TContext, TState> EventTrackerBatch<T, TContext, TState>
+impl<T, C, State> EventTrackerBatch<T, C, State>
 {
-    pub fn run(self, me: &mut T, ctx: &mut TContext, state: &TState)
+    pub fn run(self, me: &mut T, ctx: &mut C, state: &State)
     {
         for (data, func) in self.events {
             func(me, ctx, state, data);
@@ -123,7 +123,7 @@ pub struct EventBuilder
 
 impl EventBuilder
 {
-    pub fn new<TEvent: Any>(event: TEvent) -> EventBuilder
+    pub fn new<E: Any>(event: E) -> EventBuilder
     {
         return EventBuilder {
             ev: Event {
@@ -160,26 +160,26 @@ impl EventBuilder
     }
 }
 
-pub enum SystemEvent<TContext: Context>
+pub enum SystemEvent<C: Context>
 {
     Enable(ObjectRef, bool),
     Serialize(ObjectRef),
     Deserialize(ObjectRef, bpx::sd::Object),
-    Spawn(ObjectFactory<TContext>),
+    Spawn(ObjectFactory<C>),
     Destroy(ObjectRef)
 }
 
-pub struct EventManager<TContext: Context>
+pub struct EventManager<C: Context>
 {
     events: VecDeque<Event>,
-    system_events: VecDeque<(bool, Handle, SystemEvent<TContext>)>,
+    system_events: VecDeque<(bool, Handle, SystemEvent<C>)>,
     cur_handle: Handle,
     event_responses: HashMap<Handle, Option<Box<dyn Any>>>
 }
 
-impl<TContext: Context> EventManager<TContext>
+impl<C: Context> EventManager<C>
 {
-    pub fn new() -> EventManager<TContext>
+    pub fn new() -> EventManager<C>
     {
         return EventManager {
             events: VecDeque::new(),
@@ -199,7 +199,7 @@ impl<TContext: Context> EventManager<TContext>
         return handle;
     }
 
-    pub fn system(&mut self, event: SystemEvent<TContext>, tracking: bool) -> Handle
+    pub fn system(&mut self, event: SystemEvent<C>, tracking: bool) -> Handle
     {
         let handle = self.cur_handle;
         self.cur_handle += 1;
@@ -220,7 +220,7 @@ impl<TContext: Context> EventManager<TContext>
         return self.events.pop_front();
     }
 
-    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<TContext>)>
+    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<C>)>
     {
         return self.system_events.pop_front();
     }
