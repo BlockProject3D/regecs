@@ -23,12 +23,12 @@ macro_rules! build_component_manager {
         $(
             impl regecs::component::ComponentPoolProvider<$ptype> for $name
             {
-                fn get(&self, _: regecs::component::ComponentType<$ptype>) -> & <$ptype as regecs::component::Component>::Pool
+                fn get(&self) -> & <$ptype as regecs::component::Component>::Pool
                 {
                     return &self.$pname;
                 }
 
-                fn get_mut(&mut self, _: regecs::component::ComponentType<$ptype>) -> &mut <$ptype as regecs::component::Component>::Pool
+                fn get_mut(&mut self) -> &mut <$ptype as regecs::component::Component>::Pool
                 {
                     return &mut self.$pname;
                 }

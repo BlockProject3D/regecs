@@ -39,39 +39,40 @@ pub trait Component: Sized
     type Pool: ComponentPool<Self>;
 }
 
-pub struct ComponentType<TComponent: Component>
+pub struct ComponentRef<T: Component>
 {
-    useless: std::marker::PhantomData<TComponent>
+    pub index: usize,
+    useless: std::marker::PhantomData<T>
 }
 
-impl<TComponent: Component> ComponentType<TComponent>
+impl<T: Component> Copy for ComponentRef<T> {}
+
+impl<T: Component> Clone for ComponentRef<T>
 {
-    pub fn new() -> ComponentType<TComponent>
+    fn clone(&self) -> Self
     {
-        return ComponentType {
-            useless: std::marker::PhantomData::default()
-        };
+        Self {
+            index: self.index,
+            useless: self.useless
+        }
     }
 }
 
-pub trait ComponentTypeProvider<TComponent: Component>
+impl<T: Component> ComponentRef<T>
 {
-    fn class() -> ComponentType<TComponent>;
-}
-
-impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
-{
-    fn class() -> ComponentType<TComponent>
+    pub fn new(index: usize) -> Self
     {
-        return ComponentType::<TComponent>::new();
+        Self {
+            index,
+            useless: Default::default()
+        }
     }
 }
 
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<TComponent: Component>:
-    Index<usize, Output = TComponent> + IndexMut<usize>
+pub trait ComponentPool<T: Component>: Index<usize, Output = T> + IndexMut<usize>
 where
     Self: Sized
 {
@@ -84,7 +85,7 @@ where
     /// # Returns
     ///
     /// * the unique index of the new stored component
-    fn add(&mut self, comp: TComponent) -> usize;
+    fn add(&mut self, comp: T) -> usize;
 
     /// Removes a component from this pool
     ///
@@ -158,29 +159,29 @@ pub trait AttachmentProvider
     fn clear(&mut self, entity: ObjectRef);
 }
 
-pub trait ComponentPoolProvider<TComponent: Component>
+pub trait ComponentPoolProvider<T: Component>
 {
-    fn get(&self, _: ComponentType<TComponent>) -> &TComponent::Pool;
-    fn get_mut(&mut self, _: ComponentType<TComponent>) -> &mut TComponent::Pool;
+    fn get(&self) -> &T::Pool;
+    fn get_mut(&mut self) -> &mut T::Pool;
 
-    fn get_component(&self, class: ComponentType<TComponent>, id: usize) -> &TComponent
+    fn get_component(&self, r: ComponentRef<T>) -> &T
     {
-        &self.get(class)[id]
+        &self.get()[r.index]
     }
 
-    fn get_component_mut(&mut self, class: ComponentType<TComponent>, id: usize) -> &mut TComponent
+    fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T
     {
-        &mut self.get_mut(class)[id]
+        &mut self.get_mut()[r.index]
     }
 
-    fn add_component(&mut self, comp: TComponent) -> usize
+    fn add_component(&mut self, comp: T) -> ComponentRef<T>
     {
-        self.get_mut(TComponent::class()).add(comp)
+        ComponentRef::new(self.get_mut().add(comp))
     }
 
-    fn remove_component(&mut self, class: ComponentType<TComponent>, id: usize)
+    fn remove_component(&mut self, r: ComponentRef<T>)
     {
-        self.get_mut(class).remove(id);
+        self.get_mut().remove(r.index);
     }
 }
 

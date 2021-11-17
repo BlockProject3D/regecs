@@ -36,8 +36,7 @@ pub use interface::{
     ComponentPool,
     ComponentPoolProvider,
     IterableComponentPool,
-    ComponentType,
-    ComponentTypeProvider
+    ComponentRef
 };
 
 mod attachments;

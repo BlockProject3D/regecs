@@ -27,10 +27,38 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    component::{AttachmentProvider, Component, ComponentPool, ComponentPoolProvider},
+    component::{AttachmentProvider, Component, ComponentPoolProvider},
     object::ObjectRef
 };
-use crate::component::{ComponentType, ComponentTypeProvider};
+use crate::component::ComponentRef;
+
+pub struct ComponentType<TComponent: Component>
+{
+    useless: std::marker::PhantomData<TComponent>
+}
+
+impl<TComponent: Component> ComponentType<TComponent>
+{
+    pub fn new() -> ComponentType<TComponent>
+    {
+        return ComponentType {
+            useless: std::marker::PhantomData::default()
+        };
+    }
+}
+
+pub trait ComponentTypeProvider<TComponent: Component>
+{
+    fn class() -> ComponentType<TComponent>;
+}
+
+impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
+{
+    fn class() -> ComponentType<TComponent>
+    {
+        return ComponentType::<TComponent>::new();
+    }
+}
 
 pub struct Entity<'a, TComponentManager>
 {
@@ -49,45 +77,45 @@ impl<'a, TComponentManager> Entity<'a, TComponentManager>
     }
 }
 
-pub trait EntityPart<TComponent: Component, TComponentManager: ComponentPoolProvider<TComponent>>
+pub trait EntityPart<T: Component, Provider: ComponentPoolProvider<T>>
 {
-    fn add(&mut self, comp: TComponent) -> usize;
-    fn get_mut(&mut self, _: ComponentType<TComponent>, id: usize) -> &mut TComponent;
-    fn get(&self, _: ComponentType<TComponent>, id: usize) -> &TComponent;
-    fn remove(&mut self, _: ComponentType<TComponent>, id: usize);
-    fn list(&self, _: ComponentType<TComponent>) -> Option<Vec<usize>>;
+    fn add(&mut self, comp: T) -> ComponentRef<T>;
+    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T;
+    fn get(&self, r: ComponentRef<T>) -> &T;
+    fn remove(&mut self, r: ComponentRef<T>);
+    fn list(&self, _: ComponentType<T>) -> Option<Vec<usize>>;
 }
 
-impl<'a, TComponent: Component, TComponentManager: ComponentPoolProvider<TComponent>>
-    EntityPart<TComponent, TComponentManager> for Entity<'a, TComponentManager>
+impl<'a, T: Component, Provider: ComponentPoolProvider<T>>
+    EntityPart<T, Provider> for Entity<'a, Provider>
 where
-    TComponent::Pool: AttachmentProvider
+    T::Pool: AttachmentProvider
 {
-    fn add(&mut self, comp: TComponent) -> usize
+    fn add(&mut self, comp: T) -> ComponentRef<T>
     {
-        let id = self.mgr.get_mut(TComponent::class()).add(comp);
-        self.mgr.get_mut(TComponent::class()).attach(self.entity, id);
-        return id;
+        let r = self.mgr.add_component(comp);
+        self.mgr.get_mut().attach(self.entity, r.index);
+        return r;
     }
 
-    fn get_mut(&mut self, class: ComponentType<TComponent>, id: usize) -> &mut TComponent
+    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T
     {
-        return &mut self.mgr.get_mut(class)[id];
+        self.mgr.get_component_mut(r)
     }
 
-    fn get(&self, class: ComponentType<TComponent>, id: usize) -> &TComponent
+    fn get(&self, r: ComponentRef<T>) -> &T
     {
-        return &self.mgr.get(class)[id];
+        self.mgr.get_component(r)
     }
 
-    fn remove(&mut self, class: ComponentType<TComponent>, id: usize)
+    fn remove(&mut self, r: ComponentRef<T>)
     {
-        self.mgr.get_mut(class).remove(id);
+        self.mgr.remove_component(r)
     }
 
-    fn list(&self, class: ComponentType<TComponent>) -> Option<Vec<usize>>
+    fn list(&self, _: ComponentType<T>) -> Option<Vec<usize>>
     {
-        return self.mgr.get(class).list(self.entity);
+        return self.mgr.get().list(self.entity);
     }
 }
 
