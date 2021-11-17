@@ -53,6 +53,7 @@ mod components
         macros::build_component_manager,
         system::{System, Updatable}
     };
+    use regecs::component::ComponentRef;
 
     pub struct Test
     {
@@ -125,7 +126,7 @@ mod components
 
     pub struct ComplexSystem
     {
-        events: Vec<(usize, u32)>
+        events: Vec<(ComponentRef<ComplexComponent>, u32)>
     }
 
     impl Default for ComplexSystem
@@ -244,11 +245,11 @@ fn main()
     );
     mgr.remove_component(test);
     mgr.remove_component(test2);
-    let sfdk = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).size();
-    let fh = <TestComponentManager as ComponentPoolProvider<components::Test2>>::get(&mgr).size();
+    let sfdk = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).len();
+    let fh = <TestComponentManager as ComponentPoolProvider<components::Test2>>::get(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
     mgr.remove_component(test1);
-    let test = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).size();
+    let test = <TestComponentManager as ComponentPoolProvider<components::Test>>::get(&mgr).len();
     assert_eq!(test, 0);
 }

@@ -42,20 +42,21 @@ use crate::{
     },
     object::ObjectRef
 };
+use crate::component::ComponentRef;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
-        pub struct $name<'a, K: Sized + Eq + Hash + Copy, TComponent: Component>
+        pub struct $name<'a, K: Sized + Eq + Hash + Copy, T: Component>
         {
-            comps: &'a $($su)? BasicComponentPool<TComponent>,
-            values: Values<'a, K, Vec<usize>>,
-            vec: Option<&'a Vec<usize>>,
+            comps: &'a $($su)? BasicComponentPool<T>,
+            values: Values<'a, K, Vec<ComponentRef<T>>>,
+            vec: Option<&'a Vec<ComponentRef<T>>>,
             pos: usize
         }
 
-        impl <'a, K: Sized + Eq + Hash + Copy, TComponent: Component> $name<'a, K, TComponent>
+        impl <'a, K: Sized + Eq + Hash + Copy, T: Component> $name<'a, K, T>
         {
-            pub fn new(comps: &'a $($su)? BasicComponentPool<TComponent>, values: Values<'a, K, Vec<usize>>) -> $name<'a, K, TComponent>
+            pub fn new(comps: &'a $($su)? BasicComponentPool<T>, values: Values<'a, K, Vec<ComponentRef<T>>>) -> $name<'a, K, T>
             {
                 return $name {
                     comps,
@@ -66,9 +67,9 @@ macro_rules! gcp_iterator {
             }
         }
 
-        impl <'a, K: Sized + Eq + Hash + Copy, TComponent: Component> Iterator for $name<'a, K, TComponent>
+        impl <'a, K: Sized + Eq + Hash + Copy, T: Component> Iterator for $name<'a, K, T>
         {
-            type Item = (usize, &'a $($su)? TComponent);
+            type Item = (ComponentRef<T>, &'a $($su)? T);
 
             fn next(&mut self) -> Option<Self::Item>
             {
@@ -102,7 +103,7 @@ macro_rules! gcp_iterator {
                     };
                     (mut) => {
                         unsafe {
-                            let ptr = &mut self.comps[next_id] as *mut TComponent;
+                            let ptr = &mut self.comps[next_id] as *mut T;
                             return Some((next_id, &mut *ptr));
                         }
                     }
@@ -122,41 +123,41 @@ gcp_iterator!(GcpIteratorMut, mut);
 /// *This pool is optimized for rendering systems to reduce the number of pipeline changes*
 ///
 /// _NOTE: The K::default() group is reserved to store components that are not yet attached to a group_
-pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy + Default, TComponent: Component>
+pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy + Default, T: Component>
 {
-    comps: BasicComponentPool<TComponent>,
-    map: HashMap<K, Vec<usize>>,
-    group_map: HashMap<usize, K>
+    comps: BasicComponentPool<T>,
+    map: HashMap<K, Vec<ComponentRef<T>>>,
+    group_map: HashMap<ComponentRef<T>, K>
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> GroupComponentPool<K, T>
 {
     /// Update the group of a component
     ///
     /// # Arguments
     ///
-    /// * `id` - the component index
+    /// * `r` - the component reference
     /// * `new_group` - the new group of the component
-    pub fn update_group(&mut self, id: usize, new_group: K)
+    pub fn update_group(&mut self, r: ComponentRef<T>, new_group: K)
     {
-        if let Some(prev) = self.group_map.get(&id) {
+        if let Some(prev) = self.group_map.get(&r) {
             if *prev == new_group {
                 return;
             }
             let val = self.map.entry(*prev).or_insert_with(Vec::new);
-            val.retain(|val| *val != id);
+            val.retain(|val| val != &r);
             if val.is_empty() { // if val.len() == 0 then remove group
                 self.map.remove(prev);
             }
         }
-        self.group_map.insert(id, new_group);
+        self.group_map.insert(r, new_group);
         let val = self.map.entry(new_group).or_insert_with(Vec::new);
-        val.push(id);
+        val.push(r);
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Default
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default
+    for GroupComponentPool<K, T>
 {
     fn default() -> Self
     {
@@ -168,44 +169,44 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Default
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> ComponentPool<TComponent>
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> ComponentPool<T>
+    for GroupComponentPool<K, T>
 {
-    fn add(&mut self, comp: TComponent) -> usize
+    fn add(&mut self, comp: T) -> ComponentRef<T>
     {
-        let id = self.comps.add(comp);
-        self.update_group(id, K::default());
-        return id;
+        let r = self.comps.add(comp);
+        self.update_group(r, K::default());
+        r
     }
 
-    fn remove(&mut self, id: usize)
+    fn remove(&mut self, r: ComponentRef<T>)
     {
-        if let Some(group) = self.group_map.get(&id) {
+        if let Some(group) = self.group_map.get(&r) {
             let map = self.map.get_mut(group).unwrap();
-            map.retain(|val| *val != id);
+            map.retain(|val| val != &r);
             if map.is_empty() { // if map.len() == 0 then remove group (map refers to a group of components)
                 self.map.remove(group);
             }
-            self.group_map.remove(&id);
+            self.group_map.remove(&r);
         }
-        self.comps.remove(id);
+        self.comps.remove(r);
     }
 
-    fn size(&self) -> usize
+    fn len(&self) -> usize
     {
-        return self.comps.size();
+        return self.comps.len();
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentProvider
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> AttachmentProvider<T>
+    for GroupComponentPool<K, T>
 {
-    fn attach(&mut self, entity: ObjectRef, component: usize)
+    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
-        self.comps.attach(entity, component);
+        self.comps.attach(entity, r);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
     {
         return self.comps.list(entity);
     }
@@ -220,11 +221,11 @@ impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> AttachmentPro
     }
 }
 
-impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component>
-    IterableComponentPool<'a, TComponent> for GroupComponentPool<K, TComponent>
+impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component>
+    IterableComponentPool<'a, T> for GroupComponentPool<K, T>
 {
-    type Iter = GcpIterator<'a, K, TComponent>;
-    type IterMut = GcpIteratorMut<'a, K, TComponent>;
+    type Iter = GcpIterator<'a, K, T>;
+    type IterMut = GcpIteratorMut<'a, K, T>;
 
     fn iter(&'a self) -> Self::Iter
     {
@@ -237,21 +238,21 @@ impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, TComponent: 'a + Component>
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> Index<usize>
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Index<ComponentRef<T>>
+    for GroupComponentPool<K, T>
 {
-    type Output = TComponent;
+    type Output = T;
 
-    fn index(&self, index: usize) -> &Self::Output
+    fn index(&self, index: ComponentRef<T>) -> &Self::Output
     {
         return self.comps.index(index);
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, TComponent: Component> IndexMut<usize>
-    for GroupComponentPool<K, TComponent>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> IndexMut<ComponentRef<T>>
+    for GroupComponentPool<K, T>
 {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output
+    fn index_mut(&mut self, index: ComponentRef<T>) -> &mut Self::Output
     {
         return self.comps.index_mut(index);
     }

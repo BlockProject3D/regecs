@@ -41,11 +41,11 @@ macro_rules! build_component_manager {
             {
                 macro_rules! attachment_call {
                     (attachments $afsb: ident $afsb1: ty) => {
-                        <$afsb1 as regecs::component::AttachmentProvider>::clear(&mut self.$afsb, entity);
+                        <<$afsb1 as regecs::component::Component>::Pool as regecs::component::AttachmentProvider<$afsb1>>::clear(&mut self.$afsb, entity);
                     };
                     ($afsb: ident $afsb1: ty) => {};
                 }
-                $(attachment_call!($($poption)? $pname <$ptype as regecs::component::Component>::Pool);)*
+                $(attachment_call!($($poption)? $pname $ptype);)*
             }
         }
 

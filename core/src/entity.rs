@@ -83,18 +83,18 @@ pub trait EntityPart<T: Component, Provider: ComponentPoolProvider<T>>
     fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T;
     fn get(&self, r: ComponentRef<T>) -> &T;
     fn remove(&mut self, r: ComponentRef<T>);
-    fn list(&self, _: ComponentType<T>) -> Option<Vec<usize>>;
+    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
 }
 
 impl<'a, T: Component, Provider: ComponentPoolProvider<T>>
     EntityPart<T, Provider> for Entity<'a, Provider>
 where
-    T::Pool: AttachmentProvider
+    T::Pool: AttachmentProvider<T>
 {
     fn add(&mut self, comp: T) -> ComponentRef<T>
     {
         let r = self.mgr.add_component(comp);
-        self.mgr.get_mut().attach(self.entity, r.index);
+        self.mgr.get_mut().attach(self.entity, r);
         return r;
     }
 
@@ -113,7 +113,7 @@ where
         self.mgr.remove_component(r)
     }
 
-    fn list(&self, _: ComponentType<T>) -> Option<Vec<usize>>
+    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>
     {
         return self.mgr.get().list(self.entity);
     }

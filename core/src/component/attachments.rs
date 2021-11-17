@@ -29,16 +29,17 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{component::interface::AttachmentProvider, object::ObjectRef};
+use crate::component::{Component, ComponentRef};
 
-pub struct AttachmentsManager
+pub struct AttachmentsManager<T: Component>
 {
-    map: HashMap<ObjectRef, HashSet<usize>>,
-    inv_map: HashMap<usize, ObjectRef>
+    map: HashMap<ObjectRef, HashSet<ComponentRef<T>>>,
+    inv_map: HashMap<ComponentRef<T>, ObjectRef>
 }
 
-impl AttachmentsManager
+impl<T: Component> AttachmentsManager<T>
 {
-    pub fn new() -> AttachmentsManager
+    pub fn new() -> AttachmentsManager<T>
     {
         return AttachmentsManager {
             map: HashMap::new(),
@@ -46,32 +47,32 @@ impl AttachmentsManager
         };
     }
 
-    pub fn remove(&mut self, component: usize)
+    pub fn remove(&mut self, r: ComponentRef<T>)
     {
-        if let Some(entity) = self.inv_map.get(&component) {
+        if let Some(entity) = self.inv_map.get(&r) {
             if let Some(set) = self.map.get_mut(entity) {
-                set.remove(&component);
-                self.inv_map.remove(&component);
+                set.remove(&r);
+                self.inv_map.remove(&r);
             }
         }
     }
 }
 
-impl AttachmentProvider for AttachmentsManager
+impl<T: Component> AttachmentProvider<T> for AttachmentsManager<T>
 {
-    fn attach(&mut self, entity: ObjectRef, component: usize)
+    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
         if let Some(set) = self.map.get_mut(&entity) {
-            set.insert(component);
+            set.insert(r);
         } else {
             let mut set = HashSet::new();
-            set.insert(component);
+            set.insert(r);
             self.map.insert(entity, set);
         }
-        self.inv_map.insert(component, entity);
+        self.inv_map.insert(r, entity);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
     {
         if let Some(set) = self.map.get(&entity) {
             let mut vec = Vec::with_capacity(set.len());

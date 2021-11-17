@@ -41,18 +41,19 @@ use crate::{
     },
     object::ObjectRef
 };
+use crate::component::ComponentRef;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
-        pub struct $name<'a, TComponent: Component>
+        pub struct $name<'a, T: Component>
         {
-            comps: &'a $($su)? [Option<TComponent>],
+            comps: &'a $($su)? [Option<T>],
             pos: usize,
         }
 
-        impl<'a, TComponent: Component> $name<'a, TComponent>
+        impl<'a, T: Component> $name<'a, T>
         {
-            fn new(comps: &'a $($su)? [Option<TComponent>]) -> $name<'a, TComponent>
+            fn new(comps: &'a $($su)? [Option<T>]) -> $name<'a, T>
             {
                 return $name
                 {
@@ -62,9 +63,9 @@ macro_rules! bcp_iterator {
             }
         }
 
-        impl<'a, TComponent: Component> Iterator for $name<'a, TComponent>
+        impl<'a, T: Component> Iterator for $name<'a, T>
         {
-            type Item = (usize, &'a $($su)? TComponent);
+            type Item = (ComponentRef<T>, &'a $($su)? T);
 
             fn next(&mut self) -> Option<Self::Item>
             {
@@ -74,7 +75,7 @@ macro_rules! bcp_iterator {
                 macro_rules! bcp_iter_internal {
                     () => {
                         if let Some(v) = &self.comps[self.pos] {
-                            return Some((self.pos, v));
+                            return Some((ComponentRef::new(self.pos), v));
                         } else {
                             return None;
                         }
@@ -83,8 +84,8 @@ macro_rules! bcp_iterator {
                         if let Some(v) = &mut self.comps[self.pos] {
                             unsafe
                             {
-                                let ptr = v as *mut TComponent;
-                                return Some((self.pos, &mut *ptr));
+                                let ptr = v as *mut T;
+                                return Some((ComponentRef::new(self.pos), &mut *ptr));
                             }
                         } else {
                             return None;
@@ -103,14 +104,14 @@ bcp_iterator!(BcpIteratorMut, mut);
 /// Basic component pool (stores components in a single simple array list)
 ///
 /// *May not be optimized for rendering 3D model components*
-pub struct BasicComponentPool<TComponent: Component>
+pub struct BasicComponentPool<T: Component>
 {
-    comps: Vec<Option<TComponent>>,
+    comps: Vec<Option<T>>,
     size: usize,
-    attachments: AttachmentsManager
+    attachments: AttachmentsManager<T>
 }
 
-impl<TComponent: Component> Default for BasicComponentPool<TComponent>
+impl<T: Component> Default for BasicComponentPool<T>
 {
     fn default() -> Self
     {
@@ -122,9 +123,9 @@ impl<TComponent: Component> Default for BasicComponentPool<TComponent>
     }
 }
 
-impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TComponent>
+impl<T: Component> ComponentPool<T> for BasicComponentPool<T>
 {
-    fn add(&mut self, comp: TComponent) -> usize
+    fn add(&mut self, comp: T) -> ComponentRef<T>
     {
         let mut i = 0;
         while i < self.comps.len() && self.comps[i].is_some() {
@@ -136,35 +137,35 @@ impl<TComponent: Component> ComponentPool<TComponent> for BasicComponentPool<TCo
             self.comps[i] = Some(comp);
         }
         self.size += 1;
-        return i;
+        ComponentRef::new(i)
     }
 
-    fn remove(&mut self, id: usize)
+    fn remove(&mut self, r: ComponentRef<T>)
     {
-        self.comps[id] = None; //Mark slot as unclaimed
+        self.comps[r.index] = None; //Mark slot as unclaimed
         let mut i = self.comps.len() - 1; //Trim end of array
         while i > 0 && self.comps[i].is_none() {
             self.comps.remove(i);
             i -= 1;
         }
         self.size -= 1;
-        self.attachments.remove(id);
+        self.attachments.remove(r);
     }
 
-    fn size(&self) -> usize
+    fn len(&self) -> usize
     {
-        return self.size;
+        self.size
     }
 }
 
-impl<TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent>
+impl<T: Component> AttachmentProvider<T> for BasicComponentPool<T>
 {
-    fn attach(&mut self, entity: ObjectRef, component: usize)
+    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
-        self.attachments.attach(entity, component);
+        self.attachments.attach(entity, r);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>
+    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
     {
         return self.attachments.list(entity);
     }
@@ -180,11 +181,11 @@ impl<TComponent: Component> AttachmentProvider for BasicComponentPool<TComponent
     }
 }
 
-impl<'a, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
-    for BasicComponentPool<TComponent>
+impl<'a, T: 'a + Component> IterableComponentPool<'a, T>
+    for BasicComponentPool<T>
 {
-    type Iter = BcpIterator<'a, TComponent>;
-    type IterMut = BcpIteratorMut<'a, TComponent>;
+    type Iter = BcpIterator<'a, T>;
+    type IterMut = BcpIteratorMut<'a, T>;
 
     fn iter(&'a self) -> Self::Iter
     {
@@ -197,20 +198,20 @@ impl<'a, TComponent: 'a + Component> IterableComponentPool<'a, TComponent>
     }
 }
 
-impl<TComponent: Component> Index<usize> for BasicComponentPool<TComponent>
+impl<T: Component> Index<ComponentRef<T>> for BasicComponentPool<T>
 {
-    type Output = TComponent;
+    type Output = T;
 
-    fn index(&self, index: usize) -> &Self::Output
+    fn index(&self, r: ComponentRef<T>) -> &Self::Output
     {
-        return self.comps[index].as_ref().unwrap();
+        return self.comps[r.index].as_ref().unwrap();
     }
 }
 
-impl<TComponent: Component> IndexMut<usize> for BasicComponentPool<TComponent>
+impl<T: Component> IndexMut<ComponentRef<T>> for BasicComponentPool<T>
 {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output
+    fn index_mut(&mut self, r: ComponentRef<T>) -> &mut Self::Output
     {
-        return self.comps[index].as_mut().unwrap();
+        return self.comps[r.index].as_mut().unwrap();
     }
 }

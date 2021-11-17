@@ -28,6 +28,8 @@
 
 //! REGECS component interfaces
 
+use std::fmt::{Debug, Display, Formatter, UpperHex};
+use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 
 use crate::object::ObjectRef;
@@ -58,6 +60,40 @@ impl<T: Component> Clone for ComponentRef<T>
     }
 }
 
+impl<T: Component> PartialEq for ComponentRef<T>
+{
+    fn eq(&self, other: &Self) -> bool
+    {
+        self.index == other.index
+    }
+}
+
+impl<T: Component> Eq for ComponentRef<T> { }
+
+impl<T: Component> Hash for ComponentRef<T>
+{
+    fn hash<H: Hasher>(&self, state: &mut H)
+    {
+        self.index.hash(state)
+    }
+}
+
+impl<T: Component> Debug for ComponentRef<T>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+    {
+        <usize as Debug>::fmt(&self.index, f)
+    }
+}
+
+impl<T: Component> Display for ComponentRef<T>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+    {
+        <usize as Display>::fmt(&self.index, f)
+    }
+}
+
 impl<T: Component> ComponentRef<T>
 {
     pub fn new(index: usize) -> Self
@@ -72,7 +108,7 @@ impl<T: Component> ComponentRef<T>
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<T: Component>: Index<usize, Output = T> + IndexMut<usize>
+pub trait ComponentPool<T: Component>: Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
 where
     Self: Sized
 {
@@ -84,35 +120,41 @@ where
     ///
     /// # Returns
     ///
-    /// * the unique index of the new stored component
-    fn add(&mut self, comp: T) -> usize;
+    /// * a reference to the new stored component
+    fn add(&mut self, comp: T) -> ComponentRef<T>;
 
     /// Removes a component from this pool
     ///
     /// # Arguments
     ///
-    /// * `id` - the index of the component to remove
-    fn remove(&mut self, id: usize);
+    /// * `r` - a reference to the component to remove
+    fn remove(&mut self, r: ComponentRef<T>);
 
     /// Returns the number of components stored in this pool
     ///
     /// # Returns
     ///
     /// * the component count
-    fn size(&self) -> usize;
+    fn len(&self) -> usize;
+
+    /// Returns true if this component pool is empty
+    fn is_empty(&self) -> bool
+    {
+        self.len() == 0
+    }
 }
 
 /// Allows a component pool to be iterated
 ///
 /// *All iterators in component pools returns indices of components*
 /// *to get the actual component instance use index or index_mut*
-pub trait IterableComponentPool<'a, TComponent: 'a + Component>
+pub trait IterableComponentPool<'a, T: 'a + Component>
 {
     /// The type of immutable iterator
-    type Iter: Iterator<Item = (usize, &'a TComponent)>;
+    type Iter: Iterator<Item = (ComponentRef<T>, &'a T)>;
 
     /// The type of mutable iterator
-    type IterMut: Iterator<Item = (usize, &'a mut TComponent)>;
+    type IterMut: Iterator<Item = (ComponentRef<T>, &'a mut T)>;
 
     /// Returns an iterator into this pool
     ///
@@ -129,7 +171,7 @@ pub trait IterableComponentPool<'a, TComponent: 'a + Component>
     fn iter_mut(&'a mut self) -> Self::IterMut;
 }
 
-pub trait AttachmentProvider
+pub trait AttachmentProvider<T: Component>
 {
     /// Attach a new component
     ///
@@ -137,7 +179,7 @@ pub trait AttachmentProvider
     ///
     /// * `entity` - the entity to attach the component to
     /// * `component` - the component index to attach
-    fn attach(&mut self, entity: ObjectRef, component: usize);
+    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>);
 
     /// Lists all attachments of a given entity
     ///
@@ -149,7 +191,7 @@ pub trait AttachmentProvider
     ///
     /// * the list of all components attached to the given entity
     /// * None if the entity does not exist or that the entity does not have any attachements
-    fn list(&self, entity: ObjectRef) -> Option<Vec<usize>>;
+    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>;
 
     /// Removes all components attached to a given entity
     ///
@@ -166,22 +208,22 @@ pub trait ComponentPoolProvider<T: Component>
 
     fn get_component(&self, r: ComponentRef<T>) -> &T
     {
-        &self.get()[r.index]
+        &self.get()[r]
     }
 
     fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T
     {
-        &mut self.get_mut()[r.index]
+        &mut self.get_mut()[r]
     }
 
     fn add_component(&mut self, comp: T) -> ComponentRef<T>
     {
-        ComponentRef::new(self.get_mut().add(comp))
+        self.get_mut().add(comp)
     }
 
     fn remove_component(&mut self, r: ComponentRef<T>)
     {
-        self.get_mut().remove(r.index);
+        self.get_mut().remove(r);
     }
 }
 
