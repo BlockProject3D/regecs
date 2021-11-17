@@ -179,6 +179,24 @@ impl<T: Component> AttachmentProvider<T> for BasicComponentPool<T>
             self.attachments.clear(entity);
         }
     }
+
+    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>
+    {
+        if let Some(r) = self.attachments.get_first(entity) {
+            Some(&mut self[r])
+        } else {
+            None
+        }
+    }
+
+    fn get_first(&self, entity: ObjectRef) -> Option<&T>
+    {
+        if let Some(r) = self.attachments.get_first(entity) {
+            Some(&self[r])
+        } else {
+            None
+        }
+    }
 }
 
 impl<'a, T: 'a + Component> IterableComponentPool<'a, T>

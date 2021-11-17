@@ -84,6 +84,8 @@ pub trait EntityPart<T: Component, Provider: ComponentPoolProvider<T>>
     fn get(&self, r: ComponentRef<T>) -> &T;
     fn remove(&mut self, r: ComponentRef<T>);
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
+    fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
+    fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
 impl<'a, T: Component, Provider: ComponentPoolProvider<T>>
@@ -116,6 +118,16 @@ where
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>
     {
         return self.mgr.get().list(self.entity);
+    }
+
+    fn get_first(&self, _: ComponentType<T>) -> Option<&T>
+    {
+        self.mgr.get().get_first(self.entity)
+    }
+
+    fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>
+    {
+        self.mgr.get_mut().get_first_mut(self.entity)
     }
 }
 

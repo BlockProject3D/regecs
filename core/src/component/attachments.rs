@@ -28,7 +28,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::{component::interface::AttachmentProvider, object::ObjectRef};
+use crate::object::ObjectRef;
 use crate::component::{Component, ComponentRef};
 
 pub struct AttachmentsManager<T: Component>
@@ -56,11 +56,8 @@ impl<T: Component> AttachmentsManager<T>
             }
         }
     }
-}
 
-impl<T: Component> AttachmentProvider<T> for AttachmentsManager<T>
-{
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
+    pub fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
     {
         if let Some(set) = self.map.get_mut(&entity) {
             set.insert(r);
@@ -72,7 +69,7 @@ impl<T: Component> AttachmentProvider<T> for AttachmentsManager<T>
         self.inv_map.insert(r, entity);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
+    pub fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
     {
         if let Some(set) = self.map.get(&entity) {
             let mut vec = Vec::with_capacity(set.len());
@@ -84,8 +81,17 @@ impl<T: Component> AttachmentProvider<T> for AttachmentsManager<T>
         return None;
     }
 
-    fn clear(&mut self, entity: ObjectRef)
+    pub fn clear(&mut self, entity: ObjectRef)
     {
         self.map.remove(&entity);
+    }
+
+    pub fn get_first(&self, entity: ObjectRef) -> Option<ComponentRef<T>>
+    {
+        if let Some(set) = self.map.get(&entity) {
+            Some(*set.iter().nth(0).unwrap())
+        } else {
+            None
+        }
     }
 }

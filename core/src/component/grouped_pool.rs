@@ -219,6 +219,16 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> AttachmentProvider<T>
             }
         }
     }
+
+    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>
+    {
+        self.comps.get_first_mut(entity)
+    }
+
+    fn get_first(&self, entity: ObjectRef) -> Option<&T>
+    {
+        self.comps.get_first(entity)
+    }
 }
 
 impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component>

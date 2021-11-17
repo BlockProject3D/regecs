@@ -28,7 +28,7 @@
 
 //! REGECS component interfaces
 
-use std::fmt::{Debug, Display, Formatter, UpperHex};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 
@@ -199,6 +199,10 @@ pub trait AttachmentProvider<T: Component>
     ///
     /// * `entity` - the entity to clear
     fn clear(&mut self, entity: ObjectRef);
+
+    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>;
+
+    fn get_first(&self, entity: ObjectRef) -> Option<&T>;
 }
 
 pub trait ComponentPoolProvider<T: Component>
