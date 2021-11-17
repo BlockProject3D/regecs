@@ -26,51 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{Context, CoreObject, ObjectRef};
-
-pub trait PropertyGroup
-{
-    fn deserialize(obj: bpx::sd::Object) -> Self;
-}
-
-pub trait PropertyInitializer
-{
-    fn initialize(&mut self, obj: bpx::sd::Object);
-}
-
-//impl <TContext: Context, TObject: 'static + CoreObject<TContext>>
-
-/*pub trait ClassBuilder<TContext: Context, TObject: 'static + CoreObject<TContext>>
-{
-    fn name() -> String;
-    fn init_func() -> Box<dyn Fn (Option<bpx::sd::Object>) -> Box<dyn CoreObject<TContext>>>;
-}
-
-pub struct Class<TContext: Context>
+pub struct Property
 {
     name: String,
-    func: Box<dyn Fn (Option<bpx::sd::Object>) -> Box<dyn CoreObject<TContext>>>
+    optional: bool,
+    ptype: PropertyType,
+    config: Box<dyn config::PropertyConfig>
 }
 
-impl<TContext: Context, TObject: 'static + CoreObject<TContext> + ClassConnector> Class<TContext>
+pub struct PropertyGroup
 {
-
-}*/
-
-pub trait ClassInitializer
-{
-    fn new_instance(this: ObjectRef) -> Self;
-}
-
-impl<T: From<ObjectRef>> ClassInitializer for T
-{
-    fn new_instance(this: ObjectRef) -> Self
-    {
-        return Self::from(this);
-    }
-}
-
-pub trait ClassConnector : ClassInitializer
-{
-    fn class_name() -> &'static str;
+    name: String,
+    props: Vec<Property>
 }

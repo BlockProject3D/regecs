@@ -28,7 +28,7 @@
 
 use bpx::sd::Object;
 
-use crate::reflection::property::{AsProperty, PropertyType};
+use crate::reflection::property1::{AsProperty, PropertyType};
 
 pub trait PropertyConfig: CloneBox
 {
