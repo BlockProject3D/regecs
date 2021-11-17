@@ -40,12 +40,7 @@ pub trait Context
     fn objects(&self) -> &ObjectTree;
 }
 
-/// System interface
-pub trait System
-{
-}
-
-/// System interface
+/// Update functionality.
 pub trait Update<C: Context>
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState);

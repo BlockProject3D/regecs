@@ -110,3 +110,5 @@ pub trait Clear
     /// Clears all components attached to the given entity
     fn clear(&mut self, entity: ObjectRef);
 }
+
+pub type Pool<T> = <T as Component>::Pool;

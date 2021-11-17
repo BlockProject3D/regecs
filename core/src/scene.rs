@@ -117,6 +117,9 @@ impl<State, ComponentManager: Clear, SystemManager> crate::object::Context for S
     }
 }
 
+pub type ObjectContext<SystemManager, ComponentManager, State> = SceneContext<State, ComponentManager, SystemManager>;
+pub type SystemContext<SystemManager, ComponentManager, State> = Common<ObjectContext<SystemManager, ComponentManager, State>>;
+
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<
     State,

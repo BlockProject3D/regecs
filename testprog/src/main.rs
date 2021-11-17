@@ -29,15 +29,15 @@
 use components::ComplexSystem;
 use regecs::{
     entity::{Entity, EntityPart},
-    macros::build_system_manager,
-    scene::Scene,
-    system::{System, SystemPart, Updatable}
+    scene::Scene
 };
 use regecs::component::ComponentRef;
 use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
+use regecs::scene::SystemContext;
+use regecs::system::Update;
 
-use crate::components::{ComplexComponent, TestComponentManager};
+use crate::components::{ComplexComponent};
 
 mod components
 {
@@ -45,12 +45,12 @@ mod components
         component::{
             pool::{BasicComponentPool, GroupComponentPool},
             Component
-        },
-        macros::build_component_manager,
-        system::{System, Updatable}
+        }
     };
-    use regecs::component::ComponentRef;
-    use regecs::component::pool::{ComponentManager, Iter};
+    use regecs::component::{Clear, ComponentRef, Pool};
+    use regecs::component::pool::{Attachments, ComponentManager, Iter};
+    use regecs::object::ObjectRef;
+    use regecs::system::Update;
 
     pub struct Test
     {
@@ -111,15 +111,26 @@ mod components
         type Pool = GroupComponentPool<u32, ComplexComponent>;
     }
 
-    build_component_manager!(
-        #[derive(Default)]
-        pub TestComponentManager {
-            (attachments) tests: Test,
-            (attachments) test2s: Test2,
-            (attachments) complexes: ComplexComponent
+    #[derive(Default)]
+    pub struct TestComponentManager
+    {
+        tests: Pool<Test>,
+        test2s: Pool<Test2>,
+        complexes: Pool<ComplexComponent>
+    }
+
+    regecs::impl_component_manager!(TestComponentManager { (tests: Test) (test2s: Test2) (complexes: ComplexComponent) });
+
+    // TODO: Implement a derive proc macro for Clear
+    impl Clear for TestComponentManager
+    {
+        fn clear(&mut self, entity: ObjectRef)
+        {
+            self.tests.clear(entity);
+            self.test2s.clear(entity);
+            self.complexes.clear(entity);
         }
-        into (Test, Test2) => (tests, test2s)
-    );
+    }
 
     pub struct ComplexSystem
     {
@@ -136,9 +147,7 @@ mod components
         }
     }
 
-    impl System for ComplexSystem {}
-
-    impl<C: regecs::system::Context> Updatable<C> for ComplexSystem
+    impl<C: regecs::system::Context> Update<C> for ComplexSystem
     where
         C::ComponentManager: ComponentManager<ComplexComponent>
     {
@@ -173,9 +182,7 @@ impl Default for MySystem
     }
 }
 
-impl System for MySystem {}
-
-impl<C: regecs::system::Context<AppState = i32>> Updatable<C> for MySystem
+impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
 where
     C::ComponentManager:
         ComponentManager<components::Test> + ComponentManager<components::Test2>
@@ -197,21 +204,24 @@ where
 #[derive(Default)]
 struct MySystem2 {}
 
-impl System for MySystem2 {}
+#[derive(Default)]
+pub struct TestSystemManager
+{
+    my: MySystem,
+    complex: ComplexSystem,
+    my2: MySystem2
+}
 
-build_system_manager!(
-    #[derive(Default)]
-    pub TestSystemManager<i32, components::TestComponentManager>
+type Ctx = SystemContext<TestSystemManager, components::TestComponentManager, i32>;
+
+impl Update<Ctx> for TestSystemManager
+{
+    fn update(&mut self, ctx: &mut Ctx, state: &i32)
     {
-        (updates) my: MySystem,
-        (updates) complex: ComplexSystem,
-        my2: MySystem2
+        self.my.update(ctx, state);
+        self.complex.update(ctx, state);
     }
-    into (MySystem, ComplexSystem) => (my, complex)
-    into (MySystem) => (my)
-    into (ComplexSystem) => (complex)
-    context MyContext
-);
+}
 
 fn main()
 {
@@ -227,10 +237,7 @@ fn main()
     mgr.add_component(ComplexComponent::new(2, 4));
     mgr.add_component(ComplexComponent::new(1, 2));
     let mut systems = TestSystemManager::default();
-    {
-        use regecs::system::SystemTypeProvider;
-        systems.get_mut(MySystem::class()).val = 42;
-    }
+    systems.my.val = 42;
     let mut sc: Scene<i32, _, _> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
@@ -242,11 +249,11 @@ fn main()
     );
     mgr.remove_component(test);
     mgr.remove_component(test2);
-    let sfdk = <TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
-    let fh = <TestComponentManager as ComponentManager<components::Test2>>::get(&mgr).len();
+    let sfdk = <components::TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
+    let fh = <components::TestComponentManager as ComponentManager<components::Test2>>::get(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
     mgr.remove_component(test1);
-    let test = <TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
+    let test = <components::TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
     assert_eq!(test, 0);
 }
