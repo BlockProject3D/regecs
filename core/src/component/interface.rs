@@ -39,6 +39,34 @@ pub trait Component: Sized
     type Pool: ComponentPool<Self>;
 }
 
+pub struct ComponentType<TComponent: Component>
+{
+    useless: std::marker::PhantomData<TComponent>
+}
+
+impl<TComponent: Component> ComponentType<TComponent>
+{
+    pub fn new() -> ComponentType<TComponent>
+    {
+        return ComponentType {
+            useless: std::marker::PhantomData::default()
+        };
+    }
+}
+
+pub trait ComponentTypeProvider<TComponent: Component>
+{
+    fn class() -> ComponentType<TComponent>;
+}
+
+impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
+{
+    fn class() -> ComponentType<TComponent>
+    {
+        return ComponentType::<TComponent>::new();
+    }
+}
+
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
@@ -130,10 +158,30 @@ pub trait AttachmentProvider
     fn clear(&mut self, entity: ObjectRef);
 }
 
-pub trait ComponentProvider<TComponent: Component>
+pub trait ComponentPoolProvider<TComponent: Component>
 {
-    fn pool(&self) -> &TComponent::Pool;
-    fn pool_mut(&mut self) -> &mut TComponent::Pool;
+    fn get(&self, _: ComponentType<TComponent>) -> &TComponent::Pool;
+    fn get_mut(&mut self, _: ComponentType<TComponent>) -> &mut TComponent::Pool;
+
+    fn get_component(&self, class: ComponentType<TComponent>, id: usize) -> &TComponent
+    {
+        &self.get(class)[id]
+    }
+
+    fn get_component_mut(&mut self, class: ComponentType<TComponent>, id: usize) -> &mut TComponent
+    {
+        &mut self.get_mut(class)[id]
+    }
+
+    fn add_component(&mut self, comp: TComponent) -> usize
+    {
+        self.get_mut(TComponent::class()).add(comp)
+    }
+
+    fn remove_component(&mut self, class: ComponentType<TComponent>, id: usize)
+    {
+        self.get_mut(class).remove(id);
+    }
 }
 
 /// Base trait to represent the container of all component pools

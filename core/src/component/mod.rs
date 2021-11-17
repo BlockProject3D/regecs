@@ -34,8 +34,10 @@ pub use interface::{
     Component,
     ComponentManager,
     ComponentPool,
-    ComponentProvider,
-    IterableComponentPool
+    ComponentPoolProvider,
+    IterableComponentPool,
+    ComponentType,
+    ComponentTypeProvider
 };
 
 mod attachments;
@@ -47,7 +49,7 @@ pub mod pool
     pub use super::{basic_pool::BasicComponentPool, grouped_pool::GroupComponentPool};
 }
 
-pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
+/*pub fn add_component<TComponentManager: ComponentProvider<TComponent>, TComponent: Component>(
     mgr: &mut TComponentManager,
     comp: TComponent
 ) -> usize
@@ -94,4 +96,4 @@ pub fn get_component_pool<TComponentManager: ComponentProvider<TComponent>, TCom
 ) -> &TComponent::Pool
 {
     return mgr.pool();
-}
+}*/

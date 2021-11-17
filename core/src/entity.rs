@@ -27,9 +27,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    component::{AttachmentProvider, Component, ComponentPool, ComponentProvider},
+    component::{AttachmentProvider, Component, ComponentPool, ComponentPoolProvider},
     object::ObjectRef
 };
+use crate::component::{ComponentType, ComponentTypeProvider};
 
 pub struct Entity<'a, TComponentManager>
 {
@@ -48,7 +49,7 @@ impl<'a, TComponentManager> Entity<'a, TComponentManager>
     }
 }
 
-pub trait EntityPart<TComponent: Component, TComponentManager: ComponentProvider<TComponent>>
+pub trait EntityPart<TComponent: Component, TComponentManager: ComponentPoolProvider<TComponent>>
 {
     fn add(&mut self, comp: TComponent) -> usize;
     fn get_mut(&mut self, _: ComponentType<TComponent>, id: usize) -> &mut TComponent;
@@ -57,64 +58,36 @@ pub trait EntityPart<TComponent: Component, TComponentManager: ComponentProvider
     fn list(&self, _: ComponentType<TComponent>) -> Option<Vec<usize>>;
 }
 
-impl<'a, TComponent: Component, TComponentManager: ComponentProvider<TComponent>>
+impl<'a, TComponent: Component, TComponentManager: ComponentPoolProvider<TComponent>>
     EntityPart<TComponent, TComponentManager> for Entity<'a, TComponentManager>
 where
     TComponent::Pool: AttachmentProvider
 {
     fn add(&mut self, comp: TComponent) -> usize
     {
-        let id = self.mgr.pool_mut().add(comp);
-        self.mgr.pool_mut().attach(self.entity, id);
+        let id = self.mgr.get_mut(TComponent::class()).add(comp);
+        self.mgr.get_mut(TComponent::class()).attach(self.entity, id);
         return id;
     }
 
-    fn get_mut(&mut self, _: ComponentType<TComponent>, id: usize) -> &mut TComponent
+    fn get_mut(&mut self, class: ComponentType<TComponent>, id: usize) -> &mut TComponent
     {
-        return &mut self.mgr.pool_mut()[id];
+        return &mut self.mgr.get_mut(class)[id];
     }
 
-    fn get(&self, _: ComponentType<TComponent>, id: usize) -> &TComponent
+    fn get(&self, class: ComponentType<TComponent>, id: usize) -> &TComponent
     {
-        return &self.mgr.pool()[id];
+        return &self.mgr.get(class)[id];
     }
 
-    fn remove(&mut self, _: ComponentType<TComponent>, id: usize)
+    fn remove(&mut self, class: ComponentType<TComponent>, id: usize)
     {
-        self.mgr.pool_mut().remove(id);
+        self.mgr.get_mut(class).remove(id);
     }
 
-    fn list(&self, _: ComponentType<TComponent>) -> Option<Vec<usize>>
+    fn list(&self, class: ComponentType<TComponent>) -> Option<Vec<usize>>
     {
-        return self.mgr.pool().list(self.entity);
-    }
-}
-
-pub struct ComponentType<TComponent: Component>
-{
-    useless: std::marker::PhantomData<TComponent>
-}
-
-impl<TComponent: Component> ComponentType<TComponent>
-{
-    pub fn new() -> ComponentType<TComponent>
-    {
-        return ComponentType {
-            useless: std::marker::PhantomData::default()
-        };
-    }
-}
-
-pub trait ComponentTypeProvider<TComponent: Component>
-{
-    fn class() -> ComponentType<TComponent>;
-}
-
-impl<TComponent: Component> ComponentTypeProvider<TComponent> for TComponent
-{
-    fn class() -> ComponentType<TComponent>
-    {
-        return ComponentType::<TComponent>::new();
+        return self.mgr.get(class).list(self.entity);
     }
 }
 

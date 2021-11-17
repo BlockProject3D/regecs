@@ -29,18 +29,15 @@
 use components::ComplexSystem;
 use regecs::{
     component::{
-        add_component,
-        get_component,
-        get_component_mut,
-        remove_component,
         ComponentPool,
-        ComponentProvider
+        ComponentPoolProvider
     },
-    entity::{ComponentTypeProvider, Entity, EntityPart},
+    entity::{Entity, EntityPart},
     macros::build_system_manager,
     scene::Scene,
     system::{System, SystemPart, Updatable}
 };
+use regecs::component::ComponentTypeProvider;
 
 use crate::components::ComplexComponent;
 
@@ -50,12 +47,13 @@ mod components
         component::{
             pool::{BasicComponentPool, GroupComponentPool},
             Component,
-            ComponentProvider,
+            ComponentPoolProvider,
             IterableComponentPool
         },
         macros::build_component_manager,
         system::{System, Updatable}
     };
+    use regecs::component::ComponentTypeProvider;
 
     pub struct Test
     {
@@ -145,17 +143,17 @@ mod components
 
     impl<TContext: regecs::system::Context> Updatable<TContext> for ComplexSystem
     where
-        TContext::ComponentManager: ComponentProvider<ComplexComponent>
+        TContext::ComponentManager: ComponentPoolProvider<ComplexComponent>
     {
         fn update(&mut self, ctx: &mut TContext, _: &TContext::AppState)
         {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut()
-                    .pool_mut()
+                    .get_mut(ComplexComponent::class())
                     .update_group(component, new_order);
             }
-            for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
+            for (i, v) in ctx.components_mut().get_mut(ComplexComponent::class()).iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((i, v.order));
@@ -185,14 +183,14 @@ impl System for MySystem {}
 impl<TContext: regecs::system::Context<AppState = i32>> Updatable<TContext> for MySystem
 where
     TContext::ComponentManager:
-        ComponentProvider<components::Test> + ComponentProvider<components::Test2>
+        ComponentPoolProvider<components::Test> + ComponentPoolProvider<components::Test2>
 {
     fn update(&mut self, ctx: &mut TContext, state: &TContext::AppState)
     {
-        get_component_mut::<_, components::Test>(ctx.components_mut(), 0).value = 12;
-        get_component_mut::<_, components::Test2>(ctx.components_mut(), 0).value2 = 42;
+        ctx.components_mut().get_component_mut(components::Test::class(), 0).value = 12;
+        ctx.components_mut().get_component_mut(components::Test2::class(), 0).value2 = 42;
         assert_eq!(
-            get_component::<_, components::Test2>(ctx.components_mut(), 0).value2,
+            ctx.components().get_component(components::Test2::class(), 0).value2,
             42
         );
         assert_eq!(*state, 42);
@@ -225,12 +223,12 @@ fn main()
     let mut entity = Entity::new(&mut mgr, 0);
     entity.add(components::Test { value: 12 });
     entity.get_mut(components::Test::class(), 0).value = 1;
-    add_component(&mut mgr, components::Test { value: 0 });
-    add_component(&mut mgr, components::Test2 { value2: 0 });
-    add_component(&mut mgr, ComplexComponent::new(2, 3));
-    add_component(&mut mgr, ComplexComponent::new(1, 1));
-    add_component(&mut mgr, ComplexComponent::new(2, 4));
-    add_component(&mut mgr, ComplexComponent::new(1, 2));
+    mgr.add_component(components::Test { value: 0 });
+    mgr.add_component(components::Test2 { value2: 0 });
+    mgr.add_component(ComplexComponent::new(2, 3));
+    mgr.add_component(ComplexComponent::new(1, 1));
+    mgr.add_component(ComplexComponent::new(2, 4));
+    mgr.add_component(ComplexComponent::new(1, 2));
     let mut systems = TestSystemManager::default();
     {
         use regecs::system::SystemTypeProvider;
@@ -240,24 +238,18 @@ fn main()
     sc.update(&ctx);
     sc.update(&ctx);
     mgr = sc.consume();
-    assert_eq!(get_component::<_, components::Test>(&mgr, 0).value, 12);
+    assert_eq!(mgr.get_component(components::Test::class(), 0).value, 12);
     assert_eq!(
-        get_component::<_, components::Test2>(&mgr, 0).value2,
+        mgr.get_component(components::Test2::class(), 0).value2,
         42
     );
-    remove_component::<_, components::Test>(&mut mgr, 0);
-    remove_component::<_, components::Test2>(&mut mgr, 0);
-    let test =
-        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mgr)
-            .size();
-    let test1 =
-        <components::TestComponentManager as ComponentProvider<components::Test2>>::pool(&mgr)
-            .size();
+    mgr.remove_component(components::Test::class(), 0);
+    mgr.remove_component(components::Test2::class(), 0);
+    let test = mgr.get(components::Test::class()).size();
+    let test1 = mgr.get(components::Test2::class()).size();
     assert_eq!(test, 1);
     assert_eq!(test1, 0);
-    remove_component::<_, components::Test>(&mut mgr, 1);
-    let test =
-        <components::TestComponentManager as ComponentProvider<components::Test>>::pool(&mgr)
-            .size();
+    mgr.remove_component(components::Test::class(), 1);
+    let test = mgr.get(components::Test::class()).size();
     assert_eq!(test, 0);
 }
