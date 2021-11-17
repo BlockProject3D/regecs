@@ -74,19 +74,17 @@ impl<C: Context> crate::system::Context for Common<C>
 pub struct SceneContext<
     State,
     ComponentManager: Clear,
-    TSystemManager: Update<Common<Self>>
+    SystemManager
 > {
     common: Common<Self>,
-    systems: TSystemManager
+    systems: SystemManager
 }
 
-impl<State, ComponentManager: Clear, TSystemManager: Update<Common<Self>>>
-    crate::object::Context for SceneContext<State, ComponentManager, TSystemManager>
+impl<State, ComponentManager: Clear, SystemManager> crate::object::Context for SceneContext<State, ComponentManager, SystemManager>
 {
     type AppState = State;
     type ComponentManager = ComponentManager;
-    type SystemContext = Common<Self>;
-    type SystemManager = TSystemManager;
+    type SystemManager = SystemManager;
 
     fn components(&self) -> &Self::ComponentManager
     {
@@ -123,10 +121,10 @@ impl<State, ComponentManager: Clear, TSystemManager: Update<Common<Self>>>
 pub struct Scene<
     State,
     ComponentManager: Clear,
-    TSystemManager: Update<Common<SceneContext<State, ComponentManager, TSystemManager>>>
+    SystemManager: Update<Common<SceneContext<State, ComponentManager, SystemManager>>>
 > {
-    scene1: SceneContext<State, ComponentManager, TSystemManager>,
-    objects: ObjectStorage<SceneContext<State, ComponentManager, TSystemManager>>,
+    scene1: SceneContext<State, ComponentManager, SystemManager>,
+    objects: ObjectStorage<SceneContext<State, ComponentManager, SystemManager>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
