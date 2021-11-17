@@ -53,19 +53,13 @@ pub trait Context: Sized
     fn objects(&self) -> &ObjectTree;
 }
 
-pub trait Serializable<C: Context>
-{
-    fn serialize(&self, ctx: &C, state: &C::AppState) -> Option<bpx::sd::Object>;
-    fn deserialize(&mut self, ctx: &mut C, state: &C::AppState, obj: bpx::sd::Object);
-}
-
 pub trait Index
 {
     fn index(&self) -> ObjectRef;
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait CoreObject<C: Context>: Serializable<C>
+pub trait CoreObject<C: Context>
 {
     fn on_event(
         &mut self,
@@ -102,7 +96,7 @@ pub trait Object<C: Context>
 impl<
         C: Context,
         E: Any,
-        O: Object<C, EventType = E> + Serializable<C> + Index
+        O: Object<C, EventType = E> + Index
     > CoreObject<C> for O
 {
     fn on_event(

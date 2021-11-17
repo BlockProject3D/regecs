@@ -163,8 +163,6 @@ impl EventBuilder
 pub enum SystemEvent<C: Context>
 {
     Enable(ObjectRef, bool),
-    Serialize(ObjectRef),
-    Deserialize(ObjectRef, bpx::sd::Object),
     Spawn(ObjectFactory<C>),
     Destroy(ObjectRef)
 }

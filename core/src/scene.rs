@@ -189,18 +189,6 @@ impl<
                 }
                 None
             },
-            SystemEvent::Serialize(obj) => {
-                let data = self.objects[obj].serialize(&self.scene1, state);
-                if let Some(d) = data {
-                    Some(Box::from(d))
-                } else {
-                    None
-                }
-            },
-            SystemEvent::Deserialize(obj, data) => {
-                self.objects[obj].deserialize(&mut self.scene1, state, data);
-                None
-            },
             SystemEvent::Spawn(obj) => {
                 let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
                 let updatable = obj.on_init(&mut self.scene1, state);
