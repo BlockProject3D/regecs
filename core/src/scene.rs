@@ -34,7 +34,7 @@ use crate::{
     component::Clear,
     event::{Event, EventManager, SystemEvent},
     object::{Context, ObjectFactory, ObjectRef, ObjectStorage, ObjectTree},
-    system::SystemManager
+    system::Update
 };
 
 pub struct Common<C: Context>
@@ -74,13 +74,13 @@ impl<C: Context> crate::system::Context for Common<C>
 pub struct SceneContext<
     State,
     ComponentManager: Clear,
-    TSystemManager: SystemManager<Common<Self>>
+    TSystemManager: Update<Common<Self>>
 > {
     common: Common<Self>,
     systems: TSystemManager
 }
 
-impl<State, ComponentManager: Clear, TSystemManager: SystemManager<Common<Self>>>
+impl<State, ComponentManager: Clear, TSystemManager: Update<Common<Self>>>
     crate::object::Context for SceneContext<State, ComponentManager, TSystemManager>
 {
     type AppState = State;
@@ -123,7 +123,7 @@ impl<State, ComponentManager: Clear, TSystemManager: SystemManager<Common<Self>>
 pub struct Scene<
     State,
     ComponentManager: Clear,
-    TSystemManager: SystemManager<Common<SceneContext<State, ComponentManager, TSystemManager>>>
+    TSystemManager: Update<Common<SceneContext<State, ComponentManager, TSystemManager>>>
 > {
     scene1: SceneContext<State, ComponentManager, TSystemManager>,
     objects: ObjectStorage<SceneContext<State, ComponentManager, TSystemManager>>,
@@ -134,7 +134,7 @@ pub struct Scene<
 impl<
         State,
         ComponentManager: Clear,
-        TSystemManager: SystemManager<Common<SceneContext<State, ComponentManager, TSystemManager>>>
+        TSystemManager: Update<Common<SceneContext<State, ComponentManager, TSystemManager>>>
     > Scene<State, ComponentManager, TSystemManager>
 {
     pub fn new(

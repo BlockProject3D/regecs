@@ -31,7 +31,7 @@ use std::any::Any;
 use crate::{
     event::EventManager,
     object::ObjectTree,
-    system::SystemManager
+    system::Update
 };
 use crate::component::Clear;
 
@@ -45,7 +45,7 @@ pub trait Context: Sized
     type AppState;
     type ComponentManager: Clear;
     type SystemContext: crate::system::Context;
-    type SystemManager: SystemManager<Self::SystemContext>;
+    type SystemManager: Update<Self::SystemContext>;
 
     fn components(&self) -> &Self::ComponentManager;
     fn components_mut(&mut self) -> &mut Self::ComponentManager;

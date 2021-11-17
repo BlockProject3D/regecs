@@ -46,18 +46,18 @@ pub trait System
 }
 
 /// System interface
-pub trait Updatable<C: Context>
+pub trait Update<C: Context>
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState);
 }
 
-/// System manager interface
+/*/// System manager interface
 pub trait SystemManager<C: Context>
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState);
-}
+}*/
 
-pub trait SystemProvider<TSystem>
+/*pub trait SystemProvider<TSystem>
 {
     fn system(&self) -> &TSystem;
     fn system_mut(&mut self) -> &mut TSystem;
@@ -109,4 +109,4 @@ impl<TSystem: System, TSystemManager: SystemProvider<TSystem>> SystemPart<TSyste
     {
         return self.system_mut();
     }
-}
+}*/
