@@ -36,12 +36,12 @@ pub use storage::{ObjectStorage, ObjectTree};
 
 pub struct ObjectFactory<C: Context>
 {
-    factory: Box<dyn FnOnce(ObjectRef) -> Box<dyn CoreObject<C>>>
+    factory: Box<dyn FnOnce(ObjectRef) -> Box<dyn Object<C>>>
 }
 
 impl<C: Context> ObjectFactory<C>
 {
-    pub fn invoke(self, this: ObjectRef) -> Box<dyn CoreObject<C>>
+    pub fn invoke(self, this: ObjectRef) -> Box<dyn Object<C>>
     {
         return (self.factory)(this);
     }
@@ -49,7 +49,7 @@ impl<C: Context> ObjectFactory<C>
 
 impl<
         C: Context,
-        O: 'static + CoreObject<C>,
+        O: 'static + Object<C>,
         F: 'static + FnOnce(ObjectRef) -> O
     > From<F> for ObjectFactory<C>
 {

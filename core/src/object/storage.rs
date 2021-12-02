@@ -32,7 +32,7 @@ use std::{
     ops::{Index, IndexMut}
 };
 
-use crate::object::{Context, CoreObject, ObjectFactory, ObjectRef};
+use crate::object::{Context, Object, ObjectFactory, ObjectRef};
 
 pub struct ObjectTree
 {
@@ -111,7 +111,7 @@ impl ObjectTree
 
 pub struct ObjectStorage<C: Context>
 {
-    objects: Vec<Option<Box<dyn CoreObject<C>>>>
+    objects: Vec<Option<Box<dyn Object<C>>>>
 }
 
 impl<C: Context> ObjectStorage<C>
@@ -130,7 +130,7 @@ impl<C: Context> ObjectStorage<C>
         &mut self,
         tree: &mut ObjectTree,
         obj: ObjectFactory<C>
-    ) -> (ObjectRef, &mut Box<dyn CoreObject<C>>)
+    ) -> (ObjectRef, &mut Box<dyn Object<C>>)
     {
         let empty_slot = {
             let mut id = 0;
@@ -165,7 +165,7 @@ impl<C: Context> ObjectStorage<C>
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn CoreObject<C>>>>
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn Object<C>>>>
     {
         return self.objects.iter_mut();
     }
@@ -182,7 +182,7 @@ impl<C: Context> ObjectStorage<C>
 
 impl<C: Context> Index<ObjectRef> for ObjectStorage<C>
 {
-    type Output = Box<dyn CoreObject<C>>;
+    type Output = Box<dyn Object<C>>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output
     {

@@ -29,132 +29,50 @@
 //! REGECS event system
 
 use std::{
-    any::Any,
     boxed::Box,
     collections::{HashMap, VecDeque}
 };
 
 use crate::object::{Context, ObjectFactory, ObjectRef};
 
-pub type Handle = usize;
-
-type EventTrackerValue = Option<Box<dyn Any>>;
-type EventTrackerFunc<T, C, State> = Box<dyn FnOnce(&mut T, &mut C, &State, EventTrackerValue)>;
-
-pub struct EventTracker<T, C, State>
-{
-    events: Vec<(Handle, EventTrackerFunc<T, C, State>)>
-}
-
-impl<T, C, State> EventTracker<T, C, State>
-{
-    pub fn new() -> EventTracker<T, C, State>
-    {
-        return EventTracker { events: Vec::new() };
-    }
-
-    pub fn push<R: 'static, F: 'static + FnOnce(&mut T, &mut C, &State, Option<R>)>(
-        &mut self,
-        handle: Handle,
-        func: F
-    )
-    {
-        self.events.push((
-            handle,
-            Box::new(|me, ctx, state, data| {
-                if let Some(obj) = data {
-                    let o = *obj.downcast().unwrap();
-                    func(me, ctx, state, o);
-                } else {
-                    func(me, ctx, state, None);
-                }
-            })
-        ));
-    }
-
-    pub fn poll_batch<EventContext: Context>(
-        &mut self,
-        event_manager: &mut EventManager<EventContext>
-    ) -> EventTrackerBatch<T, C, State>
-    {
-        let mut batch = Vec::new();
-        let mut i = 0;
-        while i < self.events.len() {
-            let (flag, data) = event_manager.track_event(self.events[i].0);
-            if flag {
-                let (_, func) = self.events.remove(i);
-                batch.push((data, func));
-            } else {
-                i += 1;
-            }
-        }
-        return EventTrackerBatch { events: batch };
-    }
-}
-
-pub struct EventTrackerBatch<T, C, State>
-{
-    events: Vec<(EventTrackerValue, EventTrackerFunc<T, C, State>)>
-}
-
-impl<T, C, State> EventTrackerBatch<T, C, State>
-{
-    pub fn run(self, me: &mut T, ctx: &mut C, state: &State)
-    {
-        for (data, func) in self.events {
-            func(me, ctx, state, data);
-        }
-    }
-}
-
-pub struct Event
+pub struct Event<E>
 {
     pub sender: Option<ObjectRef>,
     pub target: Option<ObjectRef>,
-    pub data: Box<dyn Any>,
-    pub tracking: bool,
-    pub handle: Handle
+    pub data: E,
 }
 
-pub struct EventBuilder
+pub struct EventBuilder<E>
 {
-    ev: Event
+    ev: Event<E>
 }
 
-impl EventBuilder
+impl<E> EventBuilder<E>
 {
-    pub fn new<E: Any>(event: E) -> EventBuilder
+    pub fn new(event: E) -> EventBuilder<E>
     {
         return EventBuilder {
             ev: Event {
                 sender: None,
                 target: None,
-                data: Box::from(event),
-                tracking: false,
-                handle: 0
+                data: event
             }
         };
     }
 
-    pub fn with_sender(mut self, this: ObjectRef) -> EventBuilder
+    pub fn sender(mut self, this: ObjectRef) -> Self
     {
         self.ev.sender = Some(this);
         return self;
     }
 
-    pub fn with_target(mut self, target: ObjectRef) -> EventBuilder
+    pub fn target(mut self, target: ObjectRef) -> Self
     {
         self.ev.target = Some(target);
         return self;
     }
 
-    pub fn with_tracking(mut self) -> EventBuilder
-    {
-        self.ev.tracking = true;
-        return self;
-    }
-
-    pub fn into(self) -> Event
+    pub fn into(self) -> Event<E>
     {
         return self.ev;
     }
@@ -169,10 +87,8 @@ pub enum SystemEvent<C: Context>
 
 pub struct EventManager<C: Context>
 {
-    events: VecDeque<Event>,
-    system_events: VecDeque<(bool, Handle, SystemEvent<C>)>,
-    cur_handle: Handle,
-    event_responses: HashMap<Handle, Option<Box<dyn Any>>>
+    events: VecDeque<Event<C::Event>>,
+    system_events: VecDeque<(bool, SystemEvent<C>)>
 }
 
 impl<C: Context> EventManager<C>
@@ -181,50 +97,27 @@ impl<C: Context> EventManager<C>
     {
         return EventManager {
             events: VecDeque::new(),
-            system_events: VecDeque::new(),
-            cur_handle: 0,
-            event_responses: HashMap::new()
+            system_events: VecDeque::new()
         };
     }
 
-    pub fn send(&mut self, event: EventBuilder) -> Handle
+    pub fn send(&mut self, event: EventBuilder<C::Event>)
     {
-        let handle = self.cur_handle;
-        let mut e = event.into();
-        e.handle = handle;
-        self.cur_handle += 1;
-        self.events.push_back(e);
-        return handle;
+        self.events.push_back(event.into());
     }
 
-    pub fn system(&mut self, event: SystemEvent<C>, tracking: bool) -> Handle
+    pub fn system(&mut self, event: SystemEvent<C>, notify: bool)
     {
-        let handle = self.cur_handle;
-        self.cur_handle += 1;
-        self.system_events.push_back((tracking, handle, event));
-        return handle;
+        self.system_events.push_back((notify, event));
     }
 
-    pub fn track_event(&mut self, handle: Handle) -> (bool, Option<Box<dyn Any>>)
-    {
-        if let Some(data) = self.event_responses.remove(&handle) {
-            return (true, data);
-        }
-        return (false, None);
-    }
-
-    pub fn poll_event(&mut self) -> Option<Event>
+    pub fn poll_event(&mut self) -> Option<Event<C::Event>>
     {
         return self.events.pop_front();
     }
 
-    pub fn poll_system_event(&mut self) -> Option<(bool, Handle, SystemEvent<C>)>
+    pub fn poll_system_event(&mut self) -> Option<(bool, SystemEvent<C>)>
     {
         return self.system_events.pop_front();
-    }
-
-    pub fn queue_response(&mut self, handle: Handle, response: Option<Box<dyn Any>>)
-    {
-        self.event_responses.insert(handle, response);
     }
 }

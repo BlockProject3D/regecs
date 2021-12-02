@@ -41,6 +41,7 @@ pub type ObjectRef = u32;
 
 pub trait Context: Sized
 {
+    type Event;
     type AppState;
     type ComponentManager: Clear;
     type SystemManager;
@@ -59,15 +60,15 @@ pub trait Index
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait CoreObject<C: Context>
+pub trait Object<C: Context>
 {
     fn on_event(
         &mut self,
         ctx: &mut C,
         state: &C::AppState,
-        event: &Box<dyn Any>,
+        event: &C::Event,
         sender: Option<ObjectRef>
-    ) -> Option<Box<dyn Any>>;
+    );
     /// Return true to enable updates on this object
     fn on_init(&mut self, ctx: &mut C, state: &C::AppState) -> bool;
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
@@ -75,7 +76,7 @@ pub trait CoreObject<C: Context>
     fn class(&self) -> &str;
 }
 
-/// High-level object interface
+/*/// High-level object interface
 pub trait Object<C: Context>
 {
     type EventType: Any;
@@ -134,4 +135,4 @@ impl<
         //Not yet connected to reflection system
         return "Generic";
     }
-}
+}*/

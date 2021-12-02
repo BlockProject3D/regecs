@@ -71,20 +71,17 @@ impl<C: Context> crate::system::Context for Common<C>
     }
 }
 
-pub struct SceneContext<
-    State,
-    ComponentManager: Clear,
-    SystemManager
-> {
+pub struct State<E, S, CM: Clear, SM> {
     common: Common<Self>,
-    systems: SystemManager
+    systems: SM
 }
 
-impl<State, ComponentManager: Clear, SystemManager> crate::object::Context for SceneContext<State, ComponentManager, SystemManager>
+impl<E, S, CM: Clear, SM> crate::object::Context for State<E, S, CM, SM>
 {
-    type AppState = State;
-    type ComponentManager = ComponentManager;
-    type SystemManager = SystemManager;
+    type Event = E;
+    type AppState = S;
+    type ComponentManager = CM;
+    type SystemManager = SM;
 
     fn components(&self) -> &Self::ComponentManager
     {
@@ -117,35 +114,25 @@ impl<State, ComponentManager: Clear, SystemManager> crate::object::Context for S
     }
 }
 
-pub type ObjectContext<SystemManager, ComponentManager, State> = SceneContext<State, ComponentManager, SystemManager>;
-pub type SystemContext<SystemManager, ComponentManager, State> = Common<ObjectContext<SystemManager, ComponentManager, State>>;
+pub type ObjectContext<SM, CM, E, S> = State<E, S, CM, SM>;
+pub type SystemContext<SM, CM, E, S> = Common<ObjectContext<SM, CM, E, S>>;
 
+//TODO: Wrap all this nightmare of generics in another trait (maybe SceneContext) and export clearer names in the trait
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<
-    State,
-    ComponentManager: Clear,
-    SystemManager: Update<Common<SceneContext<State, ComponentManager, SystemManager>>>
-> {
-    scene1: SceneContext<State, ComponentManager, SystemManager>,
-    objects: ObjectStorage<SceneContext<State, ComponentManager, SystemManager>>,
+pub struct Scene<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> {
+    scene1: ObjectContext<SM, CM, E, S>,
+    objects: ObjectStorage<ObjectContext<SM, CM, E, S>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
 
-impl<
-        State,
-        ComponentManager: Clear,
-        TSystemManager: Update<Common<SceneContext<State, ComponentManager, TSystemManager>>>
-    > Scene<State, ComponentManager, TSystemManager>
+impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, S>
 {
-    pub fn new(
-        component_manager: ComponentManager,
-        systems: TSystemManager
-    ) -> Scene<State, ComponentManager, TSystemManager>
+    pub fn new(component_manager: CM, systems: SM) -> Scene<SM, CM, E, S>
     {
         let (objects, tree) = ObjectStorage::new();
         return Scene {
-            scene1: SceneContext {
+            scene1: State {
                 common: Common {
                     component_manager,
                     event_manager: EventManager::new(),
@@ -159,29 +146,25 @@ impl<
         };
     }
 
-    fn object_event_call(&mut self, state: &State, obj_ref: ObjectRef, event: &Event)
+    fn object_event_call(&mut self, state: &S, obj_ref: ObjectRef, event: &Event<E>)
     {
         if !self.scene1.common.tree.is_enabled(obj_ref) {
-            //Non enabled objects are not allowed to handle any event
+            //Disabled objects are not allowed to handle any event
             return;
         }
         let obj = &mut self.objects[obj_ref];
         let res = obj.on_event(&mut self.scene1, state, &event.data, event.sender);
-        if event.tracking {
+        /*if event.tracking {
             self.scene1
                 .common
                 .event_manager
                 .queue_response(event.handle, res);
-        }
+        }*/
     }
 
-    fn handle_system_event(
-        &mut self,
-        state: &State,
-        ev: SystemEvent<SceneContext<State, ComponentManager, TSystemManager>>
-    ) -> Option<Box<dyn Any>>
+    fn handle_system_event(&mut self, state: &S, ev: SystemEvent<ObjectContext<SM, CM, E, S>>)
     {
-        return match ev {
+        match ev {
             SystemEvent::Enable(obj, flag) => {
                 self.objects
                     .set_enabled(&mut self.scene1.common.tree, obj, flag);
@@ -190,7 +173,6 @@ impl<
                 } else if flag && self.init_updatable.contains(&obj) {
                     self.updatable.insert(obj);
                 }
-                None
             },
             SystemEvent::Spawn(obj) => {
                 let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
@@ -199,25 +181,23 @@ impl<
                     self.updatable.insert(obj_ref);
                     self.init_updatable.insert(obj_ref);
                 }
-                Some(Box::new(obj_ref))
             },
             SystemEvent::Destroy(target) => {
                 self.objects[target].on_remove(&mut self.scene1, state);
                 self.objects.destroy(&mut self.scene1.common.tree, target);
-                None
             }
         };
     }
 
-    pub fn update(&mut self, state: &State)
+    pub fn update(&mut self, state: &S)
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
-        while let Some((tracking, handle, ev)) =
+        while let Some((notify, ev)) =
             self.scene1.common.event_manager.poll_system_event()
         {
-            let res = self.handle_system_event(state, ev);
-            if tracking {
-                self.scene1.common.event_manager.queue_response(handle, res);
+            self.handle_system_event(state, ev);
+            if notify {
+                //TODO: Broadcast notification event
             }
         }
         for obj in &self.updatable {
@@ -230,14 +210,7 @@ impl<
                 for (obj_ref, obj) in self.objects.objects().enumerate() {
                     if let Some(o) = obj.as_mut() {
                         if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
-                            let res =
-                                o.on_event(&mut self.scene1, state, &event.data, event.sender);
-                            if event.tracking {
-                                self.scene1
-                                    .common
-                                    .event_manager
-                                    .queue_response(event.handle, res);
-                            }
+                            o.on_event(&mut self.scene1, state, &event.data, event.sender);
                         }
                     }
                 }
@@ -245,10 +218,7 @@ impl<
         }
     }
 
-    pub fn spawn_object(
-        &mut self,
-        factory: ObjectFactory<SceneContext<State, ComponentManager, TSystemManager>>
-    )
+    pub fn spawn_object(&mut self, factory: ObjectFactory<ObjectContext<SM, CM, E, S>>)
     {
         self.scene1
             .common
@@ -256,7 +226,7 @@ impl<
             .system(SystemEvent::Spawn(factory), false);
     }
 
-    pub fn consume(self) -> ComponentManager
+    pub fn consume(self) -> CM
     {
         return self.scene1.common.component_manager;
     }
