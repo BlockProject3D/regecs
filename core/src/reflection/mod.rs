@@ -29,3 +29,52 @@
 //pub mod class;
 //pub mod interface;
 //pub mod property;
+
+pub mod property {
+    use std::borrow::Cow;
+
+    //TODO: Add Signed and Unsigned enums with support for writing and reading signed and unsigned
+    // numbers with number of bits (support for network compression).
+
+    pub trait Reader {
+        type Error;
+
+        fn read_null(&mut self) -> Result<bool, Self::Error>;
+        fn read_u8(&mut self) -> Result<u8, Self::Error>;
+        fn read_u16(&mut self) -> Result<u16, Self::Error>;
+        fn read_u32(&mut self) -> Result<u32, Self::Error>;
+        fn read_u64(&mut self) -> Result<u64, Self::Error>;
+        fn read_i8(&mut self) -> Result<i8, Self::Error>;
+        fn read_i16(&mut self) -> Result<i16, Self::Error>;
+        fn read_i32(&mut self) -> Result<i32, Self::Error>;
+        fn read_i64(&mut self) -> Result<i64, Self::Error>;
+        fn read_f32(&mut self) -> Result<f32, Self::Error>;
+        fn read_f64(&mut self) -> Result<f64, Self::Error>;
+        fn read_bool(&mut self) -> Result<bool, Self::Error>;
+        fn read_string(&mut self) -> Result<Cow<str>, Self::Error>;
+    }
+
+    pub trait Writer {
+        type Error;
+
+        fn write_null(&mut self) -> Result<(), Self::Error>;
+        fn write_u8(&mut self, val: u8) -> Result<(), Self::Error>;
+        fn write_u16(&mut self, val: u16) -> Result<(), Self::Error>;
+        fn write_u32(&mut self, val: u32) -> Result<(), Self::Error>;
+        fn write_u64(&mut self, val: u64) -> Result<(), Self::Error>;
+        fn write_i8(&mut self, val: i8) -> Result<(), Self::Error>;
+        fn write_i16(&mut self, val: i16) -> Result<(), Self::Error>;
+        fn write_i32(&mut self, val: i32) -> Result<(), Self::Error>;
+        fn write_i64(&mut self, val: i64) -> Result<(), Self::Error>;
+        fn write_f32(&mut self, val: f32) -> Result<(), Self::Error>;
+        fn write_f64(&mut self, val: f64) -> Result<(), Self::Error>;
+        fn write_bool(&mut self, val: bool) -> Result<(), Self::Error>;
+        fn write_string(&mut self, val: &str) -> Result<(), Self::Error>;
+    }
+
+    pub trait Object : Sized + Send { // This must be Send otherwise it's impossible to safely write the
+        // object properties as a network packet.
+        fn read<T: Reader>(reader: &mut T) -> Result<Self, T::Error>;
+        fn write<T: Writer>(&self, writer: &mut T) -> Result<(), T::Error>;
+    }
+}

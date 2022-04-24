@@ -32,92 +32,82 @@ use std::{
     boxed::Box,
     collections::{HashMap, VecDeque}
 };
+use std::ops::Deref;
 
 use crate::object::{Context, ObjectFactory, ObjectRef};
 
+#[derive(Clone)]
 pub struct Event<E>
 {
-    pub sender: Option<ObjectRef>,
-    pub target: Option<ObjectRef>,
-    pub data: E,
+    sender: Option<ObjectRef>,
+    target: Option<ObjectRef>,
+    data: E,
 }
 
-pub struct EventBuilder<E>
-{
-    ev: Event<E>
-}
-
-impl<E> EventBuilder<E>
-{
-    pub fn new(event: E) -> EventBuilder<E>
-    {
-        return EventBuilder {
-            ev: Event {
-                sender: None,
-                target: None,
-                data: event
-            }
-        };
+impl<E> Event<E> {
+    pub fn sender(&self) -> Option<ObjectRef> {
+        self.sender
     }
 
-    pub fn sender(mut self, this: ObjectRef) -> Self
-    {
-        self.ev.sender = Some(this);
-        return self;
+    pub fn target(&self) -> Option<ObjectRef> {
+        self.target
     }
 
-    pub fn target(mut self, target: ObjectRef) -> Self
-    {
-        self.ev.target = Some(target);
-        return self;
-    }
-
-    pub fn into(self) -> Event<E>
-    {
-        return self.ev;
+    pub fn into_inner(self) -> E {
+        self.data
     }
 }
 
-pub enum SystemEvent<C: Context>
-{
-    Enable(ObjectRef, bool),
-    Spawn(ObjectFactory<C>),
-    Destroy(ObjectRef)
+impl<E> Deref for Event<E> {
+    type Target = E;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
 }
 
-pub struct EventManager<C: Context>
-{
-    events: VecDeque<Event<C::Event>>,
-    system_events: VecDeque<(bool, SystemEvent<C>)>
+pub struct Builder<E>(Event<E>);
+
+impl<E> Builder<E> {
+    pub fn new(data: E) -> Self {
+        Self(Event { data, sender: None, target: None })
+    }
+
+    pub fn sender(mut self, sender: ObjectRef) -> Self {
+        self.0.sender = Some(sender);
+        self
+    }
+
+    pub fn target(mut self, target: ObjectRef) -> Self {
+        self.0.target = Some(target);
+        self
+    }
+
+    pub fn into_inner(self) -> Event<E> {
+        self.0
+    }
 }
 
-impl<C: Context> EventManager<C>
-{
-    pub fn new() -> EventManager<C>
-    {
-        return EventManager {
-            events: VecDeque::new(),
-            system_events: VecDeque::new()
-        };
+//TODO: Rewrite EventManager into a generic EventManager for any Event type. In scene declare 2
+// event managers: a system event manager (to only manage system events) and an object event
+// manager (which only manages events of Context::Event type, common to all objects).
+
+pub struct EventManager<E> {
+    events: VecDeque<Event<E>>
+}
+
+impl<E> EventManager<E> {
+    pub fn new() -> EventManager<E> {
+        EventManager {
+            events: VecDeque::new()
+        }
     }
 
-    pub fn send(&mut self, event: EventBuilder<C::Event>)
-    {
-        self.events.push_back(event.into());
+    pub fn send(&mut self, event: Builder<E>) {
+        self.events.push_back(event.into_inner());
     }
 
-    pub fn system(&mut self, event: SystemEvent<C>, notify: bool)
-    {
-        self.system_events.push_back((notify, event));
-    }
-
-    pub fn poll_event(&mut self) -> Option<Event<C::Event>>
-    {
+    pub fn poll(&mut self) -> Option<Event<E>> {
         return self.events.pop_front();
-    }
-
-    pub fn poll_system_event(&mut self) -> Option<(bool, SystemEvent<C>)>
-    {
-        return self.system_events.pop_front();
     }
 }

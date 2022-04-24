@@ -32,11 +32,11 @@ pub trait Context
 {
     type AppState;
     type ComponentManager: Clear;
-    type Context: crate::object::Context;
+    type Event;
 
     fn components(&self) -> &Self::ComponentManager;
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
-    fn event_manager(&mut self) -> &mut EventManager<Self::Context>;
+    fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn objects(&self) -> &ObjectTree;
 }
 

@@ -33,6 +33,7 @@ use crate::{
     object::ObjectTree
 };
 use crate::component::Clear;
+use crate::event::Event;
 
 /// Type alias for object references
 ///
@@ -48,10 +49,13 @@ pub trait Context: Sized
 
     fn components(&self) -> &Self::ComponentManager;
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
-    fn event_manager(&mut self) -> &mut EventManager<Self>;
+    fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
     fn objects(&self) -> &ObjectTree;
+
+    //TODO: Create functions spawn_object<T: New<Self>>(props: T::Properties),
+    // remove_object(ObjectRef) and enable_object(ObjectRef, bool).
 }
 
 pub trait Index
@@ -62,18 +66,20 @@ pub trait Index
 /// Low-level object interface to represent all dynamic objects managed by a scene
 pub trait Object<C: Context>
 {
-    fn on_event(
-        &mut self,
-        ctx: &mut C,
-        state: &C::AppState,
-        event: &C::Event,
-        sender: Option<ObjectRef>
-    );
+    fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     /// Return true to enable updates on this object
     fn on_init(&mut self, ctx: &mut C, state: &C::AppState) -> bool;
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
     fn class(&self) -> &str;
+}
+
+pub trait New<C: Context>: Object<C> {
+    type Properties;
+
+    const UPDATES: bool;
+
+    fn new(ctx: &mut C, state: &C::AppState, props: Self::Properties, this_ref: ObjectRef) -> Self;
 }
 
 /*/// High-level object interface

@@ -4,8 +4,8 @@ The Rust Extended Generic ECS is an Entity Component System (ECS) based design w
 
 ## Features
 
-- No use of Rc or RefCell
-- Support for custom state/context owned by ECS invoker
-- Uses generics in order to represent the component layer
-- Built-in event system
-- Built-in Scene / object layer
+- No use of Rc or RefCell.
+- Support for custom state/context owned by ECS invoker.
+- Uses generics in order to represent both the component layer and the system layer.
+- Built-in event system.
+- Built-in Scene / object layer.

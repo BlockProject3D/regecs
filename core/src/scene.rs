@@ -32,15 +32,36 @@ use std::{any::Any, boxed::Box, collections::HashSet};
 
 use crate::{
     component::Clear,
-    event::{Event, EventManager, SystemEvent},
+    event::{Event, EventManager},
     object::{Context, ObjectFactory, ObjectRef, ObjectStorage, ObjectTree},
     system::Update
 };
+use crate::event::Builder;
+
+//TODO: Re-arm the following when system events will be re-written to use sender and target.
+/*enum SystemEventType<C: Context> {
+    SpawnObject(ObjectFactory<C>),
+    Enable,
+    Remove
+}
+
+struct SystemEvent<C: Context> {
+    notify: bool,
+    ty: SystemEventType<C>
+}*/
+
+enum SystemEvent<C: Context>
+{
+    Enable(ObjectRef, bool),
+    Spawn(ObjectFactory<C>),
+    Destroy(ObjectRef)
+}
 
 pub struct Common<C: Context>
 {
     component_manager: C::ComponentManager,
-    event_manager: EventManager<C>,
+    event_manager: EventManager<C::Event>,
+    system_event_manager: EventManager<(bool, SystemEvent<C>)>,
     tree: ObjectTree
 }
 
@@ -48,25 +69,21 @@ impl<C: Context> crate::system::Context for Common<C>
 {
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
-    type Context = C;
+    type Event = C::Event;
 
-    fn components(&self) -> &Self::ComponentManager
-    {
+    fn components(&self) -> &Self::ComponentManager {
         return &self.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::ComponentManager
-    {
+    fn components_mut(&mut self) -> &mut Self::ComponentManager {
         return &mut self.component_manager;
     }
 
-    fn event_manager(&mut self) -> &mut EventManager<Self::Context>
-    {
+    fn event_manager(&mut self) -> &mut EventManager<Self::Event> {
         return &mut self.event_manager;
     }
 
-    fn objects(&self) -> &ObjectTree
-    {
+    fn objects(&self) -> &ObjectTree {
         return &self.tree;
     }
 }
@@ -93,7 +110,7 @@ impl<E, S, CM: Clear, SM> crate::object::Context for State<E, S, CM, SM>
         return &mut self.common.component_manager;
     }
 
-    fn event_manager(&mut self) -> &mut EventManager<Self>
+    fn event_manager(&mut self) -> &mut EventManager<Self::Event>
     {
         return &mut self.common.event_manager;
     }
@@ -136,6 +153,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
                 common: Common {
                     component_manager,
                     event_manager: EventManager::new(),
+                    system_event_manager: EventManager::new(),
                     tree
                 },
                 systems
@@ -153,7 +171,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             return;
         }
         let obj = &mut self.objects[obj_ref];
-        let res = obj.on_event(&mut self.scene1, state, &event.data, event.sender);
+        /*let res = */obj.on_event(&mut self.scene1, state, &event);
         /*if event.tracking {
             self.scene1
                 .common
@@ -192,9 +210,10 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
     pub fn update(&mut self, state: &S)
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
-        while let Some((notify, ev)) =
-            self.scene1.common.event_manager.poll_system_event()
+        while let Some(ev) =
+            self.scene1.common.system_event_manager.poll()
         {
+            let (notify, ev) = ev.into_inner();
             self.handle_system_event(state, ev);
             if notify {
                 //TODO: Broadcast notification event
@@ -203,14 +222,14 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         for obj in &self.updatable {
             self.objects[*obj].on_update(&mut self.scene1, state);
         }
-        while let Some(event) = self.scene1.common.event_manager.poll_event() {
-            if let Some(obj_ref) = event.target {
+        while let Some(event) = self.scene1.common.event_manager.poll() {
+            if let Some(obj_ref) = event.target() {
                 self.object_event_call(state, obj_ref, &event);
             } else {
                 for (obj_ref, obj) in self.objects.objects().enumerate() {
                     if let Some(o) = obj.as_mut() {
                         if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
-                            o.on_event(&mut self.scene1, state, &event.data, event.sender);
+                            o.on_event(&mut self.scene1, state, &event);
                         }
                     }
                 }
@@ -220,10 +239,11 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 
     pub fn spawn_object(&mut self, factory: ObjectFactory<ObjectContext<SM, CM, E, S>>)
     {
-        self.scene1
+        /*self.scene1
             .common
             .event_manager
-            .system(SystemEvent::Spawn(factory), false);
+            .system(SystemEvent::Spawn(factory), false);*/
+        self.scene1.common.system_event_manager.send(Builder::new((false, SystemEvent::Spawn(factory))));
     }
 
     pub fn consume(self) -> CM
