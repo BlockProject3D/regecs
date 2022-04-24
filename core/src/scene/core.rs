@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2022, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,113 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS scene object
-
-use std::{any::Any, boxed::Box, collections::HashSet};
-
-use crate::{
-    component::Clear,
-    event::{Event, EventManager},
-    object::{Context, ObjectFactory, ObjectRef, ObjectStorage, ObjectTree},
-    system::Update
-};
-use crate::event::Builder;
-
-//TODO: Re-arm the following when system events will be re-written to use sender and target.
-/*enum SystemEventType<C: Context> {
-    SpawnObject(ObjectFactory<C>),
-    Enable,
-    Remove
-}
-
-struct SystemEvent<C: Context> {
-    notify: bool,
-    ty: SystemEventType<C>
-}*/
-
-enum SystemEvent<C: Context>
-{
-    Enable(ObjectRef, bool),
-    Spawn(ObjectFactory<C>),
-    Destroy(ObjectRef)
-}
-
-pub struct Common<C: Context>
-{
-    component_manager: C::ComponentManager,
-    event_manager: EventManager<C::Event>,
-    system_event_manager: EventManager<(bool, SystemEvent<C>)>,
-    tree: ObjectTree
-}
-
-impl<C: Context> crate::system::Context for Common<C>
-{
-    type AppState = C::AppState;
-    type ComponentManager = C::ComponentManager;
-    type Event = C::Event;
-
-    fn components(&self) -> &Self::ComponentManager {
-        return &self.component_manager;
-    }
-
-    fn components_mut(&mut self) -> &mut Self::ComponentManager {
-        return &mut self.component_manager;
-    }
-
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event> {
-        return &mut self.event_manager;
-    }
-
-    fn objects(&self) -> &ObjectTree {
-        return &self.tree;
-    }
-}
-
-pub struct State<E, S, CM: Clear, SM> {
-    common: Common<Self>,
-    systems: SM
-}
-
-impl<E, S, CM: Clear, SM> crate::object::Context for State<E, S, CM, SM>
-{
-    type Event = E;
-    type AppState = S;
-    type ComponentManager = CM;
-    type SystemManager = SM;
-
-    fn components(&self) -> &Self::ComponentManager
-    {
-        return &self.common.component_manager;
-    }
-
-    fn components_mut(&mut self) -> &mut Self::ComponentManager
-    {
-        return &mut self.common.component_manager;
-    }
-
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event>
-    {
-        return &mut self.common.event_manager;
-    }
-
-    fn systems(&self) -> &Self::SystemManager
-    {
-        return &self.systems;
-    }
-
-    fn systems_mut(&mut self) -> &mut Self::SystemManager
-    {
-        return &mut self.systems;
-    }
-
-    fn objects(&self) -> &ObjectTree
-    {
-        return &self.common.tree;
-    }
-}
-
-pub type ObjectContext<SM, CM, E, S> = State<E, S, CM, SM>;
-pub type SystemContext<SM, CM, E, S> = Common<ObjectContext<SM, CM, E, S>>;
+use std::collections::HashSet;
+use crate::component::Clear;
+use crate::event::{Builder, Event, EventManager};
+use crate::object::{ObjectFactory, ObjectRef, ObjectStorage};
+use crate::scene::{ObjectContext, SystemContext};
+use crate::scene::event::SystemEvent;
+use crate::scene::state::{ObjectState, SystemState};
+use crate::system::Update;
 
 //TODO: Wrap all this nightmare of generics in another trait (maybe SceneContext) and export clearer names in the trait
 /// Represents a scene, provides storage for systems and objects
@@ -149,8 +50,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
     {
         let (objects, tree) = ObjectStorage::new();
         return Scene {
-            scene1: State {
-                common: Common {
+            scene1: ObjectState {
+                common: SystemState {
                     component_manager,
                     event_manager: EventManager::new(),
                     system_event_manager: EventManager::new(),
@@ -211,7 +112,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
         while let Some(ev) =
-            self.scene1.common.system_event_manager.poll()
+        self.scene1.common.system_event_manager.poll()
         {
             let (notify, ev) = ev.into_inner();
             self.handle_system_event(state, ev);
