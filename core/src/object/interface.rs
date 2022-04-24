@@ -26,13 +26,6 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::any::Any;
-
-use crate::{
-    event::EventManager,
-    object::ObjectTree
-};
-use crate::component::Clear;
 use crate::event::Event;
 
 /// Type alias for object references
@@ -40,19 +33,12 @@ use crate::event::Event;
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context: Sized
+pub trait Context : crate::system::Context
 {
-    type Event;
-    type AppState;
-    type ComponentManager: Clear;
     type SystemManager;
 
-    fn components(&self) -> &Self::ComponentManager;
-    fn components_mut(&mut self) -> &mut Self::ComponentManager;
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
-    fn objects(&self) -> &ObjectTree;
 
     //TODO: Create functions spawn_object<T: New<Self>>(props: T::Properties),
     // remove_object(ObjectRef) and enable_object(ObjectRef, bool).

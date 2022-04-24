@@ -67,40 +67,37 @@ pub struct ObjectState<E, S, CM: Clear, SM> {
     pub systems: SM
 }
 
-impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
-{
-    type Event = E;
+impl<E, S, CM: Clear, SM> crate::system::Context for ObjectState<E, S, CM, SM> {
     type AppState = S;
     type ComponentManager = CM;
-    type SystemManager = SM;
+    type Event = E;
 
-    fn components(&self) -> &Self::ComponentManager
-    {
+    fn components(&self) -> &Self::ComponentManager {
         return &self.common.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::ComponentManager
-    {
+    fn components_mut(&mut self) -> &mut Self::ComponentManager {
         return &mut self.common.component_manager;
     }
 
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event>
-    {
+    fn event_manager(&mut self) -> &mut EventManager<Self::Event> {
         return &mut self.common.event_manager;
     }
 
-    fn systems(&self) -> &Self::SystemManager
-    {
+    fn objects(&self) -> &ObjectTree {
+        return &self.common.tree;
+    }
+}
+
+impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
+{
+    type SystemManager = SM;
+
+    fn systems(&self) -> &Self::SystemManager {
         return &self.systems;
     }
 
-    fn systems_mut(&mut self) -> &mut Self::SystemManager
-    {
+    fn systems_mut(&mut self) -> &mut Self::SystemManager {
         return &mut self.systems;
-    }
-
-    fn objects(&self) -> &ObjectTree
-    {
-        return &self.common.tree;
     }
 }
