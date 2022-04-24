@@ -28,8 +28,9 @@
 
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, ObjectTree};
+use crate::object::{Context, ObjectFactory, ObjectTree};
 use crate::scene::event::{Event};
+use crate::scene::EventInfo;
 
 pub struct SystemState<C: Context>
 {
@@ -60,6 +61,11 @@ impl<C: Context> crate::system::Context for SystemState<C>
     fn objects(&self) -> &ObjectTree {
         return &self.tree;
     }
+
+    fn enable_object(&mut self, info: EventInfo, enable: bool) {
+        let ty = super::event::Type::EnableObject(enable);
+        self.system_event_manager.send(info.into_event(ty));
+    }
 }
 
 pub struct ObjectState<E, S, CM: Clear, SM> {
@@ -87,6 +93,10 @@ impl<E, S, CM: Clear, SM> crate::system::Context for ObjectState<E, S, CM, SM> {
     fn objects(&self) -> &ObjectTree {
         return &self.common.tree;
     }
+
+    fn enable_object(&mut self, info: EventInfo, enable: bool) {
+        self.common.enable_object(info, enable)
+    }
 }
 
 impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
@@ -99,5 +109,15 @@ impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
 
     fn systems_mut(&mut self) -> &mut Self::SystemManager {
         return &mut self.systems;
+    }
+
+    fn remove_object(&mut self, info: EventInfo) {
+        let ty = super::event::Type::RemoveObject;
+        self.common.system_event_manager.send(info.into_event(ty));
+    }
+
+    fn spawn_object(&mut self, info: EventInfo, factory: ObjectFactory<Self>) {
+        let ty = super::event::Type::SpawnObject(factory);
+        self.common.system_event_manager.send(info.into_event(ty));
     }
 }

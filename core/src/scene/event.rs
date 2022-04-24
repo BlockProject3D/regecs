@@ -26,6 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::event::Builder;
 use crate::object::{Context, ObjectFactory, ObjectRef};
 
 pub enum Type<C: Context> {
@@ -67,5 +68,20 @@ impl EventInfo {
     pub fn notify(mut self) -> Self {
         self.notify = true;
         self
+    }
+
+    pub(crate) fn into_event<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
+        let ev = Event {
+            notify: self.notify,
+            ty
+        };
+        let mut builder = Builder::new(ev);
+        if let Some(sender) = self.sender {
+            builder = builder.sender(sender);
+        }
+        if let Some(target) = self.target {
+            builder = builder.sender(target);
+        }
+        builder
     }
 }

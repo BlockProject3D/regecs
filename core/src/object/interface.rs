@@ -27,21 +27,23 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
+use crate::object::ObjectFactory;
+use crate::scene::EventInfo;
 
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context : crate::system::Context
+pub trait Context : Sized + crate::system::Context
 {
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
-
-    //TODO: Create functions spawn_object<T: New<Self>>(props: T::Properties),
-    // remove_object(ObjectRef) and enable_object(ObjectRef, bool).
+    fn remove_object(&mut self, info: EventInfo);
+    fn spawn_object(&mut self, info: EventInfo, factory: ObjectFactory<Self>);
+    //TODO: Create functions spawn_object<T: New<Self>>(props: T::Properties).
 }
 
 pub trait Index

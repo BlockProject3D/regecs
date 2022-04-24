@@ -27,6 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{component::Clear, event::EventManager, object::ObjectTree};
+use crate::scene::EventInfo;
 
 pub trait Context
 {
@@ -38,6 +39,7 @@ pub trait Context
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
     fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn objects(&self) -> &ObjectTree;
+    fn enable_object(&mut self, info: EventInfo, enable: bool);
 }
 
 /// Update functionality.
