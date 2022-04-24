@@ -31,7 +31,6 @@ use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{ObjectFactory, ObjectRef, ObjectStorage};
 use crate::scene::{ObjectContext, SystemContext};
-use crate::scene::event::SystemEvent;
 use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
 
@@ -81,19 +80,23 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         }*/
     }
 
-    fn handle_system_event(&mut self, state: &S, ev: SystemEvent<ObjectContext<SM, CM, E, S>>)
+    fn handle_system_event(&mut self, state: &S, ev: Event<super::event::Event<ObjectContext<SM, CM, E, S>>>)
     {
-        match ev {
-            SystemEvent::Enable(obj, flag) => {
+        let sender = ev.sender();
+        let target = ev.target();
+        let inner = ev.into_inner();
+        match inner.ty {
+            super::event::Type::EnableObject(flag) => {
+                let target = target.expect("No target given to EnableObject");
                 self.objects
-                    .set_enabled(&mut self.scene1.common.tree, obj, flag);
+                    .set_enabled(&mut self.scene1.common.tree, target, flag);
                 if !flag {
-                    self.updatable.remove(&obj);
-                } else if flag && self.init_updatable.contains(&obj) {
-                    self.updatable.insert(obj);
+                    self.updatable.remove(&target);
+                } else if flag && self.init_updatable.contains(&target) {
+                    self.updatable.insert(target);
                 }
             },
-            SystemEvent::Spawn(obj) => {
+            super::event::Type::SpawnObject(obj) => {
                 let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
                 let updatable = obj.on_init(&mut self.scene1, state);
                 if updatable {
@@ -101,24 +104,29 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
                     self.init_updatable.insert(obj_ref);
                 }
             },
-            SystemEvent::Destroy(target) => {
+            super::event::Type::RemoveObject => {
+                let target = target.expect("No target given to RemoveObject");
                 self.objects[target].on_remove(&mut self.scene1, state);
                 self.objects.destroy(&mut self.scene1.common.tree, target);
             }
         };
+        if inner.notify {
+            match sender {
+                None => {
+                    //TODO: Broadcast notification event
+                }
+                Some(_target) => {
+                    //TODO: Send notification event to `target`
+                }
+            }
+        }
     }
 
     pub fn update(&mut self, state: &S)
     {
         self.scene1.systems.update(&mut self.scene1.common, state);
-        while let Some(ev) =
-        self.scene1.common.system_event_manager.poll()
-        {
-            let (notify, ev) = ev.into_inner();
+        while let Some(ev) = self.scene1.common.system_event_manager.poll() {
             self.handle_system_event(state, ev);
-            if notify {
-                //TODO: Broadcast notification event
-            }
         }
         for obj in &self.updatable {
             self.objects[*obj].on_update(&mut self.scene1, state);
@@ -144,7 +152,11 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             .common
             .event_manager
             .system(SystemEvent::Spawn(factory), false);*/
-        self.scene1.common.system_event_manager.send(Builder::new((false, SystemEvent::Spawn(factory))));
+        let ev = super::event::Event {
+            notify: false,
+            ty: super::event::Type::SpawnObject(factory)
+        };
+        self.scene1.common.system_event_manager.send(Builder::new(ev));
     }
 
     pub fn consume(self) -> CM

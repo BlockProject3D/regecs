@@ -26,23 +26,46 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//TODO: Re-arm the following when system events will be re-written to use sender and target.
-/*enum SystemEventType<C: Context> {
-    SpawnObject(ObjectFactory<C>),
-    Enable,
-    Remove
-}
-
-struct SystemEvent<C: Context> {
-    notify: bool,
-    ty: SystemEventType<C>
-}*/
-
 use crate::object::{Context, ObjectFactory, ObjectRef};
 
-pub enum SystemEvent<C: Context>
-{
-    Enable(ObjectRef, bool),
-    Spawn(ObjectFactory<C>),
-    Destroy(ObjectRef)
+pub enum Type<C: Context> {
+    EnableObject(bool),
+    RemoveObject,
+    SpawnObject(ObjectFactory<C>)
+}
+
+pub struct Event<C: Context> {
+    pub notify: bool,
+    pub ty: Type<C>
+}
+
+pub struct EventInfo {
+    sender: Option<ObjectRef>,
+    target: Option<ObjectRef>,
+    notify: bool
+}
+
+impl EventInfo {
+    pub fn new() -> Self {
+        EventInfo {
+            sender: None,
+            target: None,
+            notify: false
+        }
+    }
+
+    pub fn sender(mut self, sender: ObjectRef) -> Self {
+        self.sender = Some(sender);
+        self
+    }
+
+    pub fn target(mut self, target: ObjectRef) -> Self {
+        self.target = Some(target);
+        self
+    }
+
+    pub fn notify(mut self) -> Self {
+        self.notify = true;
+        self
+    }
 }

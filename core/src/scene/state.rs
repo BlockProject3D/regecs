@@ -29,13 +29,13 @@
 use crate::component::Clear;
 use crate::event::EventManager;
 use crate::object::{Context, ObjectTree};
-use crate::scene::event::SystemEvent;
+use crate::scene::event::{Event};
 
 pub struct SystemState<C: Context>
 {
     pub component_manager: C::ComponentManager,
     pub event_manager: EventManager<C::Event>,
-    pub system_event_manager: EventManager<(bool, SystemEvent<C>)>,
+    pub system_event_manager: EventManager<Event<C>>,
     pub tree: ObjectTree
 }
 
