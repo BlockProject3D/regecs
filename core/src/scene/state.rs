@@ -28,9 +28,11 @@
 
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Factory, ObjectFactory, ObjectTree};
+use crate::object::{Context, Factory, ObjectTree};
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
+
+//TODO: Find better names for fields.
 
 pub struct SystemState<C: Context>
 {

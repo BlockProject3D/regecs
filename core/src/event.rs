@@ -28,13 +28,10 @@
 
 //! REGECS event system
 
-use std::{
-    boxed::Box,
-    collections::{HashMap, VecDeque}
-};
+use std::collections::VecDeque;
 use std::ops::Deref;
 
-use crate::object::{Context, ObjectFactory, ObjectRef};
+use crate::object::ObjectRef;
 
 #[derive(Clone)]
 pub struct Event<E>

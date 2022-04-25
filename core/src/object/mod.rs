@@ -36,30 +36,3 @@ pub use factory::Factory;
 
 pub use interface::*;
 pub use storage::{ObjectStorage, ObjectTree};
-
-pub struct ObjectFactory<C: Context>
-{
-    factory: Box<dyn FnOnce(ObjectRef) -> Box<dyn Object<C>>>
-}
-
-impl<C: Context> ObjectFactory<C>
-{
-    pub fn invoke(self, this: ObjectRef) -> Box<dyn Object<C>>
-    {
-        return (self.factory)(this);
-    }
-}
-
-impl<
-        C: Context,
-        O: 'static + Object<C>,
-        F: 'static + FnOnce(ObjectRef) -> O
-    > From<F> for ObjectFactory<C>
-{
-    fn from(func: F) -> Self
-    {
-        return ObjectFactory {
-            factory: Box::new(|this| Box::new(func(this)))
-        };
-    }
-}
