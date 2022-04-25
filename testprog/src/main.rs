@@ -212,7 +212,15 @@ pub struct TestSystemManager
     my2: MySystem2
 }
 
-type Ctx = SystemContext<TestSystemManager, components::TestComponentManager, (), i32>;
+pub struct Interface;
+impl regecs::scene::Interface for Interface {
+    type Event = ();
+    type AppState = i32;
+    type ComponentManager = components::TestComponentManager;
+    type SystemManager = TestSystemManager;
+}
+
+type Ctx = SystemContext<Interface>;
 
 impl Update<Ctx> for TestSystemManager
 {
@@ -238,7 +246,7 @@ fn main()
     mgr.add_component(ComplexComponent::new(1, 2));
     let mut systems = TestSystemManager::default();
     systems.my.val = 42;
-    let mut sc: Scene<_, _, (), i32> = Scene::new(mgr, systems);
+    let mut sc: Scene<Interface> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
     mgr = sc.consume();
