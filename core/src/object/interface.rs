@@ -43,7 +43,6 @@ pub trait Context : Sized + crate::system::Context
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
     fn remove_object(&mut self, info: EventInfo);
     fn spawn_object(&mut self, info: EventInfo, factory: Factory<Self>);
-    //TODO: Create functions spawn_object<T: New<Self>>(props: T::Properties).
 }
 
 pub trait Index
