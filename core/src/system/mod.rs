@@ -26,7 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS system layer
+//! REGECS system layer.
+//!
+//! This module is currently unfinished and lacks support for dynamic object instantiation from
+//! class name.
 
 mod interface;
 //mod object_registry;
