@@ -32,7 +32,7 @@ use std::{
     ops::{Index, IndexMut}
 };
 
-use crate::object::{Context, Object, ObjectFactory, ObjectRef};
+use crate::object::{Context, Object, ObjectRef};
 
 pub struct ObjectTree
 {
@@ -77,7 +77,7 @@ impl ObjectTree
         return Cow::from(Vec::new());
     }
 
-    fn insert(&mut self, obj: ObjectRef, class: &str)
+    pub(crate) fn insert(&mut self, obj: ObjectRef, class: &str)
     {
         self.by_id.insert(obj);
         let var = self
@@ -88,7 +88,7 @@ impl ObjectTree
         self.count += 1;
     }
 
-    fn remove(&mut self, obj: ObjectRef, class: &str)
+    pub(crate) fn remove(&mut self, obj: ObjectRef, class: &str)
     {
         self.by_id.remove(&obj);
         self.enabled.remove(&obj);
@@ -126,10 +126,9 @@ impl<C: Context> ObjectStorage<C>
         );
     }
 
-    pub fn insert(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<dyn Object<C>>>(
         &mut self,
-        tree: &mut ObjectTree,
-        obj: ObjectFactory<C>
+        func: F
     ) -> (ObjectRef, &mut Box<dyn Object<C>>)
     {
         let empty_slot = {
@@ -147,21 +146,19 @@ impl<C: Context> ObjectStorage<C>
         let obj_ref;
         if let Some(slot) = empty_slot {
             obj_ref = slot as ObjectRef;
-            self.objects[slot] = Some(obj.invoke(obj_ref));
+            self.objects[slot] = Some(func(obj_ref));
         } else {
             let id = self.objects.len() as ObjectRef;
             obj_ref = id;
-            self.objects.push(Some(obj.invoke(obj_ref)));
+            self.objects.push(Some(func(obj_ref)));
         }
         let o = self.objects[obj_ref as usize].as_ref().unwrap();
-        tree.insert(obj_ref, o.class());
         return (obj_ref, &mut self[obj_ref]);
     }
 
-    pub fn destroy(&mut self, tree: &mut ObjectTree, obj: ObjectRef)
+    pub fn destroy(&mut self, obj: ObjectRef)
     {
         let o = self.objects[obj as usize].as_ref().unwrap();
-        tree.remove(obj, o.class());
         self.objects[obj as usize] = None;
     }
 

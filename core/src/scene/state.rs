@@ -28,7 +28,7 @@
 
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, ObjectFactory, ObjectTree};
+use crate::object::{Context, Factory, ObjectFactory, ObjectTree};
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
 
@@ -116,7 +116,7 @@ impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
         self.common.system_event_manager.send(info.into_event(ty));
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: ObjectFactory<Self>) {
+    fn spawn_object(&mut self, info: EventInfo, factory: Factory<Self>) {
         let ty = super::event::Type::SpawnObject(factory);
         self.common.system_event_manager.send(info.into_event(ty));
     }

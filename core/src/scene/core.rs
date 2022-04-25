@@ -29,7 +29,7 @@
 use std::collections::HashSet;
 use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{ObjectFactory, ObjectRef, ObjectStorage};
+use crate::object::{Factory, ObjectRef, ObjectStorage};
 use crate::scene::{ObjectContext, SystemContext};
 use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
@@ -97,8 +97,10 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
                 }
             },
             super::event::Type::SpawnObject(obj) => {
-                let (obj_ref, obj) = self.objects.insert(&mut self.scene1.common.tree, obj);
-                let updatable = obj.on_init(&mut self.scene1, state);
+                let updatable = obj.updates();
+                let (obj_ref, obj) = self.objects.insert(|this_ref| obj.invoke(&mut self.scene1, state, this_ref));
+                self.scene1.common.tree.insert(obj_ref, obj.class());
+                //let updatable = obj.on_init(&mut self.scene1, state);
                 if updatable {
                     self.updatable.insert(obj_ref);
                     self.init_updatable.insert(obj_ref);
@@ -107,7 +109,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");
                 self.objects[target].on_remove(&mut self.scene1, state);
-                self.objects.destroy(&mut self.scene1.common.tree, target);
+                self.scene1.common.tree.remove(target, self.objects[target].class());
+                self.objects.destroy(target);
             }
         };
         if inner.notify {
@@ -146,12 +149,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         }
     }
 
-    pub fn spawn_object(&mut self, factory: ObjectFactory<ObjectContext<SM, CM, E, S>>)
+    pub fn spawn_object(&mut self, factory: Factory<ObjectContext<SM, CM, E, S>>)
     {
-        /*self.scene1
-            .common
-            .event_manager
-            .system(SystemEvent::Spawn(factory), false);*/
         let ev = super::event::Event {
             notify: false,
             ty: super::event::Type::SpawnObject(factory)
