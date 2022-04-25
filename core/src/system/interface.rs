@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{component::Clear, event::EventManager, object::ObjectTree};
+use crate::{component::Clear, event::EventManager, object::Tree};
 use crate::scene::EventInfo;
 
 pub trait Context
@@ -38,7 +38,7 @@ pub trait Context
     fn components(&self) -> &Self::ComponentManager;
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
     fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
-    fn objects(&self) -> &ObjectTree;
+    fn objects(&self) -> &Tree;
     fn enable_object(&mut self, info: EventInfo, enable: bool);
 }
 

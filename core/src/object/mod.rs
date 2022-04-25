@@ -35,4 +35,4 @@ pub mod factory;
 pub use factory::Factory;
 
 pub use interface::*;
-pub use storage::{ObjectStorage, ObjectTree};
+pub use storage::{Storage, Tree};

@@ -28,7 +28,7 @@
 
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Factory, ObjectTree};
+use crate::object::{Context, Factory, Tree};
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
 
@@ -39,7 +39,7 @@ pub struct SystemState<C: Context>
     pub component_manager: C::ComponentManager,
     pub event_manager: EventManager<C::Event>,
     pub system_event_manager: EventManager<Event<C>>,
-    pub tree: ObjectTree
+    pub tree: Tree
 }
 
 impl<C: Context> crate::system::Context for SystemState<C>
@@ -60,7 +60,7 @@ impl<C: Context> crate::system::Context for SystemState<C>
         return &mut self.event_manager;
     }
 
-    fn objects(&self) -> &ObjectTree {
+    fn objects(&self) -> &Tree {
         return &self.tree;
     }
 
@@ -92,7 +92,7 @@ impl<E, S, CM: Clear, SM> crate::system::Context for ObjectState<E, S, CM, SM> {
         return &mut self.common.event_manager;
     }
 
-    fn objects(&self) -> &ObjectTree {
+    fn objects(&self) -> &Tree {
         return &self.common.tree;
     }
 

@@ -29,7 +29,7 @@
 use std::collections::HashSet;
 use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Factory, ObjectRef, ObjectStorage};
+use crate::object::{Factory, ObjectRef, Storage, Tree};
 use crate::scene::{ObjectContext, SystemContext};
 use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
@@ -38,7 +38,7 @@ use crate::system::Update;
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> {
     scene1: ObjectContext<SM, CM, E, S>,
-    objects: ObjectStorage<ObjectContext<SM, CM, E, S>>,
+    objects: Storage<ObjectContext<SM, CM, E, S>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
@@ -47,18 +47,17 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 {
     pub fn new(component_manager: CM, systems: SM) -> Scene<SM, CM, E, S>
     {
-        let (objects, tree) = ObjectStorage::new();
         return Scene {
             scene1: ObjectState {
                 common: SystemState {
                     component_manager,
                     event_manager: EventManager::new(),
                     system_event_manager: EventManager::new(),
-                    tree
+                    tree: Tree::new()
                 },
                 systems
             },
-            objects,
+            objects: Storage::new(),
             updatable: HashSet::new(),
             init_updatable: HashSet::new()
         };

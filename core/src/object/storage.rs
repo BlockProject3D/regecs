@@ -34,7 +34,7 @@ use std::{
 
 use crate::object::{Context, Object, ObjectRef};
 
-pub struct ObjectTree
+pub struct Tree
 {
     enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
@@ -42,7 +42,7 @@ pub struct ObjectTree
     count: usize
 }
 
-impl ObjectTree
+impl Tree
 {
     pub fn is_enabled(&self, obj: ObjectRef) -> bool
     {
@@ -106,9 +106,9 @@ impl ObjectTree
         }
     }
 
-    fn new() -> ObjectTree
+    pub(crate) fn new() -> Tree
     {
-        return ObjectTree {
+        return Tree {
             enabled: HashSet::new(),
             by_class: HashMap::new(),
             by_id: HashSet::new(),
@@ -117,21 +117,16 @@ impl ObjectTree
     }
 }
 
-pub struct ObjectStorage<C: Context>
+pub struct Storage<C: Context>
 {
     objects: Vec<Option<Box<dyn Object<C>>>>
 }
 
-impl<C: Context> ObjectStorage<C>
+impl<C: Context> Storage<C>
 {
-    pub fn new() -> (ObjectStorage<C>, ObjectTree)
+    pub fn new() -> Storage<C>
     {
-        return (
-            ObjectStorage {
-                objects: Vec::new()
-            },
-            ObjectTree::new()
-        );
+        Storage { objects: Vec::new() }
     }
 
     pub fn insert<F: FnOnce(ObjectRef) -> Box<dyn Object<C>>>(
@@ -174,7 +169,7 @@ impl<C: Context> ObjectStorage<C>
     }
 }
 
-impl<C: Context> Index<ObjectRef> for ObjectStorage<C>
+impl<C: Context> Index<ObjectRef> for Storage<C>
 {
     type Output = Box<dyn Object<C>>;
 
@@ -184,7 +179,7 @@ impl<C: Context> Index<ObjectRef> for ObjectStorage<C>
     }
 }
 
-impl<C: Context> IndexMut<ObjectRef> for ObjectStorage<C>
+impl<C: Context> IndexMut<ObjectRef> for Storage<C>
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
     {
