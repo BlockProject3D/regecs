@@ -55,8 +55,6 @@ pub trait Index
 pub trait Object<C: Context>
 {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
-    /// Return true to enable updates on this object
-    fn on_init(&mut self, ctx: &mut C, state: &C::AppState) -> bool;
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
     fn class(&self) -> &str;
