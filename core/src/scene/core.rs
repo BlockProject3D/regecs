@@ -27,26 +27,23 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::collections::HashSet;
-use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{Context, Factory, ObjectRef, Storage, Tree};
-use crate::scene::{ObjectContext, SystemContext};
+use crate::scene::{Interface, ObjectContext};
 use crate::scene::state::{State, Common};
 use crate::system::Update;
 
-//TODO: Wrap all this nightmare of generics in another trait (maybe SceneContext) and export clearer names in the trait
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> {
-    state: ObjectContext<SM, CM, E, S>,
-    objects: Storage<ObjectContext<SM, CM, E, S>>,
+pub struct Scene<I: Interface> {
+    state: ObjectContext<I>,
+    objects: Storage<ObjectContext<I>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
 }
 
-impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, S>
+impl<I: Interface> Scene<I>
 {
-    pub fn new(component_manager: CM, systems: SM) -> Scene<SM, CM, E, S>
-    {
+    pub fn new(component_manager: I::ComponentManager, systems: I::SystemManager) -> Scene<I> {
         return Scene {
             state: State {
                 common: Common {
@@ -63,7 +60,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         };
     }
 
-    fn object_event_call(&mut self, state: &S, obj_ref: ObjectRef, event: &Event<E>)
+    fn object_event_call(&mut self, state: &I::AppState, obj_ref: ObjectRef, event: &Event<I::Event>)
     {
         if !self.state.common.tree.is_enabled(obj_ref) {
             //Disabled objects are not allowed to handle any event
@@ -73,7 +70,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         obj.on_event(&mut self.state, state, &event);
     }
 
-    fn handle_system_event(&mut self, state: &S, ev: Event<super::event::Event<ObjectContext<SM, CM, E, S>>>)
+    fn handle_system_event(&mut self, state: &I::AppState, ev: Event<super::event::Event<ObjectContext<I>>>)
     {
         let sender = ev.sender();
         let target = ev.target();
@@ -116,7 +113,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         }
     }
 
-    pub fn update(&mut self, state: &S)
+    pub fn update(&mut self, state: &I::AppState)
     {
         self.state.systems.update(&mut self.state.common, state);
         while let Some(ev) = self.state.common.system_event_manager.poll() {
@@ -140,7 +137,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         }
     }
 
-    pub fn spawn_object(&mut self, factory: Factory<ObjectContext<SM, CM, E, S>>)
+    pub fn spawn_object(&mut self, factory: Factory<ObjectContext<I>>)
     {
         let ev = super::event::Event {
             notify: false,
@@ -159,7 +156,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 
     //TODO: Allow turning the scene into it's system manager and component manager
 
-    pub fn consume(self) -> CM
+    pub fn consume(self) -> I::ComponentManager
     {
         return self.state.common.component_manager;
     }

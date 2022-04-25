@@ -26,13 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//! REGECS scene layer.
+use crate::component::Clear;
+use crate::scene::state::{Common, State};
+use crate::system::Update;
 
-mod state;
-mod core;
-mod event;
-mod interface;
+pub trait Interface {
+    type Event;
+    type AppState;
+    type ComponentManager: Clear;
+    type SystemManager: Update<SystemContext<Self>>;
+}
 
-pub use self::core::Scene;
-pub use self::event::EventInfo;
-pub use self::interface::*;
+pub type ObjectContext<I> = State<<I as Interface>::Event, <I as Interface>::AppState, <I as Interface>::ComponentManager, <I as Interface>::SystemManager>;
+pub type SystemContext<I> = Common<ObjectContext<I>>;
