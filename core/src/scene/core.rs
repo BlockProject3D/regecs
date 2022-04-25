@@ -29,7 +29,7 @@
 use std::collections::HashSet;
 use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Factory, ObjectRef, Storage, Tree};
+use crate::object::{Context, Factory, ObjectRef, Storage, Tree};
 use crate::scene::{ObjectContext, SystemContext};
 use crate::scene::state::{State, Common};
 use crate::system::Update;
@@ -149,8 +149,15 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         self.state.common.system_event_manager.send(Builder::new(ev));
     }
 
+    pub fn state_mut(&mut self) -> &mut impl Context {
+        &mut self.state
+    }
+
+    pub fn state(&self) -> & impl Context {
+        &self.state
+    }
+
     //TODO: Allow turning the scene into it's system manager and component manager
-    //TODO: Allow access to object context outside of any object, ie: directly from the scene.
 
     pub fn consume(self) -> CM
     {
