@@ -70,13 +70,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             return;
         }
         let obj = &mut self.objects[obj_ref];
-        /*let res = */obj.on_event(&mut self.scene1, state, &event);
-        /*if event.tracking {
-            self.scene1
-                .common
-                .event_manager
-                .queue_response(event.handle, res);
-        }*/
+        obj.on_event(&mut self.scene1, state, &event);
     }
 
     fn handle_system_event(&mut self, state: &S, ev: Event<super::event::Event<ObjectContext<SM, CM, E, S>>>)
@@ -98,7 +92,6 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
                 let updatable = obj.updates();
                 let (obj_ref, obj) = self.objects.insert(|this_ref| obj.invoke(&mut self.scene1, state, this_ref));
                 self.scene1.common.tree.insert(obj_ref, obj.class());
-                //let updatable = obj.on_init(&mut self.scene1, state);
                 if updatable {
                     self.updatable.insert(obj_ref);
                     self.init_updatable.insert(obj_ref);
