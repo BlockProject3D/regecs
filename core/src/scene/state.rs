@@ -34,7 +34,7 @@ use crate::scene::EventInfo;
 
 //TODO: Find better names for fields.
 
-pub struct SystemState<C: Context>
+pub struct Common<C: Context>
 {
     pub component_manager: C::ComponentManager,
     pub event_manager: EventManager<C::Event>,
@@ -42,7 +42,7 @@ pub struct SystemState<C: Context>
     pub tree: Tree
 }
 
-impl<C: Context> crate::system::Context for SystemState<C>
+impl<C: Context> crate::system::Context for Common<C>
 {
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
@@ -70,12 +70,12 @@ impl<C: Context> crate::system::Context for SystemState<C>
     }
 }
 
-pub struct ObjectState<E, S, CM: Clear, SM> {
-    pub common: SystemState<Self>,
+pub struct State<E, S, CM: Clear, SM> {
+    pub common: Common<Self>,
     pub systems: SM
 }
 
-impl<E, S, CM: Clear, SM> crate::system::Context for ObjectState<E, S, CM, SM> {
+impl<E, S, CM: Clear, SM> crate::system::Context for State<E, S, CM, SM> {
     type AppState = S;
     type ComponentManager = CM;
     type Event = E;
@@ -101,7 +101,7 @@ impl<E, S, CM: Clear, SM> crate::system::Context for ObjectState<E, S, CM, SM> {
     }
 }
 
-impl<E, S, CM: Clear, SM> Context for ObjectState<E, S, CM, SM>
+impl<E, S, CM: Clear, SM> Context for State<E, S, CM, SM>
 {
     type SystemManager = SM;
 

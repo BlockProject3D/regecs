@@ -32,8 +32,8 @@ mod state;
 mod core;
 mod event;
 
-pub type ObjectContext<SM, CM, E, S> = state::ObjectState<E, S, CM, SM>;
-pub type SystemContext<SM, CM, E, S> = state::SystemState<ObjectContext<SM, CM, E, S>>;
+pub type ObjectContext<SM, CM, E, S> = state::State<E, S, CM, SM>;
+pub type SystemContext<SM, CM, E, S> = state::Common<ObjectContext<SM, CM, E, S>>;
 
 pub use self::core::Scene;
 pub use self::event::EventInfo;

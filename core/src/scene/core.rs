@@ -31,13 +31,13 @@ use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{Factory, ObjectRef, Storage, Tree};
 use crate::scene::{ObjectContext, SystemContext};
-use crate::scene::state::{ObjectState, SystemState};
+use crate::scene::state::{State, Common};
 use crate::system::Update;
 
 //TODO: Wrap all this nightmare of generics in another trait (maybe SceneContext) and export clearer names in the trait
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> {
-    scene1: ObjectContext<SM, CM, E, S>,
+    state: ObjectContext<SM, CM, E, S>,
     objects: Storage<ObjectContext<SM, CM, E, S>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>
@@ -48,8 +48,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
     pub fn new(component_manager: CM, systems: SM) -> Scene<SM, CM, E, S>
     {
         return Scene {
-            scene1: ObjectState {
-                common: SystemState {
+            state: State {
+                common: Common {
                     component_manager,
                     event_manager: EventManager::new(),
                     system_event_manager: EventManager::new(),
@@ -65,12 +65,12 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 
     fn object_event_call(&mut self, state: &S, obj_ref: ObjectRef, event: &Event<E>)
     {
-        if !self.scene1.common.tree.is_enabled(obj_ref) {
+        if !self.state.common.tree.is_enabled(obj_ref) {
             //Disabled objects are not allowed to handle any event
             return;
         }
         let obj = &mut self.objects[obj_ref];
-        obj.on_event(&mut self.scene1, state, &event);
+        obj.on_event(&mut self.state, state, &event);
     }
 
     fn handle_system_event(&mut self, state: &S, ev: Event<super::event::Event<ObjectContext<SM, CM, E, S>>>)
@@ -81,7 +81,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         match inner.ty {
             super::event::Type::EnableObject(flag) => {
                 let target = target.expect("No target given to EnableObject");
-                self.scene1.common.tree.set_enabled(target, flag);
+                self.state.common.tree.set_enabled(target, flag);
                 if !flag {
                     self.updatable.remove(&target);
                 } else if flag && self.init_updatable.contains(&target) {
@@ -90,8 +90,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             },
             super::event::Type::SpawnObject(obj) => {
                 let updatable = obj.updates();
-                let (obj_ref, obj) = self.objects.insert(|this_ref| obj.invoke(&mut self.scene1, state, this_ref));
-                self.scene1.common.tree.insert(obj_ref, obj.class());
+                let (obj_ref, obj) = self.objects.insert(|this_ref| obj.invoke(&mut self.state, state, this_ref));
+                self.state.common.tree.insert(obj_ref, obj.class());
                 if updatable {
                     self.updatable.insert(obj_ref);
                     self.init_updatable.insert(obj_ref);
@@ -99,8 +99,8 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             },
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");
-                self.objects[target].on_remove(&mut self.scene1, state);
-                self.scene1.common.tree.remove(target, self.objects[target].class());
+                self.objects[target].on_remove(&mut self.state, state);
+                self.state.common.tree.remove(target, self.objects[target].class());
                 self.objects.destroy(target);
             }
         };
@@ -118,21 +118,21 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 
     pub fn update(&mut self, state: &S)
     {
-        self.scene1.systems.update(&mut self.scene1.common, state);
-        while let Some(ev) = self.scene1.common.system_event_manager.poll() {
+        self.state.systems.update(&mut self.state.common, state);
+        while let Some(ev) = self.state.common.system_event_manager.poll() {
             self.handle_system_event(state, ev);
         }
         for obj in &self.updatable {
-            self.objects[*obj].on_update(&mut self.scene1, state);
+            self.objects[*obj].on_update(&mut self.state, state);
         }
-        while let Some(event) = self.scene1.common.event_manager.poll() {
+        while let Some(event) = self.state.common.event_manager.poll() {
             if let Some(obj_ref) = event.target() {
                 self.object_event_call(state, obj_ref, &event);
             } else {
                 for (obj_ref, obj) in self.objects.objects().enumerate() {
                     if let Some(o) = obj.as_mut() {
-                        if self.scene1.common.tree.is_enabled(obj_ref as ObjectRef) {
-                            o.on_event(&mut self.scene1, state, &event);
+                        if self.state.common.tree.is_enabled(obj_ref as ObjectRef) {
+                            o.on_event(&mut self.state, state, &event);
                         }
                     }
                 }
@@ -146,7 +146,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
             notify: false,
             ty: super::event::Type::SpawnObject(factory)
         };
-        self.scene1.common.system_event_manager.send(Builder::new(ev));
+        self.state.common.system_event_manager.send(Builder::new(ev));
     }
 
     //TODO: Allow turning the scene into it's system manager and component manager
@@ -154,6 +154,6 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
 
     pub fn consume(self) -> CM
     {
-        return self.scene1.common.component_manager;
+        return self.state.common.component_manager;
     }
 }
