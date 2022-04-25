@@ -88,8 +88,7 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         match inner.ty {
             super::event::Type::EnableObject(flag) => {
                 let target = target.expect("No target given to EnableObject");
-                self.objects
-                    .set_enabled(&mut self.scene1.common.tree, target, flag);
+                self.scene1.common.tree.set_enabled(target, flag);
                 if !flag {
                     self.updatable.remove(&target);
                 } else if flag && self.init_updatable.contains(&target) {
@@ -157,6 +156,9 @@ impl<SM: Update<SystemContext<SM, CM, E, S>>, CM: Clear, E, S> Scene<SM, CM, E, 
         };
         self.scene1.common.system_event_manager.send(Builder::new(ev));
     }
+
+    //TODO: Allow turning the scene into it's system manager and component manager
+    //TODO: Allow access to object context outside of any object, ie: directly from the scene.
 
     pub fn consume(self) -> CM
     {

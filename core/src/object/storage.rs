@@ -98,6 +98,14 @@ impl ObjectTree
         self.count -= 1;
     }
 
+    pub(crate) fn set_enabled(&mut self, obj: ObjectRef, enabled: bool) {
+        if enabled {
+            self.enabled.insert(obj);
+        } else {
+            self.enabled.remove(&obj);
+        }
+    }
+
     fn new() -> ObjectTree
     {
         return ObjectTree {
@@ -152,28 +160,17 @@ impl<C: Context> ObjectStorage<C>
             obj_ref = id;
             self.objects.push(Some(func(obj_ref)));
         }
-        let o = self.objects[obj_ref as usize].as_ref().unwrap();
-        return (obj_ref, &mut self[obj_ref]);
+        let o = unsafe { self.objects[obj_ref as usize].as_mut().unwrap_unchecked() };
+        return (obj_ref, o);
     }
 
-    pub fn destroy(&mut self, obj: ObjectRef)
-    {
-        let o = self.objects[obj as usize].as_ref().unwrap();
+    pub fn destroy(&mut self, obj: ObjectRef) {
         self.objects[obj as usize] = None;
     }
 
     pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn Object<C>>>>
     {
         return self.objects.iter_mut();
-    }
-
-    pub fn set_enabled(&mut self, tree: &mut ObjectTree, obj: ObjectRef, enabled: bool)
-    {
-        if enabled {
-            tree.enabled.insert(obj);
-        } else {
-            tree.enabled.remove(&obj);
-        }
     }
 }
 
