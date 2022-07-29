@@ -27,8 +27,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::collections::HashSet;
+use std::marker::PhantomData;
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Context, Factory, ObjectRef, Storage, Tree};
+use crate::object::{Context, Factory, Object, ObjectRef, Storage, Tree};
+use crate::object::factory::Function;
 use crate::scene::{Interface, ObjectContext};
 use crate::scene::state::{State, Common};
 use crate::system::Update;
@@ -52,7 +54,8 @@ impl<I: Interface> Scene<I>
                     system_event_manager: EventManager::new(),
                     tree: Tree::new()
                 },
-                systems
+                systems,
+                useless: PhantomData::default()
             },
             objects: Storage::new(),
             updatable: HashSet::new(),
@@ -85,9 +88,9 @@ impl<I: Interface> Scene<I>
                     self.updatable.insert(target);
                 }
             },
-            super::event::Type::SpawnObject(obj) => {
-                let updatable = obj.updates();
-                let (obj_ref, obj) = self.objects.insert(|this_ref| obj.invoke(&mut self.state, state, this_ref));
+            super::event::Type::SpawnObject(func) => {
+                let updatable = func.updates();
+                let (obj_ref, obj) = self.objects.insert(|this_ref| Box::new(func.invoke(&mut self.state, state, this_ref)));
                 self.state.common.tree.insert(obj_ref, obj.class());
                 if updatable {
                     self.updatable.insert(obj_ref);
@@ -137,7 +140,7 @@ impl<I: Interface> Scene<I>
         }
     }
 
-    pub fn spawn_object(&mut self, factory: Factory<ObjectContext<I>>)
+    pub fn spawn_object(&mut self, factory: Function<ObjectContext<I>>)
     {
         let ev = super::event::Event {
             notify: false,

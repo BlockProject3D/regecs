@@ -27,12 +27,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Builder;
-use crate::object::{Context, Factory, ObjectRef};
+use crate::object::{Context, ObjectRef};
+use crate::object::factory::Function;
 
 pub enum Type<C: Context> {
     EnableObject(bool),
     RemoveObject,
-    SpawnObject(Factory<C>)
+    SpawnObject(Function<C>)
 }
 
 pub struct Event<C: Context> {

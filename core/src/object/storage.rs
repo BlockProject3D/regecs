@@ -119,7 +119,7 @@ impl Tree
 
 pub struct Storage<C: Context>
 {
-    objects: Vec<Option<Box<dyn Object<C>>>>
+    objects: Vec<Option<Box<C::Registry>>>
 }
 
 impl<C: Context> Storage<C>
@@ -129,10 +129,10 @@ impl<C: Context> Storage<C>
         Storage { objects: Vec::new() }
     }
 
-    pub fn insert<F: FnOnce(ObjectRef) -> Box<dyn Object<C>>>(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<C::Registry>>(
         &mut self,
         func: F
-    ) -> (ObjectRef, &mut Box<dyn Object<C>>)
+    ) -> (ObjectRef, &mut Box<C::Registry>)
     {
         let empty_slot = {
             let mut id = 0;
@@ -163,7 +163,7 @@ impl<C: Context> Storage<C>
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn Object<C>>>>
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<C::Registry>>>
     {
         return self.objects.iter_mut();
     }
@@ -171,7 +171,7 @@ impl<C: Context> Storage<C>
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
 {
-    type Output = Box<dyn Object<C>>;
+    type Output = Box<C::Registry>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output
     {

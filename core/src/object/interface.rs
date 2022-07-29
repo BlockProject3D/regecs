@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::Factory;
+use crate::object::factory::Function;
 use crate::scene::EventInfo;
 
 /// Type alias for object references
@@ -37,12 +37,13 @@ pub type ObjectRef = u32;
 
 pub trait Context : Sized + crate::system::Context
 {
+    type Registry;
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
     fn remove_object(&mut self, info: EventInfo);
-    fn spawn_object(&mut self, info: EventInfo, factory: Factory<Self>);
+    fn spawn_object(&mut self, info: EventInfo, factory: Function<Self>);
 }
 
 pub trait Index
@@ -59,7 +60,7 @@ pub trait Object<C: Context>
     fn class(&self) -> &str;
 }
 
-pub trait New<C: Context>: 'static + Sized + Object<C> {
+/*pub trait New<C: Context>: 'static + Sized + Object<C> {
     type Properties: 'static;
 
     const UPDATES: bool;
@@ -70,7 +71,7 @@ pub trait New<C: Context>: 'static + Sized + Object<C> {
         Factory::new_static(move |ctx, state, this_ref| Self::new(ctx, state, props, this_ref))
             .set_updates(Self::UPDATES)
     }
-}
+}*/
 
 /*/// High-level object interface
 pub trait Object<C: Context>

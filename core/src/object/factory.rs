@@ -28,30 +28,30 @@
 
 use crate::object::{Context, Object, ObjectRef};
 
-pub type Function<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> Box<dyn Object<C>>>;
+type RawFunction<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> <C as Context>::Registry>;
 
-pub struct Factory<C: Context> {
-    func: Function<C>,
+pub struct Function<C: Context> {
+    func: RawFunction<C>,
     updates: bool
 }
 
-impl<C: Context> Factory<C> {
+impl<C: Context> Function<C> {
     pub fn updates(&self) -> bool {
         self.updates
     }
 
-    pub fn invoke(self, ctx: &mut C, state: &C::AppState, this_ref: ObjectRef) -> Box<dyn Object<C>> {
+    pub fn invoke(self, ctx: &mut C, state: &C::AppState, this_ref: ObjectRef) -> C::Registry {
         (self.func)(ctx, state, this_ref)
     }
 
-    pub fn new_static<O: 'static + Object<C>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
+    pub fn from_object<O: 'static + Object<C> + Factory<C>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
         Self {
-            func: Box::new(|ctx, state, this_ref| Box::new(func(ctx, state, this_ref))),
+            func: Box::new(|ctx, state, this_ref| func(ctx, state, this_ref).wrap()),
             updates: false
         }
     }
 
-    pub fn new_dynamic(func: Function<C>) -> Self {
+    pub fn from_raw(func: RawFunction<C>) -> Self {
         Self {
             func,
             updates: false
@@ -62,4 +62,11 @@ impl<C: Context> Factory<C> {
         self.updates = flag;
         self
     }
+}
+
+pub trait Factory<C: Context> where Self: Object<C> {
+    type Parameters;
+
+    fn wrap(self) -> C::Registry;
+    fn create(params: Self::Parameters) -> Function<C>;
 }

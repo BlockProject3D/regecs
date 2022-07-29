@@ -26,9 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::marker::PhantomData;
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Factory, Tree};
+use crate::object::{Context, Tree};
+use crate::object::factory::Function;
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
 
@@ -70,12 +72,13 @@ impl<C: Context> crate::system::Context for Common<C>
     }
 }
 
-pub struct State<E, S, CM: Clear, SM> {
+pub struct State<E, S, CM: Clear, SM, R> {
     pub common: Common<Self>,
-    pub systems: SM
+    pub systems: SM,
+    pub useless: PhantomData<R>
 }
 
-impl<E, S, CM: Clear, SM> crate::system::Context for State<E, S, CM, SM> {
+impl<E, S, CM: Clear, SM, R> crate::system::Context for State<E, S, CM, SM, R> {
     type AppState = S;
     type ComponentManager = CM;
     type Event = E;
@@ -101,8 +104,9 @@ impl<E, S, CM: Clear, SM> crate::system::Context for State<E, S, CM, SM> {
     }
 }
 
-impl<E, S, CM: Clear, SM> Context for State<E, S, CM, SM>
+impl<E, S, CM: Clear, SM, R> Context for State<E, S, CM, SM, R>
 {
+    type Registry = R;
     type SystemManager = SM;
 
     fn systems(&self) -> &Self::SystemManager {
@@ -118,7 +122,7 @@ impl<E, S, CM: Clear, SM> Context for State<E, S, CM, SM>
         self.common.system_event_manager.send(info.into_event(ty));
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: Factory<Self>) {
+    fn spawn_object(&mut self, info: EventInfo, factory: Function<Self>) {
         let ty = super::event::Type::SpawnObject(factory);
         self.common.system_event_manager.send(info.into_event(ty));
     }

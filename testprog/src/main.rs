@@ -34,7 +34,10 @@ use regecs::{
 use regecs::component::ComponentRef;
 use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
-use regecs::scene::SystemContext;
+use regecs::event::Event;
+use regecs::object::{Factory, Object};
+use regecs::object::factory::Function;
+use regecs::scene::{ObjectContext, SystemContext};
 use regecs::system::Update;
 
 use crate::components::{ComplexComponent};
@@ -212,16 +215,52 @@ pub struct TestSystemManager
     my2: MySystem2
 }
 
+pub struct Test;
+
+impl Object<Ctx1> for Test {
+    fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
+        todo!()
+    }
+
+    fn on_remove(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
+
+    fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
+
+    fn class(&self) -> &str {
+        todo!()
+    }
+}
+
+impl Factory<Ctx1> for Test {
+    type Parameters = ();
+
+    fn wrap(self) -> MyRegistry {
+        MyRegistry::Test(self)
+    }
+
+    fn create(params: Self::Parameters) -> Function<Ctx1> {
+        todo!()
+    }
+}
+
+type Ctx = SystemContext<Interface>;
+type Ctx1 = ObjectContext<Interface>;
+regecs::register_objects!(pub MyRegistry(Ctx1) { Test: Test });
+
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
     type Event = ();
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
+    type Registry = MyRegistry;
 }
 
-type Ctx = SystemContext<Interface>;
-
+//TODO: Create a derive macro for Update<T>
 impl Update<Ctx> for TestSystemManager
 {
     fn update(&mut self, ctx: &mut Ctx, state: &i32)
