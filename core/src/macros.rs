@@ -67,6 +67,15 @@ macro_rules! register_objects {
                 $class_name($object_type),
             )*
         }
+
+        $(
+            impl regecs::object::factory::Wrap<$ctx> for $object_type {
+                fn wrap(self) -> <$ctx as regecs::object::Context>::Registry {
+                    $name::$class_name(self)
+                }
+            }
+        )*
+
         impl regecs::object::Object<$ctx> for $name {
             fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
                 match self {

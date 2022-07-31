@@ -34,3 +34,9 @@ pub mod object;
 pub mod reflection;
 pub mod scene;
 pub mod system;
+
+pub trait Factory<T> {
+    type Parameters;
+
+    fn create(params: Option<Self::Parameters>) -> T;
+}

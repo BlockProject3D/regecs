@@ -60,76 +60,12 @@ pub trait Object<C: Context>
     fn class(&self) -> &str;
 }
 
-/*pub trait New<C: Context>: 'static + Sized + Object<C> {
-    type Properties: 'static;
+pub trait New<C: Context> {
+    type Arguments;
 
-    const UPDATES: bool;
+    fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Option<Self::Arguments>) -> Self;
 
-    fn new(ctx: &mut C, state: &C::AppState, props: Self::Properties, this_ref: ObjectRef) -> Self;
-
-    fn create(props: Self::Properties) -> Factory<C> {
-        Factory::new_static(move |ctx, state, this_ref| Self::new(ctx, state, props, this_ref))
-            .set_updates(Self::UPDATES)
+    fn will_update(_: &Option<Self::Arguments>) -> bool {
+        false
     }
-}*/
-
-/*/// High-level object interface
-pub trait Object<C: Context>
-{
-    type EventType: Any;
-
-    fn handle_event<R: Any>(
-        &mut self,
-        ctx: &mut C,
-        state: &C::AppState,
-        event: &Self::EventType,
-        sender: Option<ObjectRef>
-    ) -> Option<R>;
-    /// Return true to enable updates on this object
-    fn init(&mut self, ctx: &mut C, state: &C::AppState) -> bool;
-    fn remove(&mut self, ctx: &mut C, state: &C::AppState);
-    fn update(&mut self, ctx: &mut C, state: &C::AppState);
 }
-
-impl<
-        C: Context,
-        E: Any,
-        O: Object<C, EventType = E> + Index
-    > CoreObject<C> for O
-{
-    fn on_event(
-        &mut self,
-        ctx: &mut C,
-        state: &C::AppState,
-        event: &Box<dyn Any>,
-        sender: Option<ObjectRef>
-    ) -> Option<Box<dyn Any>>
-    {
-        if let Some(ev) = event.downcast_ref::<E>() {
-            return self.handle_event(ctx, state, ev, sender);
-        }
-        return None;
-    }
-
-    fn on_init(&mut self, ctx: &mut C, state: &C::AppState) -> bool
-    {
-        return self.init(ctx, state);
-    }
-
-    fn on_remove(&mut self, ctx: &mut C, state: &C::AppState)
-    {
-        ctx.components_mut().clear(self.index());
-        self.remove(ctx, state);
-    }
-
-    fn on_update(&mut self, ctx: &mut C, state: &C::AppState)
-    {
-        self.update(ctx, state);
-    }
-
-    fn class(&self) -> &str
-    {
-        //Not yet connected to reflection system
-        return "Generic";
-    }
-}*/

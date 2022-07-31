@@ -26,7 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{Context, Object, ObjectRef};
+use crate::Factory;
+use crate::object::{Context, New, Object, ObjectRef};
 
 type RawFunction<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> <C as Context>::Registry>;
 
@@ -44,7 +45,7 @@ impl<C: Context> Function<C> {
         (self.func)(ctx, state, this_ref)
     }
 
-    pub fn from_object<O: 'static + Object<C> + Factory<C>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
+    pub fn from_object<O: 'static + Object<C> + Wrap<C>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
         Self {
             func: Box::new(|ctx, state, this_ref| func(ctx, state, this_ref).wrap()),
             updates: false
@@ -64,9 +65,17 @@ impl<C: Context> Function<C> {
     }
 }
 
-pub trait Factory<C: Context> where Self: Object<C> {
-    type Parameters;
-
+pub trait Wrap<C: Context> {
     fn wrap(self) -> C::Registry;
-    fn create(params: Self::Parameters) -> Function<C>;
+}
+
+impl<C: Context, T: Object<C> + New<C> + Wrap<C> + 'static> Factory<Function<C>> for T
+    where T::Arguments: 'static {
+    type Parameters = T::Arguments;
+
+    fn create(params: Option<Self::Parameters>) -> Function<C> {
+        let flag = T::will_update(&params);
+        Function::from_object(move |ctx, state, this| T::new(ctx, state, this, params))
+            .set_updates(flag)
+    }
 }

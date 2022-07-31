@@ -29,7 +29,7 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Context, Factory, Object, ObjectRef, Storage, Tree};
+use crate::object::{Context, Object, ObjectRef, Storage, Tree};
 use crate::object::factory::Function;
 use crate::scene::{Interface, ObjectContext};
 use crate::scene::state::{State, Common};
