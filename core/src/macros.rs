@@ -45,15 +45,11 @@ macro_rules! impl_component_manager {
     };
 }
 
-/*trait ObjectRegistry {
-    fn get_factory(class: &str);
-}*/
-
 #[macro_export]
 macro_rules! register_objects {
     (
         $(#[$outer: meta])*
-        $visibility: vis $name: ident ($ctx: ty) {
+        $visibility: vis $name: ident ($ctx: ty, $factory: ty) {
             $(
                 $(#[$object_outer: meta])*
                 $class_name: ident : $object_type: ty
@@ -98,5 +94,19 @@ macro_rules! register_objects {
                 }
             }
         }
+
+        //$(
+            impl regecs::object::registry::Registry for $name {
+                type Factory = $factory;
+                fn get_class_map() -> regecs::object::registry::ClassMap<$factory> {
+                    let map = std::collections::HashMap::from([
+                        $(
+                            (std::stringify!($class_name), <$factory as regecs::object::registry::NewFactory<$ctx, $object_type>>::new_factory()),
+                        )*
+                    ]);
+                    regecs::object::registry::ClassMap::new(map)
+                }
+            }
+        //)?
     };
 }

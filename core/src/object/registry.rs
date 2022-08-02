@@ -57,7 +57,7 @@ impl<F> ClassMap<F> {
     }
 }
 
-pub trait Registry<C: Context> {
+pub trait Registry {
     type Factory;
     fn get_class_map() -> ClassMap<Self::Factory>;
 }

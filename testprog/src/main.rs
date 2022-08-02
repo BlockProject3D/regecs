@@ -246,7 +246,7 @@ impl regecs::object::New<Ctx1> for Test {
 
 type Ctx = SystemContext<Interface>;
 type Ctx1 = ObjectContext<Interface>;
-regecs::register_objects!(pub MyRegistry(Ctx1) { Test: Test });
+regecs::register_objects!(pub MyRegistry(Ctx1, regecs::object::registry::AnyFactory<Ctx1>) { Test: Test });
 
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
