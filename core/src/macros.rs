@@ -46,6 +46,19 @@ macro_rules! impl_component_manager {
 }
 
 #[macro_export]
+macro_rules! impl_object_wrap {
+    ($name: ty { $(($class_name: ident : $object_type: ty))* }) => {
+        $(
+            impl regecs::object::factory::Wrap<$name> for $object_type {
+                fn wrap(self) -> $name {
+                    $name::$class_name(self)
+                }
+            }
+        )*
+    };
+}
+
+#[macro_export]
 macro_rules! register_objects {
     (
         $(#[$outer: meta])*
@@ -65,8 +78,8 @@ macro_rules! register_objects {
         }
 
         $(
-            impl regecs::object::factory::Wrap<$ctx> for $object_type {
-                fn wrap(self) -> <$ctx as regecs::object::Context>::Registry {
+            impl regecs::object::factory::Wrap<$name> for $object_type {
+                fn wrap(self) -> $name {
                     $name::$class_name(self)
                 }
             }

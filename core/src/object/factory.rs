@@ -45,7 +45,7 @@ impl<C: Context> Function<C> {
         (self.func)(ctx, state, this_ref)
     }
 
-    pub fn from_object<O: 'static + Object<C> + Wrap<C>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
+    pub fn from_object<O: 'static + Object<C> + Wrap<C::Registry>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
         Self {
             func: Box::new(|ctx, state, this_ref| func(ctx, state, this_ref).wrap()),
             updates: false
@@ -65,11 +65,11 @@ impl<C: Context> Function<C> {
     }
 }
 
-pub trait Wrap<C: Context> {
-    fn wrap(self) -> C::Registry;
+pub trait Wrap<T> {
+    fn wrap(self) -> T;
 }
 
-impl<C: Context, T: Object<C> + New<C> + Wrap<C> + 'static> Factory<Function<C>> for T
+impl<C: Context, T: Object<C> + New<C> + Wrap<C::Registry> + 'static> Factory<Function<C>> for T
     where T::Arguments: 'static {
     type Parameters = T::Arguments;
 
