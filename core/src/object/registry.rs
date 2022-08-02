@@ -62,14 +62,14 @@ pub trait Registry<C: Context> {
     fn get_class_map() -> ClassMap<Self::Factory>;
 }
 
-type AnyFactoryFunc<C> = Box<dyn Fn(Option<Box<dyn Any>>) -> Function<C>>;
+type AnyFactoryFunc<C> = Box<dyn Fn(Box<dyn Any>) -> Option<Function<C>>>;
 
 pub struct AnyFactory<C: Context> {
     func: AnyFactoryFunc<C>
 }
 
 impl<C: Context> AnyFactory<C> {
-    pub fn create(&self, params: Option<Box<dyn Any>>) -> Function<C> {
+    pub fn create(&self, params: Box<dyn Any>) -> Option<Function<C>> {
         (self.func)(params)
     }
 }
@@ -79,12 +79,8 @@ impl<C: Context, T: Object<C> + Wrap<C> + Factory<Function<C>>> NewFactory<C, T>
     fn new_factory() -> Self {
         AnyFactory {
             func: Box::new(move |val| {
-                if let Some(v) = val {
-                    let v = v.downcast().unwrap();
-                    T::create(Some(*v))
-                } else {
-                    T::create(None)
-                }
+                let v = val.downcast().ok()?;
+                Some(T::create(*v))
             })
         }
     }

@@ -239,68 +239,10 @@ impl Object<Ctx1> for Test {
 impl regecs::object::New<Ctx1> for Test {
     type Arguments = ();
 
-    fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Option<Self::Arguments>) -> Self {
+    fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
     }
 }
-
-/*impl Factory<Ctx1> for Test {
-    type Parameters = ();
-
-    fn wrap(self) -> MyRegistry {
-        use regecs::object::registry::NewFactory;
-        let test = <CustomFactory::<Ctx1> as NewFactory<Ctx1, Test>>::new_factory("test");
-        let myGreatestObject = test.create(None);
-        MyRegistry::Test(self)
-    }
-
-    fn create(params: Option<Self::Parameters>) -> Function<Ctx1> {
-        todo!()
-    }
-}*/
-
-struct CustomFactory<C: regecs::object::Context> {
-    func: Box<dyn Fn(Option<Box<dyn std::any::Any>>) -> Function<C>>
-}
-
-impl<C: regecs::object::Context> CustomFactory<C> {
-    pub fn create(&self, params: Option<Box<dyn std::any::Any>>) -> Function<C> {
-        (self.func)(params)
-    }
-}
-
-/*impl<C: regecs::object::Context, T> regecs::object::registry::NewFactory<C, T> for CustomFactory<C>
-where T: Object<C> + Factory<C>, T::Parameters: 'static {
-    fn new_factory(class: &str) -> Self {
-        let boxed: Box<dyn Fn(Option<Box<dyn std::any::Any>>) -> Function<C>> = Box::new(move |val| {
-            if let Some(v) = val {
-                let v = v.downcast().unwrap();
-                T::create(Some(*v))
-            } else {
-                T::create(None)
-            }
-        });
-        todo!()
-    }
-}*/
-
-/*struct Wrapper<T>(PhantomData<T>);
-
-struct Provider;
-impl regecs::object::registry::Wrap for Provider {
-    type Wrapper = Wrapper;
-    type Factory = ();
-
-    fn wrap<T>() -> Self::Wrapper {
-        todo!()
-    }
-}*/
-
-/*impl<C: regecs::object::Context, T: Object<C> + ReflectableObject> regecs::object::registry::NewFactory<CustomFactory<C>> for T {
-    fn new_factory() -> CustomFactory<C> {
-        todo!()
-    }
-}*/
 
 type Ctx = SystemContext<Interface>;
 type Ctx1 = ObjectContext<Interface>;
@@ -327,8 +269,6 @@ impl Update<Ctx> for TestSystemManager
 
 fn main()
 {
-    use regecs::Factory;
-    let obj = Test::create(None);
     let ctx = 42;
     let mut mgr = components::TestComponentManager::default();
     let mut entity = Entity::new(&mut mgr, 0);

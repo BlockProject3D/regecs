@@ -38,5 +38,5 @@ pub mod system;
 pub trait Factory<T> {
     type Parameters;
 
-    fn create(params: Option<Self::Parameters>) -> T;
+    fn create(params: Self::Parameters) -> T;
 }

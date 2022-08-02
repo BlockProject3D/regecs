@@ -63,9 +63,9 @@ pub trait Object<C: Context>
 pub trait New<C: Context> {
     type Arguments;
 
-    fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Option<Self::Arguments>) -> Self;
+    fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
 
-    fn will_update(_: &Option<Self::Arguments>) -> bool {
+    fn will_update(_: &Self::Arguments) -> bool {
         false
     }
 }

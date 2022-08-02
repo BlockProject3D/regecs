@@ -73,7 +73,7 @@ impl<C: Context, T: Object<C> + New<C> + Wrap<C> + 'static> Factory<Function<C>>
     where T::Arguments: 'static {
     type Parameters = T::Arguments;
 
-    fn create(params: Option<Self::Parameters>) -> Function<C> {
+    fn create(params: Self::Parameters) -> Function<C> {
         let flag = T::will_update(&params);
         Function::from_object(move |ctx, state, this| T::new(ctx, state, this, params))
             .set_updates(flag)
