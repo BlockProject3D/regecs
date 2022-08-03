@@ -36,8 +36,8 @@ pub trait Interface {
     type AppState;
     type ComponentManager: Clear;
     type SystemManager: Update<SystemContext<Self>>;
-    type Registry: Object<ObjectContext<Self>>;
+    type Object: Object<ObjectContext<Self>>;
 }
 
-pub type ObjectContext<I> = State<<I as Interface>::Event, <I as Interface>::AppState, <I as Interface>::ComponentManager, <I as Interface>::SystemManager, <I as Interface>::Registry>;
+pub type ObjectContext<I> = State<<I as Interface>::Event, <I as Interface>::AppState, <I as Interface>::ComponentManager, <I as Interface>::SystemManager, <I as Interface>::Object>;
 pub type SystemContext<I> = Common<ObjectContext<I>>;

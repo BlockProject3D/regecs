@@ -74,7 +74,7 @@ impl<C: Context> AnyFactory<C> {
     }
 }
 
-impl<C: Context, T: Object<C> + Wrap<C::Registry> + Factory<Function<C>>> NewFactory<C, T> for AnyFactory<C>
+impl<C: Context, T: Object<C> + Wrap<C::Object> + Factory<Function<C>>> NewFactory<C, T> for AnyFactory<C>
     where T::Parameters: 'static {
     fn new_factory() -> Self {
         AnyFactory {

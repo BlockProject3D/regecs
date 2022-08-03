@@ -254,7 +254,7 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Registry = MyRegistry;
+    type Object = MyRegistry;
 }
 
 //TODO: Create a derive macro for Update<T>

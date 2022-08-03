@@ -72,13 +72,13 @@ impl<C: Context> crate::system::Context for Common<C>
     }
 }
 
-pub struct State<E, S, CM: Clear, SM, R> {
+pub struct State<E, S, CM: Clear, SM, O> {
     pub common: Common<Self>,
     pub systems: SM,
-    pub useless: PhantomData<R>
+    pub useless: PhantomData<O>
 }
 
-impl<E, S, CM: Clear, SM, R> crate::system::Context for State<E, S, CM, SM, R> {
+impl<E, S, CM: Clear, SM, O> crate::system::Context for State<E, S, CM, SM, O> {
     type AppState = S;
     type ComponentManager = CM;
     type Event = E;
@@ -104,9 +104,9 @@ impl<E, S, CM: Clear, SM, R> crate::system::Context for State<E, S, CM, SM, R> {
     }
 }
 
-impl<E, S, CM: Clear, SM, R> Context for State<E, S, CM, SM, R>
+impl<E, S, CM: Clear, SM, O> Context for State<E, S, CM, SM, O>
 {
-    type Registry = R;
+    type Object = O;
     type SystemManager = SM;
 
     fn systems(&self) -> &Self::SystemManager {

@@ -37,7 +37,7 @@ pub type ObjectRef = u32;
 
 pub trait Context : Sized + crate::system::Context
 {
-    type Registry;
+    type Object;
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
