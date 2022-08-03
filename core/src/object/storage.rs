@@ -33,6 +33,7 @@ use std::{
 };
 
 use crate::object::{Context, Object, ObjectRef};
+use crate::object::factory::Factory;
 
 pub struct Tree
 {
@@ -119,7 +120,7 @@ impl Tree
 
 pub struct Storage<C: Context>
 {
-    objects: Vec<Option<Box<C::Object>>>
+    objects: Vec<Option<Box<<C::Factory as Factory<C>>::Object>>>
 }
 
 impl<C: Context> Storage<C>
@@ -129,10 +130,10 @@ impl<C: Context> Storage<C>
         Storage { objects: Vec::new() }
     }
 
-    pub fn insert<F: FnOnce(ObjectRef) -> Box<C::Object>>(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Factory as Factory<C>>::Object>>(
         &mut self,
         func: F
-    ) -> (ObjectRef, &mut Box<C::Object>)
+    ) -> (ObjectRef, &mut Box<<C::Factory as Factory<C>>::Object>)
     {
         let empty_slot = {
             let mut id = 0;
@@ -163,7 +164,7 @@ impl<C: Context> Storage<C>
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<C::Object>>>
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<<C::Factory as Factory<C>>::Object>>>
     {
         return self.objects.iter_mut();
     }
@@ -171,7 +172,7 @@ impl<C: Context> Storage<C>
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
 {
-    type Output = Box<C::Object>;
+    type Output = Box<<C::Factory as Factory<C>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output
     {

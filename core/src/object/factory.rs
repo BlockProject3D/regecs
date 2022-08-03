@@ -26,10 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::Factory;
+//use crate::Factory;
 use crate::object::{Context, New, Object, ObjectRef};
 
-type RawFunction<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> <C as Context>::Object>;
+/*type RawFunction<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> <C as Context>::Object>;
 
 pub struct Function<C: Context> {
     func: RawFunction<C>,
@@ -63,13 +63,13 @@ impl<C: Context> Function<C> {
         self.updates = flag;
         self
     }
-}
+}*/
 
 pub trait Wrap<T> {
     fn wrap(self) -> T;
 }
 
-impl<C: Context, T: Object<C> + New<C> + Wrap<C::Object> + 'static> Factory<Function<C>> for T
+/*impl<C: Context, T: Object<C> + New<C> + Wrap<C::Object> + 'static> Factory<Function<C>> for T
     where T::Arguments: 'static {
     type Parameters = T::Arguments;
 
@@ -78,4 +78,11 @@ impl<C: Context, T: Object<C> + New<C> + Wrap<C::Object> + 'static> Factory<Func
         Function::from_object(move |ctx, state, this| T::new(ctx, state, this, params))
             .set_updates(flag)
     }
+}*/
+
+pub trait Factory<C: Context> {
+    type Object: Object<C>;
+
+    fn spawn(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
+    fn can_update_object(&self) -> bool;
 }

@@ -30,7 +30,8 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{Context, Object, ObjectRef, Storage, Tree};
-use crate::object::factory::Function;
+use crate::object::factory::Factory;
+//use crate::object::factory::Function;
 use crate::scene::{Interface, ObjectContext};
 use crate::scene::state::{State, Common};
 use crate::system::Update;
@@ -88,9 +89,9 @@ impl<I: Interface> Scene<I>
                     self.updatable.insert(target);
                 }
             },
-            super::event::Type::SpawnObject(func) => {
-                let updatable = func.updates();
-                let (obj_ref, obj) = self.objects.insert(|this_ref| Box::new(func.invoke(&mut self.state, state, this_ref)));
+            super::event::Type::SpawnObject(factory) => {
+                let updatable = factory.can_update_object();
+                let (obj_ref, obj) = self.objects.insert(|this_ref| Box::new(factory.spawn(&mut self.state, state, this_ref)));
                 self.state.common.tree.insert(obj_ref, obj.class());
                 if updatable {
                     self.updatable.insert(obj_ref);
@@ -140,7 +141,7 @@ impl<I: Interface> Scene<I>
         }
     }
 
-    pub fn spawn_object(&mut self, factory: Function<ObjectContext<I>>)
+    pub fn spawn_object(&mut self, factory: I::Factory)
     {
         let ev = super::event::Event {
             notify: false,

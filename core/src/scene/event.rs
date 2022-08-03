@@ -28,12 +28,11 @@
 
 use crate::event::Builder;
 use crate::object::{Context, ObjectRef};
-use crate::object::factory::Function;
 
 pub enum Type<C: Context> {
     EnableObject(bool),
     RemoveObject,
-    SpawnObject(Function<C>)
+    SpawnObject(C::Factory)
 }
 
 pub struct Event<C: Context> {

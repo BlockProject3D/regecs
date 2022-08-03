@@ -61,65 +61,80 @@ macro_rules! impl_object_wrap {
 #[macro_export]
 macro_rules! register_objects {
     (
-        $(#[$outer: meta])*
-        $visibility: vis $name: ident ($ctx: ty, $factory: ty) {
-            $(
-                $(#[$object_outer: meta])*
-                $class_name: ident : $object_type: ty
-            ),*
+        $(#[$factory_outer: meta])*
+        $visibility: vis $factory_name: ident {
+            context = $ctx: ty;
+            $(#[$object_outer: meta])*
+            object = $object_name: ident;
+            map = [$(($class_name: ident : $object_type: ty)),*];
         }
     ) => {
-        $(#[$outer])*
-        $visibility enum $name {
+        $(#[$object_outer])*
+        $visibility enum $object_name {
             $(
-                $(#[$object_outer])*
                 $class_name($object_type),
             )*
         }
 
-        $(
-            impl regecs::object::factory::Wrap<$name> for $object_type {
-                fn wrap(self) -> $name {
-                    $name::$class_name(self)
-                }
-            }
-        )*
-
-        impl regecs::object::Object<$ctx> for $name {
+        impl regecs::object::Object<$ctx> for $object_name {
             fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
                 match self {
-                    $($name::$class_name(v) => v.on_event(ctx, state, event),)*
+                    $($object_name::$class_name(v) => v.on_event(ctx, state, event),)*
                 }
             }
             fn on_remove(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
                 match self {
-                    $($name::$class_name(v) => v.on_remove(ctx, state),)*
+                    $($object_name::$class_name(v) => v.on_remove(ctx, state),)*
                 }
             }
             fn on_update(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
                 match self {
-                    $($name::$class_name(v) => v.on_update(ctx, state),)*
+                    $($object_name::$class_name(v) => v.on_update(ctx, state),)*
                 }
             }
             fn class(&self) -> &str {
                 match self {
-                    $($name::$class_name(v) => v.class(),)*
+                    $($object_name::$class_name(v) => v.class(),)*
                 }
             }
         }
 
-        //$(
-            impl regecs::object::registry::Registry for $name {
-                type Factory = $factory;
-                fn get_class_map() -> regecs::object::registry::ClassMap<$factory> {
-                    let map = std::collections::HashMap::from([
-                        $(
-                            (std::stringify!($class_name), <$factory as regecs::object::registry::NewFactory<$ctx, $object_type>>::new_factory()),
-                        )*
-                    ]);
-                    regecs::object::registry::ClassMap::new(map)
+        $(#[$factory_outer])*
+        $visibility enum $factory_name {
+            $(
+                $class_name(<$object_type as regecs::object::New<$ctx>>::Arguments),
+            )*
+        }
+
+        impl regecs::object::factory::Factory<$ctx> for $factory_name {
+            type Object = $object_name;
+
+            fn spawn(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
+                this: ObjectRef) -> Self::Object {
+                match self {
+                    $($factory_name::$class_name(v) =>
+                        $object_name::$class_name(<$object_type as regecs::object::New<$ctx>>::new(
+                            ctx, state, this, v
+                        ))
+                    ,)*
                 }
             }
-        //)?
+
+            fn can_update_object(&self) -> bool {
+                match self {
+                    $($factory_name::$class_name(v) =>
+                        <$object_type as regecs::object::New<$ctx>>::will_update(v),)*
+                }
+            }
+        }
+
+        $(
+            impl regecs::Create<$factory_name> for $object_type {
+                type Arguments = <$object_type as regecs::object::New<$ctx>>::Arguments;
+                fn create(args: Self::Arguments) -> $factory_name {
+                    $factory_name::$class_name(args)
+                }
+            }
+        )*
     };
 }

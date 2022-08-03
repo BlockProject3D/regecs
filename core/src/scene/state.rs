@@ -30,7 +30,7 @@ use std::marker::PhantomData;
 use crate::component::Clear;
 use crate::event::EventManager;
 use crate::object::{Context, Tree};
-use crate::object::factory::Function;
+use crate::object::factory::Factory;
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
 
@@ -72,13 +72,13 @@ impl<C: Context> crate::system::Context for Common<C>
     }
 }
 
-pub struct State<E, S, CM: Clear, SM, O> {
+pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
     pub common: Common<Self>,
     pub systems: SM,
-    pub useless: PhantomData<O>
+    pub useless: PhantomData<F>
 }
 
-impl<E, S, CM: Clear, SM, O> crate::system::Context for State<E, S, CM, SM, O> {
+impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context for State<E, S, CM, SM, F> {
     type AppState = S;
     type ComponentManager = CM;
     type Event = E;
@@ -104,9 +104,9 @@ impl<E, S, CM: Clear, SM, O> crate::system::Context for State<E, S, CM, SM, O> {
     }
 }
 
-impl<E, S, CM: Clear, SM, O> Context for State<E, S, CM, SM, O>
+impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<E, S, CM, SM, F>
 {
-    type Object = O;
+    type Factory = F;
     type SystemManager = SM;
 
     fn systems(&self) -> &Self::SystemManager {
@@ -122,7 +122,7 @@ impl<E, S, CM: Clear, SM, O> Context for State<E, S, CM, SM, O>
         self.common.system_event_manager.send(info.into_event(ty));
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: Function<Self>) {
+    fn spawn_object(&mut self, info: EventInfo, factory: F) {
         let ty = super::event::Type::SpawnObject(factory);
         self.common.system_event_manager.send(info.into_event(ty));
     }

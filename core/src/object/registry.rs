@@ -28,9 +28,8 @@
 
 use std::any::Any;
 use std::collections::HashMap;
-use crate::Factory;
 use crate::object::{Context, Object};
-use crate::object::factory::{Function, Wrap};
+use crate::object::factory::Wrap;
 
 pub trait NewFactory<C: Context, T: Object<C>> {
     /// A provider to provide "object safe" factory traits.
@@ -62,7 +61,7 @@ pub trait Registry {
     fn get_class_map() -> ClassMap<Self::Factory>;
 }
 
-type AnyFactoryFunc<C> = Box<dyn Fn(Box<dyn Any>) -> Option<Function<C>>>;
+/*type AnyFactoryFunc<C> = Box<dyn Fn(Box<dyn Any>) -> Option<Function<C>>>;
 
 pub struct AnyFactory<C: Context> {
     func: AnyFactoryFunc<C>
@@ -84,4 +83,4 @@ impl<C: Context, T: Object<C> + Wrap<C::Object> + Factory<Function<C>>> NewFacto
             })
         }
     }
-}
+}*/

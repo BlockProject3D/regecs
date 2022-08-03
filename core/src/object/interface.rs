@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::factory::Function;
+use crate::object::factory::Factory;
 use crate::scene::EventInfo;
 
 /// Type alias for object references
@@ -37,13 +37,13 @@ pub type ObjectRef = u32;
 
 pub trait Context : Sized + crate::system::Context
 {
-    type Object;
+    type Factory: Factory<Self>;
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
     fn remove_object(&mut self, info: EventInfo);
-    fn spawn_object(&mut self, info: EventInfo, factory: Function<Self>);
+    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory);
 }
 
 pub trait Index

@@ -35,8 +35,7 @@ pub mod reflection;
 pub mod scene;
 pub mod system;
 
-pub trait Factory<T> {
-    type Parameters;
-
-    fn create(params: Self::Parameters) -> T;
+pub trait Create<T> {
+    type Arguments;
+    fn create(args: Self::Arguments) -> T;
 }

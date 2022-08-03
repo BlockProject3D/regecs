@@ -37,7 +37,7 @@ use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
 use regecs::event::Event;
 use regecs::object::{Object, ObjectRef};
-use regecs::object::factory::{Function, Wrap};
+use regecs::object::factory::Wrap;
 use regecs::scene::{ObjectContext, SystemContext};
 use regecs::system::Update;
 
@@ -246,7 +246,16 @@ impl regecs::object::New<Ctx1> for Test {
 
 type Ctx = SystemContext<Interface>;
 type Ctx1 = ObjectContext<Interface>;
-regecs::register_objects!(pub MyRegistry(Ctx1, regecs::object::registry::AnyFactory<Ctx1>) { Test: Test });
+
+regecs::register_objects!(
+    /// The root factory for all objects of this test.
+    pub RootFactory {
+        context = Ctx1;
+        /// The root object enumeration to allow expanding of dynamic dispatches into static dispatches.
+        object = RootObject;
+        map = [(Test: Test)];
+    }
+);
 
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
@@ -254,7 +263,7 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Object = MyRegistry;
+    type Factory = RootFactory;
 }
 
 //TODO: Create a derive macro for Update<T>
@@ -269,6 +278,8 @@ impl Update<Ctx> for TestSystemManager
 
 fn main()
 {
+    use regecs::Create;
+    let factort = Test::create(());
     let ctx = 42;
     let mut mgr = components::TestComponentManager::default();
     let mut entity = Entity::new(&mut mgr, 0);
