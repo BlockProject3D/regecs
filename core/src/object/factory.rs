@@ -26,59 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//use crate::Factory;
-use crate::object::{Context, New, Object, ObjectRef};
-
-/*type RawFunction<C> = Box<dyn FnOnce(&mut C, &<C as crate::system::Context>::AppState, ObjectRef) -> <C as Context>::Object>;
-
-pub struct Function<C: Context> {
-    func: RawFunction<C>,
-    updates: bool
-}
-
-impl<C: Context> Function<C> {
-    pub fn updates(&self) -> bool {
-        self.updates
-    }
-
-    pub fn invoke(self, ctx: &mut C, state: &C::AppState, this_ref: ObjectRef) -> C::Object {
-        (self.func)(ctx, state, this_ref)
-    }
-
-    pub fn from_object<O: 'static + Object<C> + Wrap<C::Object>, F: 'static + FnOnce(&mut C, &C::AppState, ObjectRef) -> O>(func: F) -> Self {
-        Self {
-            func: Box::new(|ctx, state, this_ref| func(ctx, state, this_ref).wrap()),
-            updates: false
-        }
-    }
-
-    pub fn from_raw(func: RawFunction<C>) -> Self {
-        Self {
-            func,
-            updates: false
-        }
-    }
-
-    pub fn set_updates(mut self, flag: bool) -> Self {
-        self.updates = flag;
-        self
-    }
-}*/
-
-pub trait Wrap<T> {
-    fn wrap(self) -> T;
-}
-
-/*impl<C: Context, T: Object<C> + New<C> + Wrap<C::Object> + 'static> Factory<Function<C>> for T
-    where T::Arguments: 'static {
-    type Parameters = T::Arguments;
-
-    fn create(params: Self::Parameters) -> Function<C> {
-        let flag = T::will_update(&params);
-        Function::from_object(move |ctx, state, this| T::new(ctx, state, this, params))
-            .set_updates(flag)
-    }
-}*/
+use crate::object::{Context, Object, ObjectRef};
 
 pub trait Factory<C: Context> {
     type Object: Object<C>;

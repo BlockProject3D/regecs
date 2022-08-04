@@ -27,8 +27,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::factory::Factory;
-use crate::scene::EventInfo;
 
 /// Type alias for object references
 ///
