@@ -33,7 +33,7 @@ use crate::event::Event;
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context : Sized + crate::system::Context
+pub trait Context: crate::system::Context
 {
     type SystemManager;
 
