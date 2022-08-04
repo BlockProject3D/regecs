@@ -26,11 +26,55 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{Context, Object, ObjectRef};
+use std::marker::PhantomData;
+use crate::event::Event;
+use crate::object::{Context, New, Object, ObjectRef};
+use crate::scene::{Interface, ObjectContext};
 
 pub trait Factory<C: Context> {
     type Object: Object<C>;
 
     fn spawn(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
     fn can_update_object(&self) -> bool;
+}
+
+pub struct NullObject;
+
+impl<C: Context> Object<C> for NullObject {
+    fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {
+    }
+
+    fn on_remove(&mut self, _: &mut C, _: &C::AppState) {
+    }
+
+    fn on_update(&mut self, _: &mut C, _: &C::AppState) {
+    }
+
+    fn class(&self) -> &str {
+        "null"
+    }
+}
+
+impl<C: Context> New<C> for NullObject {
+    type Arguments = ();
+
+    fn new(_: &mut C, _: &C::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
+        Self
+    }
+}
+
+pub struct NullFactory<I: Interface> {
+    useless: PhantomData<I>
+}
+
+impl<I: Interface> Factory<ObjectContext<I>> for NullFactory<I> {
+    type Object = NullObject;
+
+    fn spawn(self, _: &mut ObjectContext<I>, _: &I::AppState, _: ObjectRef) -> Self::Object {
+        NullObject
+    }
+
+    fn can_update_object(&self) -> bool {
+        false
+    }
 }
