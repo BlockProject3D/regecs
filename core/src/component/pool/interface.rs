@@ -132,27 +132,27 @@ pub trait Attachments<T: Component>
 
 pub trait ComponentManager<T: Component>
 {
-    fn get(&self) -> &T::Pool;
-    fn get_mut(&mut self) -> &mut T::Pool;
+    fn pool(&self) -> &T::Pool;
+    fn pool_mut(&mut self) -> &mut T::Pool;
 
-    fn get_component(&self, r: ComponentRef<T>) -> &T
+    fn get(&self, r: ComponentRef<T>) -> &T
     {
-        &self.get()[r]
+        &self.pool()[r]
     }
 
-    fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T
+    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T
     {
-        &mut self.get_mut()[r]
+        &mut self.pool_mut()[r]
     }
 
-    fn add_component(&mut self, comp: T) -> ComponentRef<T>
+    fn add(&mut self, comp: T) -> ComponentRef<T>
     {
-        self.get_mut().add(comp)
+        self.pool_mut().add(comp)
     }
 
-    fn remove_component(&mut self, r: ComponentRef<T>)
+    fn remove(&mut self, r: ComponentRef<T>)
     {
-        self.get_mut().remove(r);
+        self.pool_mut().remove(r);
     }
 }
 

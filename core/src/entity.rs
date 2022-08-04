@@ -69,23 +69,9 @@ pub struct Entity<'a, ComponentManager>
     entity: ObjectRef
 }
 
-impl<'a, ComponentManager> Entity<'a, ComponentManager>
-{
-    pub fn aquire(&mut self, other: ObjectRef) -> Entity<ComponentManager>
-    {
-        return Entity {
-            mgr: self.mgr,
-            entity: other
-        };
-    }
-}
-
 pub trait EntityPart<T: Component, CM: ComponentManager<T>>
 {
-    fn add(&mut self, comp: T) -> ComponentRef<T>;
-    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T;
-    fn get(&self, r: ComponentRef<T>) -> &T;
-    fn remove(&mut self, r: ComponentRef<T>);
+    fn add_attach(&mut self, comp: T) -> ComponentRef<T>;
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
@@ -96,41 +82,26 @@ impl<'a, T: Component, CM: ComponentManager<T>>
 where
     T::Pool: Attachments<T>
 {
-    fn add(&mut self, comp: T) -> ComponentRef<T>
+    fn add_attach(&mut self, comp: T) -> ComponentRef<T>
     {
-        let r = self.mgr.add_component(comp);
-        self.mgr.get_mut().attach(self.entity, r);
+        let r = self.mgr.add(comp);
+        self.mgr.pool_mut().attach(self.entity, r);
         return r;
-    }
-
-    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T
-    {
-        self.mgr.get_component_mut(r)
-    }
-
-    fn get(&self, r: ComponentRef<T>) -> &T
-    {
-        self.mgr.get_component(r)
-    }
-
-    fn remove(&mut self, r: ComponentRef<T>)
-    {
-        self.mgr.remove_component(r)
     }
 
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>
     {
-        return self.mgr.get().list(self.entity);
+        return self.mgr.pool().list(self.entity);
     }
 
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>
     {
-        self.mgr.get().get_first(self.entity)
+        self.mgr.pool().get_first(self.entity)
     }
 
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>
     {
-        self.mgr.get_mut().get_first_mut(self.entity)
+        self.mgr.pool_mut().get_first_mut(self.entity)
     }
 }
 
