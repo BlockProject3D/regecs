@@ -33,11 +33,11 @@ macro_rules! impl_component_manager {
     ) => {
         $(
             impl regecs::component::pool::ComponentManager<$ptype> for $name {
-                fn get(&self) -> & <$ptype as regecs::component::Component>::Pool {
+                fn pool(&self) -> & <$ptype as regecs::component::Component>::Pool {
                     &self.$pname
                 }
 
-                fn get_mut(&mut self) -> &mut <$ptype as regecs::component::Component>::Pool {
+                fn pool_mut(&mut self) -> &mut <$ptype as regecs::component::Component>::Pool {
                     &mut self.$pname
                 }
             }
