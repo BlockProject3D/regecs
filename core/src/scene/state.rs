@@ -75,7 +75,7 @@ impl<C: Context> crate::system::Context for Common<C>
 pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
     pub common: Common<Self>,
     pub systems: SM,
-    pub useless: PhantomData<F>
+    pub(crate) useless: PhantomData<F>
 }
 
 impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context for State<E, S, CM, SM, F> {
