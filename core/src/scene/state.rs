@@ -29,8 +29,7 @@
 use std::marker::PhantomData;
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Tree};
-use crate::object::factory::Factory;
+use crate::object::{Context, Tree, Factory};
 use crate::scene::event::{Event};
 use crate::scene::EventInfo;
 

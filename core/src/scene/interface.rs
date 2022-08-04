@@ -27,8 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::Clear;
-use crate::object::factory::Factory;
-use crate::object::Object;
+use crate::object::Factory;
 use crate::scene::state::{Common, State};
 use crate::system::Update;
 

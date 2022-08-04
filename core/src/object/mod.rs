@@ -30,8 +30,9 @@
 
 mod interface;
 mod storage;
-pub mod factory;
+mod factory;
 pub mod registry;
 
 pub use interface::*;
 pub use storage::{Storage, Tree};
+pub use factory::Factory;

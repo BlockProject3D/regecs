@@ -106,7 +106,7 @@ macro_rules! register_objects {
             )*
         }
 
-        impl regecs::object::factory::Factory<$ctx> for $factory_name {
+        impl regecs::object::Factory<$ctx> for $factory_name {
             type Object = $object_name;
 
             fn spawn(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
