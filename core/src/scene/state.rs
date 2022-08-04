@@ -38,10 +38,10 @@ use crate::scene::EventInfo;
 
 pub struct Common<C: Context>
 {
-    pub component_manager: C::ComponentManager,
-    pub event_manager: EventManager<C::Event>,
-    pub system_event_manager: EventManager<Event<C>>,
-    pub tree: Tree
+    pub(crate) component_manager: C::ComponentManager,
+    pub(crate) event_manager: EventManager<C::Event>,
+    pub(crate) system_event_manager: EventManager<Event<C>>,
+    pub(crate) tree: Tree
 }
 
 impl<C: Context> crate::system::Context for Common<C>
@@ -73,8 +73,8 @@ impl<C: Context> crate::system::Context for Common<C>
 }
 
 pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
-    pub common: Common<Self>,
-    pub systems: SM,
+    pub(crate) common: Common<Self>,
+    pub(crate) systems: SM,
     pub(crate) useless: PhantomData<F>
 }
 
