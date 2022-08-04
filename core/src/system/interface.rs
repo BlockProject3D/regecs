@@ -31,6 +31,7 @@ use crate::scene::EventInfo;
 
 pub trait Context
 {
+    type Factory;
     type AppState;
     type ComponentManager: Clear;
     type Event;
@@ -40,6 +41,8 @@ pub trait Context
     fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn objects(&self) -> &Tree;
     fn enable_object(&mut self, info: EventInfo, enable: bool);
+    fn remove_object(&mut self, info: EventInfo);
+    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory);
 }
 
 /// Update functionality.

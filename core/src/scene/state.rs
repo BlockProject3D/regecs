@@ -46,6 +46,7 @@ pub struct Common<C: Context>
 
 impl<C: Context> crate::system::Context for Common<C>
 {
+    type Factory = C::Factory;
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
     type Event = C::Event;
@@ -70,6 +71,16 @@ impl<C: Context> crate::system::Context for Common<C>
         let ty = super::event::Type::EnableObject(enable);
         self.system_event_manager.send(info.into_event(ty));
     }
+
+    fn remove_object(&mut self, info: EventInfo) {
+        let ty = super::event::Type::RemoveObject;
+        self.system_event_manager.send(info.into_event(ty));
+    }
+
+    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory) {
+        let ty = super::event::Type::SpawnObject(factory);
+        self.system_event_manager.send(info.into_event(ty));
+    }
 }
 
 pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
@@ -79,6 +90,7 @@ pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
 }
 
 impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context for State<E, S, CM, SM, F> {
+    type Factory = F;
     type AppState = S;
     type ComponentManager = CM;
     type Event = E;
@@ -102,11 +114,18 @@ impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Con
     fn enable_object(&mut self, info: EventInfo, enable: bool) {
         self.common.enable_object(info, enable)
     }
+
+    fn remove_object(&mut self, info: EventInfo) {
+        self.common.remove_object(info)
+    }
+
+    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory) {
+        self.common.spawn_object(info, factory)
+    }
 }
 
 impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<E, S, CM, SM, F>
 {
-    type Factory = F;
     type SystemManager = SM;
 
     fn systems(&self) -> &Self::SystemManager {
@@ -115,15 +134,5 @@ impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<
 
     fn systems_mut(&mut self) -> &mut Self::SystemManager {
         return &mut self.systems;
-    }
-
-    fn remove_object(&mut self, info: EventInfo) {
-        let ty = super::event::Type::RemoveObject;
-        self.common.system_event_manager.send(info.into_event(ty));
-    }
-
-    fn spawn_object(&mut self, info: EventInfo, factory: F) {
-        let ty = super::event::Type::SpawnObject(factory);
-        self.common.system_event_manager.send(info.into_event(ty));
     }
 }

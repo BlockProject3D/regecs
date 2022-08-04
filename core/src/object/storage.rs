@@ -32,7 +32,7 @@ use std::{
     ops::{Index, IndexMut}
 };
 
-use crate::object::{Context, Object, ObjectRef};
+use crate::object::{Context, ObjectRef};
 use crate::object::factory::Factory;
 
 pub struct Tree
@@ -119,11 +119,13 @@ impl Tree
 }
 
 pub struct Storage<C: Context>
+    where C::Factory: Factory<C>
 {
     objects: Vec<Option<Box<<C::Factory as Factory<C>>::Object>>>
 }
 
 impl<C: Context> Storage<C>
+    where C::Factory: Factory<C>
 {
     pub fn new() -> Storage<C>
     {
@@ -171,6 +173,7 @@ impl<C: Context> Storage<C>
 }
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
+    where C::Factory: Factory<C>
 {
     type Output = Box<<C::Factory as Factory<C>>::Object>;
 
@@ -181,6 +184,7 @@ impl<C: Context> Index<ObjectRef> for Storage<C>
 }
 
 impl<C: Context> IndexMut<ObjectRef> for Storage<C>
+    where C::Factory: Factory<C>
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
     {

@@ -37,13 +37,10 @@ pub type ObjectRef = u32;
 
 pub trait Context : Sized + crate::system::Context
 {
-    type Factory: Factory<Self>;
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
-    fn remove_object(&mut self, info: EventInfo);
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory);
 }
 
 pub trait Index
