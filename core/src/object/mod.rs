@@ -30,7 +30,7 @@
 
 mod interface;
 mod storage;
-mod factory;
+pub mod factory;
 pub mod registry;
 
 pub use interface::*;

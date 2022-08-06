@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2022, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,11 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern crate core;
+
+mod object_impl;
+
 use std::vec::Vec;
 
 use proc_macro::{self, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Type};
+use crate::object_impl::ObjectImpl;
 
 fn workarround_unprintable_path(path: &syn::Path) -> String
 {
@@ -194,4 +199,16 @@ pub fn component_manager(input: TokenStream) -> TokenStream
         #(#impls_tokens)*
     };
     return output.into();
+}
+
+#[proc_macro_derive(Object, attributes(context))]
+pub fn object(input: TokenStream) -> TokenStream
+{
+    let DeriveInput { attrs, ident, data, .. } = parse_macro_input!(input);
+    let context = attrs.into_iter()
+        .filter_map(|v| if v.path.clone().into_token_stream().to_string() == "context" {
+            Some(v.parse_args::<Type>().expect("failed to parse context"))} else { None })
+        .last()
+        .expect("missing context");
+    ObjectImpl::parse_data(context, ident, data).into_token_stream().into()
 }
