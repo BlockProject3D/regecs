@@ -59,6 +59,16 @@ macro_rules! impl_object_wrap {
 }
 
 #[macro_export]
+macro_rules! test_macro {
+    (
+        $(#[$outer: meta])*
+        $visibility: vis $factory_name: ident for $object: ty where context = $ctx: ty [
+            $(($class_name: ident : $object_type: ty)),*
+        ]
+    ) => {};
+}
+
+#[macro_export]
 macro_rules! register_objects {
     (
         $(#[$factory_outer: meta])*

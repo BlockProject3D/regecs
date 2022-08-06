@@ -26,20 +26,15 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::marker::PhantomData;
 use components::ComplexSystem;
-use regecs::{
-    entity::{Entity, EntityPart},
-    scene::Scene
-};
+use regecs::{Create, entity::{Entity, EntityPart}, scene::Scene};
 use regecs::component::ComponentRef;
 use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
 use regecs::event::Event;
-use regecs::object::{Object, ObjectRef};
-use regecs::object::factory::Wrap;
-use regecs::scene::{ObjectContext, SystemContext};
-use regecs::system::Update;
+use regecs::object::{Context as _, Object, ObjectRef};
+use regecs::scene::{EventInfo, ObjectContext, SystemContext};
+use regecs::system::{Context as _, Update};
 
 use crate::components::{ComplexComponent};
 
@@ -159,9 +154,9 @@ mod components
         {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
-                ctx.components_mut().get_mut().update_group(component, new_order);
+                ctx.components_mut().pool_mut().update_group(component, new_order);
             }
-            for (i, v) in ctx.components_mut().get_mut().iter_mut() {
+            for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((i, v.order));
@@ -195,10 +190,10 @@ where
     {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);
-        ctx.components_mut().get_component_mut(test).value = 12;
-        ctx.components_mut().get_component_mut(test2).value2 = 42;
+        ctx.components_mut().get_mut(test).value = 12;
+        ctx.components_mut().get_mut(test2).value2 = 42;
         assert_eq!(
-            ctx.components().get_component(test2).value2,
+            ctx.components().get(test2).value2,
             42
         );
         assert_eq!(*state, 42);
@@ -244,8 +239,25 @@ impl regecs::object::New<Ctx1> for Test {
     }
 }
 
+use regecs_codegen::Object;
+
+#[derive(Object)]
+#[context(Ctx1)]
+pub struct NullObject(regecs::object::factory::NullObject);
+
+#[derive(Object)]
+#[context(Ctx1)]
+pub enum RootObject1 {
+    Null(NullObject),
+    Test(Test)
+}
+
 type Ctx = SystemContext<Interface>;
 type Ctx1 = ObjectContext<Interface>;
+
+regecs::test_macro!{pub RootFactory for RootObject where context = Ctx1 [
+    (Test: Test)
+]}
 
 regecs::register_objects!(
     /// The root factory for all objects of this test.
@@ -263,7 +275,7 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Factory = RootFactory;
+    type Factory = /*regecs::object::factory::NullFactory<Self>*/RootFactory;
 }
 
 //TODO: Create a derive macro for Update<T>
@@ -283,32 +295,32 @@ fn main()
     let ctx = 42;
     let mut mgr = components::TestComponentManager::default();
     let mut entity = Entity::new(&mut mgr, 0);
-    let test = entity.add(components::Test { value: 12 });
-    entity.get_mut(test).value = 1;
-    let test1 = mgr.add_component(components::Test { value: 0 });
-    let test2 = mgr.add_component(components::Test2 { value2: 0 });
-    mgr.add_component(ComplexComponent::new(2, 3));
-    mgr.add_component(ComplexComponent::new(1, 1));
-    mgr.add_component(ComplexComponent::new(2, 4));
-    mgr.add_component(ComplexComponent::new(1, 2));
+    let test = entity.add_attach(components::Test { value: 12 });
+    mgr.get_mut(test).value = 1;
+    let test1 = mgr.add(components::Test { value: 0 });
+    let test2 = mgr.add(components::Test2 { value2: 0 });
+    mgr.add(ComplexComponent::new(2, 3));
+    mgr.add(ComplexComponent::new(1, 1));
+    mgr.add(ComplexComponent::new(2, 4));
+    mgr.add(ComplexComponent::new(1, 2));
     let mut systems = TestSystemManager::default();
     systems.my.val = 42;
     let mut sc: Scene<Interface> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
     mgr = sc.consume();
-    assert_eq!(mgr.get_component(test).value, 12);
+    assert_eq!(mgr.get(test).value, 12);
     assert_eq!(
-        mgr.get_component(test2).value2,
+        mgr.get(test2).value2,
         42
     );
-    mgr.remove_component(test);
-    mgr.remove_component(test2);
-    let sfdk = <components::TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
-    let fh = <components::TestComponentManager as ComponentManager<components::Test2>>::get(&mgr).len();
+    mgr.remove(test);
+    mgr.remove(test2);
+    let sfdk = <components::TestComponentManager as ComponentManager<components::Test>>::pool(&mgr).len();
+    let fh = <components::TestComponentManager as ComponentManager<components::Test2>>::pool(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
-    mgr.remove_component(test1);
-    let test = <components::TestComponentManager as ComponentManager<components::Test>>::get(&mgr).len();
+    mgr.remove(test1);
+    let test = <components::TestComponentManager as ComponentManager<components::Test>>::pool(&mgr).len();
     assert_eq!(test, 0);
 }
