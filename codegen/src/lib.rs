@@ -29,6 +29,8 @@
 extern crate core;
 
 mod object_impl;
+mod fields_enum;
+mod dispatch;
 
 use std::vec::Vec;
 

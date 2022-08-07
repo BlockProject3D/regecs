@@ -27,53 +27,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use quote::{quote, ToTokens};
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use syn::{Field, Fields, Type, Ident, Variant, Data, Index};
-
-struct DispatchVariant {
-    variant: TokenStream,
-    children: Option<Vec<Dispatch>>
-}
-
-struct Dispatch {
-    target: TokenStream,
-    ty: Type,
-    variant: Option<DispatchVariant>
-}
-
-impl Dispatch {
-    pub fn to_token_stream<F: Fn(&TokenStream) -> TokenStream>(&self, function: F, ctx: &Type) -> TokenStream {
-        let ty = &self.ty;
-        let tokens = function(&self.target);
-        match &self.variant {
-            Some(v) => {
-                let v1 = &v.variant;
-                match &v.children {
-                    None => {
-                        quote! {
-                            #v1 => <#ty as regecs::object::Object<#ctx>>::#tokens
-                        }
-                    },
-                    Some(children) => {
-                        let vec: Vec<TokenStream> = children.iter().map(|v| {
-                            let ty = &v.ty;
-                            let tokens = function(&v.target);
-                            quote! { <#ty as regecs::object::Object<#ctx>>::#tokens }
-                        }).collect();
-                        quote! {
-                            #v1 => {
-                                #(#vec;)*
-                            }
-                        }
-                    }
-                }
-            },
-            None => quote! {
-                <#ty as regecs::object::Object<#ctx>>::#tokens
-            }
-        }
-    }
-}
+use crate::dispatch::{Dispatch, FieldDispatch, MultiFieldVariantDispatch, VariantDispatch};
+use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 
 pub struct ObjectImpl {
     context: Type,
@@ -117,33 +74,43 @@ impl ObjectImpl {
         let variant = v.ident;
         self.is_enum = true;
         match v.fields {
-            Fields::Named(_) => {
-                // Initially I thought Rust did support using a single variable to access all
-                // fields of a struct variant. Unfortunately that's not possible, in the mean
-                // time that I find an algorithm to generate the expansion required for these
-                // variants, just panic with an "unsupported" message.
-                // Also "self" is not an Ident which greatly limits code re-usability.
-                //TODO: Fix
-                panic!("struct enum variants are not supported")
+            Fields::Named(v) => {
+                let fields = expand_named_fields(&v);
+                let children: Vec<FieldDispatch> = v.named.into_iter().map(|v| {
+                    FieldDispatch {
+                        target: v.ident.unwrap().into_token_stream(),
+                        ty: v.ty,
+                    }
+                }).collect();
+                self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                    variant: quote! { #name::#variant #fields },
+                    children
+                }));
             }
             Fields::Unnamed(v) => {
                 if v.unnamed.len() > 1 {
-                    // Same problem as for Fields::Named.
-                    //TODO: Fix
-                    panic!("tuple enum variants with more than 1 item are not supported")
+                    let fields = expand_unnamed_fields(&v);
+                    let children: Vec<FieldDispatch> = v.unnamed.into_iter().enumerate().map(|(i, v)| {
+                        FieldDispatch {
+                            target: Ident::new(&format!("v{}", i), Span::call_site()).into_token_stream(),
+                            ty: v.ty
+                        }
+                    }).collect();
+                    self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                        variant: quote! { #name::#variant #fields },
+                        children
+                    }));
+                    return;
                 }
                 if v.unnamed.len() < 1 {
                     return;
                 }
                 let field = v.unnamed.into_iter().last().unwrap();
-                self.dispatches.push(Dispatch {
+                self.dispatches.push(Dispatch::Variant(VariantDispatch {
                     ty: field.ty,
                     target: quote! { v },
-                    variant: Some(DispatchVariant{
-                        variant: quote! { #name::#variant(v) },
-                        children: None
-                    })
-                });
+                    variant: quote! { #name::#variant(v) },
+                }));
             }
             _ => ()
         }
@@ -152,11 +119,10 @@ impl ObjectImpl {
     pub fn parse_field(&mut self, f: Field) {
         let index = Index::from(self.dispatches.len());
         let name = f.ident.map(|v| v.into_token_stream()).unwrap_or(quote! { #index });
-        self.dispatches.push(Dispatch {
+        self.dispatches.push(Dispatch::Field(FieldDispatch {
             ty: f.ty,
-            target: quote! { &mut self.#name },
-            variant: None
-        });
+            target: quote! { &mut self.#name }
+        }));
     }
 
     pub fn into_token_stream(self) -> TokenStream {
