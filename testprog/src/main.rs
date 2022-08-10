@@ -240,15 +240,16 @@ impl regecs::object::New<Ctx1> for Test {
 }
 
 use regecs_codegen::Object;
+use regecs_codegen::New;
 
-#[derive(Object)]
+#[derive(Object, New)]
 #[context(Ctx1)]
 pub struct NullObject(regecs::object::factory::NullObject);
 
-#[derive(Object)]
+#[derive(Object, New)]
 #[context(Ctx1)]
 pub enum RootObject1 {
-    Null(NullObject),
+    Null(regecs::object::factory::NullObject),
     Test(Test)
 }
 

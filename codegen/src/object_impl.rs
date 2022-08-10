@@ -26,117 +26,80 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use quote::{quote, ToTokens};
-use proc_macro2::{Span, TokenStream};
-use syn::{Field, Fields, Type, Ident, Variant, Data, Index};
-use crate::dispatch::{Dispatch, FieldDispatch, MultiFieldVariantDispatch, VariantDispatch};
-use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
+use quote::quote;
+use proc_macro2::TokenStream;
+use syn::{Field, Type, Ident, Variant};
+use crate::dispatch::{Dispatch, DispatchParser};
+use crate::r#impl::Impl;
 
 pub struct ObjectImpl {
     context: Type,
     name: Ident,
-    dispatches: Vec<Dispatch>,
+    parser: DispatchParser,
     is_enum: bool,
     class: String
 }
 
-impl ObjectImpl {
-    pub fn new(context: Type, name: Ident) -> ObjectImpl {
+fn to_token_stream<F: Fn(&TokenStream) -> TokenStream>(dispatch: &Dispatch, function: F, ctx: &Type) -> TokenStream {
+    match dispatch {
+        Dispatch::Field(v) => {
+            let ty = &v.ty;
+            let tokens = function(&v.target);
+            quote! { <#ty as regecs::object::Object<#ctx>>::#tokens }
+        },
+        Dispatch::Variant(v) => {
+            let ty = &v.ty;
+            let tokens = function(&v.target);
+            let v1 = &v.variant;
+            quote! { #v1 => <#ty as regecs::object::Object<#ctx>>::#tokens }
+        },
+        Dispatch::VariantMultiField(v) => {
+            let v1 = &v.variant;
+            let vec: Vec<TokenStream> = v.children.iter().map(|v| {
+                let ty = &v.ty;
+                let tokens = function(&v.target);
+                quote! { <#ty as regecs::object::Object<#ctx>>::#tokens }
+            }).collect();
+            quote! { #v1 => { #(#vec;)* } }
+        }
+    }
+}
+
+impl Impl for ObjectImpl {
+    type Params = (Type, Ident);
+
+    fn new((context, name): Self::Params) -> Self {
         ObjectImpl {
             class: name.to_string(),
             context,
             name,
-            dispatches: Vec::new(),
+            parser: DispatchParser::new(),
             is_enum: false
         }
     }
 
-    pub fn parse_data(context: Type, name: Ident, data: Data) -> ObjectImpl {
-        let mut obj = ObjectImpl::new(context, name);
-        match data {
-            Data::Enum(e) => {
-                for v in e.variants {
-                    obj.parse_variant(v);
-                }
-            },
-            Data::Struct(s) => {
-                for f in s.fields {
-                    obj.parse_field(f);
-                }
-            },
-            _ => panic!("unions are not supported")
-        }
-        obj
-    }
-
-    pub fn parse_variant(&mut self, v: Variant) {
-        let name = self.name.clone();
-        let variant = v.ident;
+    fn parse_variant(&mut self, v: Variant) {
         self.is_enum = true;
-        match v.fields {
-            Fields::Named(v) => {
-                let fields = expand_named_fields(&v);
-                let children: Vec<FieldDispatch> = v.named.into_iter().map(|v| {
-                    FieldDispatch {
-                        target: v.ident.unwrap().into_token_stream(),
-                        ty: v.ty,
-                    }
-                }).collect();
-                self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                    variant: quote! { #name::#variant #fields },
-                    children
-                }));
-            }
-            Fields::Unnamed(v) => {
-                if v.unnamed.len() > 1 {
-                    let fields = expand_unnamed_fields(&v);
-                    let children: Vec<FieldDispatch> = v.unnamed.into_iter().enumerate().map(|(i, v)| {
-                        FieldDispatch {
-                            target: Ident::new(&format!("v{}", i), Span::call_site()).into_token_stream(),
-                            ty: v.ty
-                        }
-                    }).collect();
-                    self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                        variant: quote! { #name::#variant #fields },
-                        children
-                    }));
-                    return;
-                }
-                if v.unnamed.len() < 1 {
-                    return;
-                }
-                let field = v.unnamed.into_iter().last().unwrap();
-                self.dispatches.push(Dispatch::Variant(VariantDispatch {
-                    ty: field.ty,
-                    target: quote! { v },
-                    variant: quote! { #name::#variant(v) },
-                }));
-            }
-            _ => ()
-        }
+        self.parser.parse_variant(self.name.clone(), v);
     }
 
-    pub fn parse_field(&mut self, f: Field) {
-        let index = Index::from(self.dispatches.len());
-        let name = f.ident.map(|v| v.into_token_stream()).unwrap_or(quote! { #index });
-        self.dispatches.push(Dispatch::Field(FieldDispatch {
-            ty: f.ty,
-            target: quote! { &mut self.#name }
-        }));
+    fn parse_field(&mut self, f: Field) {
+        self.parser.parse_field(f);
     }
 
-    pub fn into_token_stream(self) -> TokenStream {
+    fn into_token_stream(self) -> TokenStream {
         let ctx = self.context;
         let name = self.name;
         let class = self.class;
-        let on_event: Vec<TokenStream> = self.dispatches.iter()
-            .map(|v| v.to_token_stream(|target| quote! { on_event(#target, ctx, state, event) }, &ctx))
+        let dispatches = self.parser.into_inner();
+        let on_event: Vec<TokenStream> = dispatches.iter()
+            .map(|v| to_token_stream(v, |target| quote! { on_event(#target, ctx, state, event) }, &ctx))
             .collect();
-        let on_update: Vec<TokenStream> = self.dispatches.iter()
-            .map(|v| v.to_token_stream(|target| quote! { on_update(#target, ctx, state) }, &ctx))
+        let on_update: Vec<TokenStream> = dispatches.iter()
+            .map(|v| to_token_stream(v, |target| quote! { on_update(#target, ctx, state) }, &ctx))
             .collect();
-        let on_remove: Vec<TokenStream> = self.dispatches.iter()
-            .map(|v| v.to_token_stream(|target| quote! { on_remove(#target, ctx, state) }, &ctx))
+        let on_remove: Vec<TokenStream> = dispatches.iter()
+            .map(|v| to_token_stream(v, |target| quote! { on_remove(#target, ctx, state) }, &ctx))
             .collect();
         let body = match self.is_enum {
             true => quote! {
