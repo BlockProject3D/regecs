@@ -52,7 +52,9 @@ pub trait Object<C: Context>
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
-    fn class(&self) -> &str;
+    fn class(&self) -> &str {
+        std::any::type_name::<Self>()
+    }
 }
 
 pub trait New<C: Context> {
