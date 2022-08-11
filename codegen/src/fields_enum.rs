@@ -28,7 +28,7 @@
 
 use quote::quote;
 use proc_macro2::{Ident, Span, TokenStream};
-use syn::{FieldsNamed, FieldsUnnamed, Index};
+use syn::{FieldsNamed, FieldsUnnamed};
 
 pub fn expand_named_fields(fields: &FieldsNamed) -> TokenStream {
     let idents: Vec<&Ident> = fields.named.iter().map(|v| v.ident.as_ref().unwrap()).collect();
