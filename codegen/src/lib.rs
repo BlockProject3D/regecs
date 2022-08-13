@@ -33,6 +33,7 @@ mod fields_enum;
 mod dispatch;
 mod new_impl;
 mod r#impl;
+mod clear;
 
 use proc_macro::{self, TokenStream};
 use quote::ToTokens;
