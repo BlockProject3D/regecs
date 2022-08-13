@@ -35,6 +35,7 @@ mod new_impl;
 mod r#impl;
 mod clear;
 
+use clear::ClearImpl;
 use proc_macro::{self, TokenStream};
 use quote::ToTokens;
 use syn::{parse_macro_input, DeriveInput, Type, Attribute};
@@ -63,4 +64,10 @@ pub fn new(input: TokenStream) -> TokenStream
     let DeriveInput { attrs, ident, data, vis, .. } = parse_macro_input!(input);
     let context = get_context(attrs.into_iter());
     NewImpl::parse_data((context, ident, vis), data).into_token_stream().into()
+}
+
+#[proc_macro_derive(Clear, attributes(no_clear))]
+pub fn clear(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    ClearImpl::parse_data(ident, data).into_token_stream().into()
 }

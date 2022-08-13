@@ -32,20 +32,28 @@ use proc_macro2::{TokenStream, Ident};
 use quote::quote;
 use syn::{Variant, Field};
 
-use crate::{r#impl::Impl, dispatch::{DispatchParser, Dispatch}};
+use crate::{r#impl::Impl, dispatch::{DispatchParser, Dispatch, FieldName}};
 
-fn to_token_stream(dispatch: &Dispatch) -> TokenStream {
+fn to_token_stream(dispatch: &Dispatch, no_clear: &HashSet<FieldName>) -> Option<TokenStream> {
     match dispatch {
         Dispatch::Field(v) => {
             let ty = &v.ty;
             let target = &v.target;
-            quote! { <#ty as regecs::component::Clear>::clear(#target, entity) }
+            if no_clear.contains(&v.name) {
+                None
+            } else {
+                Some(quote! { <#ty as regecs::component::Clear>::clear(#target, entity) })
+            }
         },
         Dispatch::Variant(v) => {
             let ty = &v.ty;
             let target = &v.target;
             let v1 = &v.variant;
-            quote! { #v1 => <#ty as regecs::component::Clear>::clear(#target, entity) }
+            if no_clear.contains(&FieldName::Ident(v.variant_name.clone())) {
+                None
+            } else {
+                Some(quote! { #v1 => <#ty as regecs::component::Clear>::clear(#target, entity) })
+            }
         },
         Dispatch::VariantMultiField(v) => {
             let v1 = &v.variant;
@@ -54,19 +62,23 @@ fn to_token_stream(dispatch: &Dispatch) -> TokenStream {
                 let target = &v.target;
                 quote! { <#ty as regecs::component::Clear>::clear(#target, entity) }
             }).collect();
-            quote! { #v1 => { #(#vec;)* } }
+            if no_clear.contains(&FieldName::Ident(v.variant_name.clone())) {
+                None
+            } else {
+                Some(quote! { #v1 => { #(#vec;)* } })
+            }
         }
     }
 }
 
-struct Clear {
+pub struct ClearImpl {
     name: Ident,
     parser: DispatchParser,
-    no_clear: HashSet<String>,
+    no_clear: HashSet<FieldName>,
     is_enum: bool
 }
 
-impl Impl for Clear {
+impl Impl for ClearImpl {
     type Params = Ident;
 
     fn new(name: Self::Params) -> Self {
@@ -80,23 +92,35 @@ impl Impl for Clear {
 
     fn parse_variant(&mut self, v: Variant) {
         self.is_enum = true;
-        if v.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())) {
-            self.no_clear.insert(v.ident.to_string());
+        let no_clear = v.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into()));
+        let v = self.parser.parse_variant(self.name.clone(), v);
+        if no_clear {
+            if let Some(v) = v {
+                match v {
+                    Dispatch::Variant(v) => {
+                        self.no_clear.insert(FieldName::Ident(v.variant_name.clone()));
+                    },
+                    Dispatch::VariantMultiField(v) => {
+                        self.no_clear.insert(FieldName::Ident(v.variant_name.clone()));
+                    },
+                    _ => std::unreachable!()
+                }
+            }
         }
-        self.parser.parse_variant(self.name.clone(), v);
     }
 
     fn parse_field(&mut self, f: Field) {
-        if f.ident.is_some() && f.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())) {
-            self.no_clear.insert(f.ident.as_ref().unwrap().to_string());
+        let no_clear = f.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into()));
+        let f = self.parser.parse_field(f);
+        if no_clear {
+            self.no_clear.insert(f.name.clone());
         }
-        self.parser.parse_field(f);
     }
 
     fn into_token_stream(self) -> TokenStream {
         let name = self.name;
         let dispatches = self.parser.into_inner();
-        let tokens = dispatches.iter().map(|v| to_token_stream(v));
+        let tokens = dispatches.iter().map(|v| to_token_stream(v, &self.no_clear));
         if self.is_enum {
             quote! {
                 impl regecs::component::Clear for #name {
