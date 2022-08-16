@@ -31,7 +31,7 @@ use quote::{quote, ToTokens};
 use syn::{Field, Fields, Index, Type, Variant};
 use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum FieldName {
     Ident(Ident),
     Index(usize)
@@ -100,7 +100,7 @@ impl DispatchParser {
         }
     }
 
-    pub fn parse_variant(&mut self, type_name: Ident, v: Variant) -> Option<&Dispatch> {
+    pub fn parse_variant(&mut self, type_name: Ident, v: Variant) {
         let variant = v.ident;
         match v.fields {
             Fields::Named(v) => {
@@ -133,10 +133,10 @@ impl DispatchParser {
                         variant_name: variant,
                         children
                     }));
-                    return self.dispatches.last();
+                    return;
                 }
                 if v.unnamed.len() < 1 {
-                    return self.dispatches.last();
+                    return;
                 }
                 let field = v.unnamed.into_iter().last().unwrap();
                 self.dispatches.push(Dispatch::Variant(VariantDispatch {
@@ -148,10 +148,9 @@ impl DispatchParser {
             }
             _ => ()
         }
-        self.dispatches.last()
     }
 
-    pub fn parse_field(&mut self, f: Field) -> &FieldDispatch {
+    pub fn parse_field(&mut self, f: Field) {
         let index = Index::from(self.dispatches.len());
         let name = f.ident.clone().map(|v| v.into_token_stream()).unwrap_or(quote! { #index });
         self.dispatches.push(Dispatch::Field(FieldDispatch {
@@ -159,10 +158,6 @@ impl DispatchParser {
             ty: f.ty,
             target: quote! { &mut self.#name }
         }));
-        self.dispatches.last().map(|v| match v {
-            Dispatch::Field(v) => v,
-            _ => std::unreachable!()
-        }).unwrap()
     }
 
     pub fn into_inner(self) -> Vec<Dispatch> {
