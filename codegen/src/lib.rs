@@ -33,7 +33,6 @@ mod fields_enum;
 mod dispatch;
 mod new_impl;
 mod r#impl;
-mod clear;
 
 use clear::ClearImpl;
 use proc_macro::{self, TokenStream};
