@@ -28,27 +28,23 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::object::ObjectRef;
 use crate::component::{Component, ComponentRef};
+use crate::object::ObjectRef;
 
-pub struct AttachmentsManager<T: Component>
-{
+pub struct AttachmentsManager<T: Component> {
     map: HashMap<ObjectRef, HashSet<ComponentRef<T>>>,
-    inv_map: HashMap<ComponentRef<T>, ObjectRef>
+    inv_map: HashMap<ComponentRef<T>, ObjectRef>,
 }
 
-impl<T: Component> AttachmentsManager<T>
-{
-    pub fn new() -> AttachmentsManager<T>
-    {
+impl<T: Component> AttachmentsManager<T> {
+    pub fn new() -> AttachmentsManager<T> {
         return AttachmentsManager {
             map: HashMap::new(),
-            inv_map: HashMap::new()
+            inv_map: HashMap::new(),
         };
     }
 
-    pub fn remove(&mut self, r: ComponentRef<T>)
-    {
+    pub fn remove(&mut self, r: ComponentRef<T>) {
         if let Some(entity) = self.inv_map.get(&r) {
             if let Some(set) = self.map.get_mut(entity) {
                 set.remove(&r);
@@ -57,8 +53,7 @@ impl<T: Component> AttachmentsManager<T>
         }
     }
 
-    pub fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
-    {
+    pub fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>) {
         if let Some(set) = self.map.get_mut(&entity) {
             set.insert(r);
         } else {
@@ -69,8 +64,7 @@ impl<T: Component> AttachmentsManager<T>
         self.inv_map.insert(r, entity);
     }
 
-    pub fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
-    {
+    pub fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>> {
         if let Some(set) = self.map.get(&entity) {
             let mut vec = Vec::with_capacity(set.len());
             for v in set {
@@ -81,13 +75,11 @@ impl<T: Component> AttachmentsManager<T>
         return None;
     }
 
-    pub fn clear(&mut self, entity: ObjectRef)
-    {
+    pub fn clear(&mut self, entity: ObjectRef) {
         self.map.remove(&entity);
     }
 
-    pub fn get_first(&self, entity: ObjectRef) -> Option<ComponentRef<T>>
-    {
+    pub fn get_first(&self, entity: ObjectRef) -> Option<ComponentRef<T>> {
         if let Some(set) = self.map.get(&entity) {
             Some(*set.iter().nth(0).unwrap())
         } else {

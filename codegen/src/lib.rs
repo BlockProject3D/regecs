@@ -32,8 +32,7 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Type};
 
-fn workarround_unprintable_path(path: &syn::Path) -> String
-{
+fn workarround_unprintable_path(path: &syn::Path) -> String {
     let mut s = String::new();
 
     for v in &path.segments {
@@ -43,14 +42,12 @@ fn workarround_unprintable_path(path: &syn::Path) -> String
 }
 
 #[proc_macro_derive(ClassConnector, attributes(property))]
-pub fn class_connector(input: TokenStream) -> TokenStream
-{
+pub fn class_connector(input: TokenStream) -> TokenStream {
     todo!();
 }
 
 #[proc_macro_derive(SerializableComponent)]
-pub fn serializable_component(input: TokenStream) -> TokenStream
-{
+pub fn serializable_component(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     if let Data::Struct(_) = data {
         let output = quote! {
@@ -74,8 +71,7 @@ pub fn serializable_component(input: TokenStream) -> TokenStream
 }
 
 #[proc_macro_derive(NonSerializableComponent)]
-pub fn non_serializable_component(input: TokenStream) -> TokenStream
-{
+pub fn non_serializable_component(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     if let Data::Struct(_) = data {
         let output = quote! {
@@ -99,8 +95,7 @@ pub fn non_serializable_component(input: TokenStream) -> TokenStream
 }
 
 #[proc_macro_derive(ComponentManager, attributes(no_attachments))]
-pub fn component_manager(input: TokenStream) -> TokenStream
-{
+pub fn component_manager(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     let mut v = Vec::new();
 
@@ -127,13 +122,13 @@ pub fn component_manager(input: TokenStream) -> TokenStream
                         _ => panic!(
                             "Could not identify type of component for field {:?}",
                             f.ident
-                        )
+                        ),
                     }
                 }
             },
-            _ => panic!("Your component list must not be empty")
+            _ => panic!("Your component list must not be empty"),
         },
-        _ => panic!("ComponentManager cannot be implemented on non-structs")
+        _ => panic!("ComponentManager cannot be implemented on non-structs"),
     };
     let mut impl_base_tokens = Vec::new();
     let mut impl_cmgr_tokens = Vec::new();

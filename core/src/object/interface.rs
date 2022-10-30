@@ -28,19 +28,15 @@
 
 use std::any::Any;
 
-use crate::{
-    event::EventManager,
-    object::ObjectTree
-};
 use crate::component::Clear;
+use crate::{event::EventManager, object::ObjectTree};
 
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context: Sized
-{
+pub trait Context: Sized {
     type Event;
     type AppState;
     type ComponentManager: Clear;
@@ -54,20 +50,18 @@ pub trait Context: Sized
     fn objects(&self) -> &ObjectTree;
 }
 
-pub trait Index
-{
+pub trait Index {
     fn index(&self) -> ObjectRef;
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait Object<C: Context>
-{
+pub trait Object<C: Context> {
     fn on_event(
         &mut self,
         ctx: &mut C,
         state: &C::AppState,
         event: &C::Event,
-        sender: Option<ObjectRef>
+        sender: Option<ObjectRef>,
     );
     /// Return true to enable updates on this object
     fn on_init(&mut self, ctx: &mut C, state: &C::AppState) -> bool;

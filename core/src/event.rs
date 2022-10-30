@@ -30,94 +30,79 @@
 
 use std::{
     boxed::Box,
-    collections::{HashMap, VecDeque}
+    collections::{HashMap, VecDeque},
 };
 
 use crate::object::{Context, ObjectFactory, ObjectRef};
 
-pub struct Event<E>
-{
+pub struct Event<E> {
     pub sender: Option<ObjectRef>,
     pub target: Option<ObjectRef>,
     pub data: E,
 }
 
-pub struct EventBuilder<E>
-{
-    ev: Event<E>
+pub struct EventBuilder<E> {
+    ev: Event<E>,
 }
 
-impl<E> EventBuilder<E>
-{
-    pub fn new(event: E) -> EventBuilder<E>
-    {
+impl<E> EventBuilder<E> {
+    pub fn new(event: E) -> EventBuilder<E> {
         return EventBuilder {
             ev: Event {
                 sender: None,
                 target: None,
-                data: event
-            }
+                data: event,
+            },
         };
     }
 
-    pub fn sender(mut self, this: ObjectRef) -> Self
-    {
+    pub fn sender(mut self, this: ObjectRef) -> Self {
         self.ev.sender = Some(this);
         return self;
     }
 
-    pub fn target(mut self, target: ObjectRef) -> Self
-    {
+    pub fn target(mut self, target: ObjectRef) -> Self {
         self.ev.target = Some(target);
         return self;
     }
 
-    pub fn into(self) -> Event<E>
-    {
+    pub fn into(self) -> Event<E> {
         return self.ev;
     }
 }
 
-pub enum SystemEvent<C: Context>
-{
+pub enum SystemEvent<C: Context> {
     Enable(ObjectRef, bool),
     Spawn(ObjectFactory<C>),
-    Destroy(ObjectRef)
+    Destroy(ObjectRef),
 }
 
-pub struct EventManager<C: Context>
-{
+pub struct EventManager<C: Context> {
     events: VecDeque<Event<C::Event>>,
-    system_events: VecDeque<(bool, SystemEvent<C>)>
+    system_events: VecDeque<(bool, SystemEvent<C>)>,
 }
 
-impl<C: Context> EventManager<C>
-{
-    pub fn new() -> EventManager<C>
-    {
+impl<C: Context> EventManager<C> {
+    pub fn new() -> EventManager<C> {
         return EventManager {
             events: VecDeque::new(),
-            system_events: VecDeque::new()
+            system_events: VecDeque::new(),
         };
     }
 
-    pub fn send(&mut self, event: EventBuilder<C::Event>)
-    {
+    pub fn send(&mut self, event: EventBuilder<C::Event>) {
         self.events.push_back(event.into());
     }
 
-    pub fn system(&mut self, event: SystemEvent<C>, notify: bool)
-    {
+    pub fn system(&mut self, event: SystemEvent<C>, notify: bool) {
         self.system_events.push_back((notify, event));
     }
 
-    pub fn poll_event(&mut self) -> Option<Event<C::Event>>
-    {
+    pub fn poll_event(&mut self) -> Option<Event<C::Event>> {
         return self.events.pop_front();
     }
 
-    pub fn poll_system_event(&mut self) -> Option<(bool, SystemEvent<C>)>
-    {
+    pub fn poll_system_event(&mut self) -> Option<(bool, SystemEvent<C>)> {
         return self.system_events.pop_front();
     }
 }

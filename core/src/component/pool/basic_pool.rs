@@ -26,14 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::component::attachments::AttachmentsManager;
+use crate::component::pool::{Attachments, ComponentPool, Iter};
+use crate::component::{Component, ComponentRef};
+use crate::object::ObjectRef;
 use std::{
     ops::{Index, IndexMut},
-    vec::Vec
+    vec::Vec,
 };
-use crate::component::attachments::AttachmentsManager;
-use crate::component::{Component, ComponentRef};
-use crate::component::pool::{Attachments, ComponentPool, Iter};
-use crate::object::ObjectRef;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -96,29 +96,24 @@ bcp_iterator!(BcpIteratorMut, mut);
 /// Basic component pool (stores components in a single simple array list)
 ///
 /// *May not be optimized for rendering 3D model components*
-pub struct BasicComponentPool<T: Component>
-{
+pub struct BasicComponentPool<T: Component> {
     comps: Vec<Option<T>>,
     size: usize,
-    attachments: AttachmentsManager<T>
+    attachments: AttachmentsManager<T>,
 }
 
-impl<T: Component> Default for BasicComponentPool<T>
-{
-    fn default() -> Self
-    {
+impl<T: Component> Default for BasicComponentPool<T> {
+    fn default() -> Self {
         return BasicComponentPool {
             comps: Vec::new(),
             size: 0,
-            attachments: AttachmentsManager::new()
+            attachments: AttachmentsManager::new(),
         };
     }
 }
 
-impl<T: Component> ComponentPool<T> for BasicComponentPool<T>
-{
-    fn add(&mut self, comp: T) -> ComponentRef<T>
-    {
+impl<T: Component> ComponentPool<T> for BasicComponentPool<T> {
+    fn add(&mut self, comp: T) -> ComponentRef<T> {
         let mut i = 0;
         while i < self.comps.len() && self.comps[i].is_some() {
             i += 1;
@@ -132,8 +127,7 @@ impl<T: Component> ComponentPool<T> for BasicComponentPool<T>
         ComponentRef::new(i)
     }
 
-    fn remove(&mut self, r: ComponentRef<T>)
-    {
+    fn remove(&mut self, r: ComponentRef<T>) {
         self.comps[r.index] = None; //Mark slot as unclaimed
         let mut i = self.comps.len() - 1; //Trim end of array
         while i > 0 && self.comps[i].is_none() {
@@ -144,26 +138,21 @@ impl<T: Component> ComponentPool<T> for BasicComponentPool<T>
         self.attachments.remove(r);
     }
 
-    fn len(&self) -> usize
-    {
+    fn len(&self) -> usize {
         self.size
     }
 }
 
-impl<T: Component> Attachments<T> for BasicComponentPool<T>
-{
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>)
-    {
+impl<T: Component> Attachments<T> for BasicComponentPool<T> {
+    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>) {
         self.attachments.attach(entity, r);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>
-    {
+    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>> {
         return self.attachments.list(entity);
     }
 
-    fn clear(&mut self, entity: ObjectRef)
-    {
+    fn clear(&mut self, entity: ObjectRef) {
         if let Some(set) = self.attachments.list(entity) {
             for v in set {
                 self.remove(v)
@@ -172,8 +161,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T>
         }
     }
 
-    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>
-    {
+    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T> {
         if let Some(r) = self.attachments.get_first(entity) {
             Some(&mut self[r])
         } else {
@@ -181,8 +169,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T>
         }
     }
 
-    fn get_first(&self, entity: ObjectRef) -> Option<&T>
-    {
+    fn get_first(&self, entity: ObjectRef) -> Option<&T> {
         if let Some(r) = self.attachments.get_first(entity) {
             Some(&self[r])
         } else {
@@ -191,36 +178,29 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T>
     }
 }
 
-impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T>
-{
+impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T> {
     type Iter = BcpIterator<'a, T>;
     type IterMut = BcpIteratorMut<'a, T>;
 
-    fn iter(&'a self) -> Self::Iter
-    {
+    fn iter(&'a self) -> Self::Iter {
         return BcpIterator::new(&self.comps);
     }
 
-    fn iter_mut(&'a mut self) -> Self::IterMut
-    {
+    fn iter_mut(&'a mut self) -> Self::IterMut {
         return BcpIteratorMut::new(&mut self.comps);
     }
 }
 
-impl<T: Component> Index<ComponentRef<T>> for BasicComponentPool<T>
-{
+impl<T: Component> Index<ComponentRef<T>> for BasicComponentPool<T> {
     type Output = T;
 
-    fn index(&self, r: ComponentRef<T>) -> &Self::Output
-    {
+    fn index(&self, r: ComponentRef<T>) -> &Self::Output {
         return self.comps[r.index].as_ref().unwrap();
     }
 }
 
-impl<T: Component> IndexMut<ComponentRef<T>> for BasicComponentPool<T>
-{
-    fn index_mut(&mut self, r: ComponentRef<T>) -> &mut Self::Output
-    {
+impl<T: Component> IndexMut<ComponentRef<T>> for BasicComponentPool<T> {
+    fn index_mut(&mut self, r: ComponentRef<T>) -> &mut Self::Output {
         return self.comps[r.index].as_mut().unwrap();
     }
 }

@@ -26,16 +26,17 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ops::{Index, IndexMut};
 use crate::component::{Component, ComponentRef};
 use crate::object::ObjectRef;
+use std::ops::{Index, IndexMut};
 
 /// Represents an allocation pool for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<T: Component>: Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
-    where
-        Self: Sized
+pub trait ComponentPool<T: Component>:
+    Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
+where
+    Self: Sized,
 {
     /// Stores a new component in this pool
     ///
@@ -63,8 +64,7 @@ pub trait ComponentPool<T: Component>: Index<ComponentRef<T>, Output = T> + Inde
     fn len(&self) -> usize;
 
     /// Returns true if this component pool is empty
-    fn is_empty(&self) -> bool
-    {
+    fn is_empty(&self) -> bool {
         self.len() == 0
     }
 }
@@ -73,8 +73,7 @@ pub trait ComponentPool<T: Component>: Index<ComponentRef<T>, Output = T> + Inde
 ///
 /// *All iterators in component pools returns indices of components*
 /// *to get the actual component instance use index or index_mut*
-pub trait Iter<'a, T: 'a + Component>
-{
+pub trait Iter<'a, T: 'a + Component> {
     /// The type of immutable iterator
     type Iter: Iterator<Item = (ComponentRef<T>, &'a T)>;
 
@@ -96,8 +95,7 @@ pub trait Iter<'a, T: 'a + Component>
     fn iter_mut(&'a mut self) -> Self::IterMut;
 }
 
-pub trait Attachments<T: Component>
-{
+pub trait Attachments<T: Component> {
     /// Attach a new component
     ///
     /// # Arguments
@@ -130,29 +128,23 @@ pub trait Attachments<T: Component>
     fn get_first(&self, entity: ObjectRef) -> Option<&T>;
 }
 
-pub trait ComponentManager<T: Component>
-{
+pub trait ComponentManager<T: Component> {
     fn get(&self) -> &T::Pool;
     fn get_mut(&mut self) -> &mut T::Pool;
 
-    fn get_component(&self, r: ComponentRef<T>) -> &T
-    {
+    fn get_component(&self, r: ComponentRef<T>) -> &T {
         &self.get()[r]
     }
 
-    fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T
-    {
+    fn get_component_mut(&mut self, r: ComponentRef<T>) -> &mut T {
         &mut self.get_mut()[r]
     }
 
-    fn add_component(&mut self, comp: T) -> ComponentRef<T>
-    {
+    fn add_component(&mut self, comp: T) -> ComponentRef<T> {
         self.get_mut().add(comp)
     }
 
-    fn remove_component(&mut self, r: ComponentRef<T>)
-    {
+    fn remove_component(&mut self, r: ComponentRef<T>) {
         self.get_mut().remove(r);
     }
 }
-

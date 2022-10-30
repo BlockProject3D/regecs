@@ -28,8 +28,7 @@
 
 use crate::{component::Clear, event::EventManager, object::ObjectTree};
 
-pub trait Context
-{
+pub trait Context {
     type AppState;
     type ComponentManager: Clear;
     type Context: crate::object::Context;
@@ -41,7 +40,6 @@ pub trait Context
 }
 
 /// Update functionality.
-pub trait Update<C: Context>
-{
+pub trait Update<C: Context> {
     fn update(&mut self, ctx: &mut C, state: &C::AppState);
 }

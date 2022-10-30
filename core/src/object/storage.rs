@@ -29,56 +29,47 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    ops::{Index, IndexMut}
+    ops::{Index, IndexMut},
 };
 
 use crate::object::{Context, Object, ObjectFactory, ObjectRef};
 
-pub struct ObjectTree
-{
+pub struct ObjectTree {
     enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
     by_id: HashSet<ObjectRef>,
-    count: usize
+    count: usize,
 }
 
-impl ObjectTree
-{
-    pub fn is_enabled(&self, obj: ObjectRef) -> bool
-    {
+impl ObjectTree {
+    pub fn is_enabled(&self, obj: ObjectRef) -> bool {
         return self.enabled.contains(&obj);
     }
 
-    pub fn exists(&self, obj: ObjectRef) -> bool
-    {
+    pub fn exists(&self, obj: ObjectRef) -> bool {
         return self.by_id.contains(&obj);
     }
 
-    pub fn get_count(&self) -> usize
-    {
+    pub fn get_count(&self) -> usize {
         return self.count;
     }
 
-    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef>
-    {
+    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.enabled.iter();
     }
 
-    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef>
-    {
+    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.by_id.iter();
     }
 
-    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]>
-    {
+    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]> {
         if let Some(v) = self.by_class.get(class) {
             return Cow::from(v);
         }
         return Cow::from(Vec::new());
     }
 
-    fn insert(&mut self, obj: ObjectRef, class: &str)
-    {
+    fn insert(&mut self, obj: ObjectRef, class: &str) {
         self.by_id.insert(obj);
         let var = self
             .by_class
@@ -88,8 +79,7 @@ impl ObjectTree
         self.count += 1;
     }
 
-    fn remove(&mut self, obj: ObjectRef, class: &str)
-    {
+    fn remove(&mut self, obj: ObjectRef, class: &str) {
         self.by_id.remove(&obj);
         self.enabled.remove(&obj);
         if let Some(v) = self.by_class.get_mut(class) {
@@ -98,40 +88,35 @@ impl ObjectTree
         self.count -= 1;
     }
 
-    fn new() -> ObjectTree
-    {
+    fn new() -> ObjectTree {
         return ObjectTree {
             enabled: HashSet::new(),
             by_class: HashMap::new(),
             by_id: HashSet::new(),
-            count: 0
+            count: 0,
         };
     }
 }
 
-pub struct ObjectStorage<C: Context>
-{
-    objects: Vec<Option<Box<dyn Object<C>>>>
+pub struct ObjectStorage<C: Context> {
+    objects: Vec<Option<Box<dyn Object<C>>>>,
 }
 
-impl<C: Context> ObjectStorage<C>
-{
-    pub fn new() -> (ObjectStorage<C>, ObjectTree)
-    {
+impl<C: Context> ObjectStorage<C> {
+    pub fn new() -> (ObjectStorage<C>, ObjectTree) {
         return (
             ObjectStorage {
-                objects: Vec::new()
+                objects: Vec::new(),
             },
-            ObjectTree::new()
+            ObjectTree::new(),
         );
     }
 
     pub fn insert(
         &mut self,
         tree: &mut ObjectTree,
-        obj: ObjectFactory<C>
-    ) -> (ObjectRef, &mut Box<dyn Object<C>>)
-    {
+        obj: ObjectFactory<C>,
+    ) -> (ObjectRef, &mut Box<dyn Object<C>>) {
         let empty_slot = {
             let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
@@ -158,20 +143,17 @@ impl<C: Context> ObjectStorage<C>
         return (obj_ref, &mut self[obj_ref]);
     }
 
-    pub fn destroy(&mut self, tree: &mut ObjectTree, obj: ObjectRef)
-    {
+    pub fn destroy(&mut self, tree: &mut ObjectTree, obj: ObjectRef) {
         let o = self.objects[obj as usize].as_ref().unwrap();
         tree.remove(obj, o.class());
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn Object<C>>>>
-    {
+    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<dyn Object<C>>>> {
         return self.objects.iter_mut();
     }
 
-    pub fn set_enabled(&mut self, tree: &mut ObjectTree, obj: ObjectRef, enabled: bool)
-    {
+    pub fn set_enabled(&mut self, tree: &mut ObjectTree, obj: ObjectRef, enabled: bool) {
         if enabled {
             tree.enabled.insert(obj);
         } else {
@@ -180,20 +162,16 @@ impl<C: Context> ObjectStorage<C>
     }
 }
 
-impl<C: Context> Index<ObjectRef> for ObjectStorage<C>
-{
+impl<C: Context> Index<ObjectRef> for ObjectStorage<C> {
     type Output = Box<dyn Object<C>>;
 
-    fn index(&self, index: ObjectRef) -> &Self::Output
-    {
+    fn index(&self, index: ObjectRef) -> &Self::Output {
         return self.objects[index as usize].as_ref().unwrap();
     }
 }
 
-impl<C: Context> IndexMut<ObjectRef> for ObjectStorage<C>
-{
-    fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
-    {
+impl<C: Context> IndexMut<ObjectRef> for ObjectStorage<C> {
+    fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
         return self.objects[index as usize].as_mut().unwrap();
     }
 }
