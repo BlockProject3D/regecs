@@ -26,36 +26,36 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{Field, Fields, Index, Type, Variant};
-use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 
 #[derive(Clone)]
 pub enum FieldName {
     Ident(Ident),
-    Index(usize)
+    Index(usize),
 }
 
 impl FieldName {
     pub fn is_ident(&self) -> bool {
         match self {
             FieldName::Ident(_) => true,
-            FieldName::Index(_) => false
+            FieldName::Index(_) => false,
         }
     }
 
     pub fn to_ident(&self) -> &Ident {
         match self {
             FieldName::Ident(v) => v,
-            FieldName::Index(_) => std::unreachable!()
+            FieldName::Index(_) => std::unreachable!(),
         }
     }
 
     pub fn to_index(&self) -> usize {
         match self {
             FieldName::Ident(_) => std::unreachable!(),
-            FieldName::Index(v) => *v
+            FieldName::Index(v) => *v,
         }
     }
 }
@@ -64,7 +64,7 @@ impl FieldName {
 pub struct FieldDispatch {
     pub name: FieldName,
     pub target: TokenStream,
-    pub ty: Type
+    pub ty: Type,
 }
 
 #[derive(Clone)]
@@ -72,31 +72,31 @@ pub struct VariantDispatch {
     pub target: TokenStream,
     pub ty: Type,
     pub variant: TokenStream,
-    pub variant_name: Ident
+    pub variant_name: Ident,
 }
 
 #[derive(Clone)]
 pub struct MultiFieldVariantDispatch {
     pub variant: TokenStream,
     pub variant_name: Ident,
-    pub children: Vec<FieldDispatch>
+    pub children: Vec<FieldDispatch>,
 }
 
 #[derive(Clone)]
 pub enum Dispatch {
     Field(FieldDispatch),
     Variant(VariantDispatch),
-    VariantMultiField(MultiFieldVariantDispatch)
+    VariantMultiField(MultiFieldVariantDispatch),
 }
 
 pub struct DispatchParser {
-    dispatches: Vec<Dispatch>
+    dispatches: Vec<Dispatch>,
 }
 
 impl DispatchParser {
     pub fn new() -> DispatchParser {
         DispatchParser {
-            dispatches: Vec::new()
+            dispatches: Vec::new(),
         }
     }
 
@@ -105,34 +105,42 @@ impl DispatchParser {
         match v.fields {
             Fields::Named(v) => {
                 let fields = expand_named_fields(&v);
-                let children: Vec<FieldDispatch> = v.named.into_iter().map(|v| {
-                    FieldDispatch {
+                let children: Vec<FieldDispatch> = v
+                    .named
+                    .into_iter()
+                    .map(|v| FieldDispatch {
                         name: FieldName::Ident(v.ident.clone().unwrap()),
                         target: v.ident.unwrap().into_token_stream(),
                         ty: v.ty,
-                    }
-                }).collect();
-                self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                    variant: quote! { #type_name::#variant #fields },
-                    variant_name: variant,
-                    children
-                }));
-            }
+                    })
+                    .collect();
+                self.dispatches
+                    .push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                        variant: quote! { #type_name::#variant #fields },
+                        variant_name: variant,
+                        children,
+                    }));
+            },
             Fields::Unnamed(v) => {
                 if v.unnamed.len() > 1 {
                     let fields = expand_unnamed_fields(&v);
-                    let children: Vec<FieldDispatch> = v.unnamed.into_iter().enumerate().map(|(i, v)| {
-                        FieldDispatch {
+                    let children: Vec<FieldDispatch> = v
+                        .unnamed
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, v)| FieldDispatch {
                             name: FieldName::Index(i),
-                            target: Ident::new(&format!("v{}", i), Span::call_site()).into_token_stream(),
-                            ty: v.ty
-                        }
-                    }).collect();
-                    self.dispatches.push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                        variant: quote! { #type_name::#variant #fields },
-                        variant_name: variant,
-                        children
-                    }));
+                            target: Ident::new(&format!("v{}", i), Span::call_site())
+                                .into_token_stream(),
+                            ty: v.ty,
+                        })
+                        .collect();
+                    self.dispatches
+                        .push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                            variant: quote! { #type_name::#variant #fields },
+                            variant_name: variant,
+                            children,
+                        }));
                     return;
                 }
                 if v.unnamed.len() < 1 {
@@ -143,20 +151,27 @@ impl DispatchParser {
                     ty: field.ty,
                     target: quote! { v },
                     variant: quote! { #type_name::#variant(v) },
-                    variant_name: variant
+                    variant_name: variant,
                 }));
-            }
-            _ => ()
+            },
+            _ => (),
         }
     }
 
     pub fn parse_field(&mut self, f: Field) {
         let index = Index::from(self.dispatches.len());
-        let name = f.ident.clone().map(|v| v.into_token_stream()).unwrap_or(quote! { #index });
+        let name = f
+            .ident
+            .clone()
+            .map(|v| v.into_token_stream())
+            .unwrap_or(quote! { #index });
         self.dispatches.push(Dispatch::Field(FieldDispatch {
-            name: f.ident.map(FieldName::Ident).unwrap_or(FieldName::Index(self.dispatches.len())),
+            name: f
+                .ident
+                .map(FieldName::Ident)
+                .unwrap_or(FieldName::Index(self.dispatches.len())),
             ty: f.ty,
-            target: quote! { &mut self.#name }
+            target: quote! { &mut self.#name },
         }));
     }
 

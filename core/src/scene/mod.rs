@@ -28,10 +28,10 @@
 
 //! REGECS scene layer.
 
-mod state;
 mod core;
 mod event;
 mod interface;
+mod state;
 
 pub use self::core::Scene;
 pub use self::event::EventInfo;

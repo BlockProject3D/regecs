@@ -26,21 +26,25 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use quote::quote;
-use proc_macro2::TokenStream;
-use syn::{Field, Type, Ident, Variant};
 use crate::dispatch::{Dispatch, DispatchParser};
 use crate::r#impl::Impl;
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::{Field, Ident, Type, Variant};
 
 pub struct ObjectImpl {
     context: Type,
     name: Ident,
     parser: DispatchParser,
     is_enum: bool,
-    class: String
+    class: String,
 }
 
-fn to_token_stream<F: Fn(&TokenStream) -> TokenStream>(dispatch: &Dispatch, function: F, ctx: &Type) -> TokenStream {
+fn to_token_stream<F: Fn(&TokenStream) -> TokenStream>(
+    dispatch: &Dispatch,
+    function: F,
+    ctx: &Type,
+) -> TokenStream {
     match dispatch {
         Dispatch::Field(v) => {
             let ty = &v.ty;
@@ -55,13 +59,17 @@ fn to_token_stream<F: Fn(&TokenStream) -> TokenStream>(dispatch: &Dispatch, func
         },
         Dispatch::VariantMultiField(v) => {
             let v1 = &v.variant;
-            let vec: Vec<TokenStream> = v.children.iter().map(|v| {
-                let ty = &v.ty;
-                let tokens = function(&v.target);
-                quote! { <#ty as regecs::object::Object<#ctx>>::#tokens }
-            }).collect();
+            let vec: Vec<TokenStream> = v
+                .children
+                .iter()
+                .map(|v| {
+                    let ty = &v.ty;
+                    let tokens = function(&v.target);
+                    quote! { <#ty as regecs::object::Object<#ctx>>::#tokens }
+                })
+                .collect();
             quote! { #v1 => { #(#vec;)* } }
-        }
+        },
     }
 }
 
@@ -74,7 +82,7 @@ impl Impl for ObjectImpl {
             context,
             name,
             parser: DispatchParser::new(),
-            is_enum: false
+            is_enum: false,
         }
     }
 
@@ -92,13 +100,22 @@ impl Impl for ObjectImpl {
         let name = self.name;
         let class = self.class;
         let dispatches = self.parser.into_inner();
-        let on_event: Vec<TokenStream> = dispatches.iter()
-            .map(|v| to_token_stream(v, |target| quote! { on_event(#target, ctx, state, event) }, &ctx))
+        let on_event: Vec<TokenStream> = dispatches
+            .iter()
+            .map(|v| {
+                to_token_stream(
+                    v,
+                    |target| quote! { on_event(#target, ctx, state, event) },
+                    &ctx,
+                )
+            })
             .collect();
-        let on_update: Vec<TokenStream> = dispatches.iter()
+        let on_update: Vec<TokenStream> = dispatches
+            .iter()
             .map(|v| to_token_stream(v, |target| quote! { on_update(#target, ctx, state) }, &ctx))
             .collect();
-        let on_remove: Vec<TokenStream> = dispatches.iter()
+        let on_remove: Vec<TokenStream> = dispatches
+            .iter()
             .map(|v| to_token_stream(v, |target| quote! { on_remove(#target, ctx, state) }, &ctx))
             .collect();
         let body = match self.is_enum {
@@ -129,7 +146,7 @@ impl Impl for ObjectImpl {
                 fn on_update(&mut self, ctx: &mut #ctx, state: &<#ctx as regecs::system::Context>::AppState) {
                     #(#on_update;)*
                 }
-            }
+            },
         };
         quote! {
             impl regecs::object::Object<#ctx> for #name {

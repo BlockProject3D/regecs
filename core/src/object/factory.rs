@@ -26,10 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::marker::PhantomData;
 use crate::event::Event;
 use crate::object::{Context, New, Object, ObjectRef};
 use crate::scene::{Interface, ObjectContext};
+use std::marker::PhantomData;
 
 pub trait Factory<C: Context> {
     type Object: Object<C>;
@@ -41,14 +41,11 @@ pub trait Factory<C: Context> {
 pub struct NullObject;
 
 impl<C: Context> Object<C> for NullObject {
-    fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {
-    }
+    fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {}
 
-    fn on_remove(&mut self, _: &mut C, _: &C::AppState) {
-    }
+    fn on_remove(&mut self, _: &mut C, _: &C::AppState) {}
 
-    fn on_update(&mut self, _: &mut C, _: &C::AppState) {
-    }
+    fn on_update(&mut self, _: &mut C, _: &C::AppState) {}
 
     fn class(&self) -> &str {
         "null"
@@ -64,7 +61,7 @@ impl<C: Context> New<C> for NullObject {
 }
 
 pub struct NullFactory<I: Interface> {
-    useless: PhantomData<I>
+    useless: PhantomData<I>,
 }
 
 impl<I: Interface> Factory<ObjectContext<I>> for NullFactory<I> {

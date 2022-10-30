@@ -39,5 +39,11 @@ pub trait Interface {
     type Factory: Factory<ObjectContext<Self>>;
 }
 
-pub type ObjectContext<I> = State<<I as Interface>::Event, <I as Interface>::AppState, <I as Interface>::ComponentManager, <I as Interface>::SystemManager, <I as Interface>::Factory>;
+pub type ObjectContext<I> = State<
+    <I as Interface>::Event,
+    <I as Interface>::AppState,
+    <I as Interface>::ComponentManager,
+    <I as Interface>::SystemManager,
+    <I as Interface>::Factory,
+>;
 pub type SystemContext<I> = Common<ObjectContext<I>>;

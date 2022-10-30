@@ -26,16 +26,23 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use quote::quote;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use syn::{FieldsNamed, FieldsUnnamed};
 
 pub fn expand_named_fields(fields: &FieldsNamed) -> TokenStream {
-    let idents: Vec<&Ident> = fields.named.iter().map(|v| v.ident.as_ref().unwrap()).collect();
+    let idents: Vec<&Ident> = fields
+        .named
+        .iter()
+        .map(|v| v.ident.as_ref().unwrap())
+        .collect();
     quote! { { #(#idents,)* } }
 }
 
 pub fn expand_unnamed_fields(fields: &FieldsUnnamed) -> TokenStream {
-    let idents: Vec<Ident> = (0..fields.unnamed.len()).into_iter().map(|v| Ident::new(&format!("v{}", v), Span::call_site())).collect();
+    let idents: Vec<Ident> = (0..fields.unnamed.len())
+        .into_iter()
+        .map(|v| Ident::new(&format!("v{}", v), Span::call_site()))
+        .collect();
     quote! { (#(#idents,)*) }
 }

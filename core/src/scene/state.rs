@@ -26,25 +26,23 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::marker::PhantomData;
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Tree, Factory};
-use crate::scene::event::{Event};
+use crate::object::{Context, Factory, Tree};
+use crate::scene::event::Event;
 use crate::scene::EventInfo;
+use std::marker::PhantomData;
 
 //TODO: Find better names for fields.
 
-pub struct Common<C: Context>
-{
+pub struct Common<C: Context> {
     pub(crate) component_manager: C::ComponentManager,
     pub(crate) event_manager: EventManager<C::Event>,
     pub(crate) system_event_manager: EventManager<Event<C>>,
-    pub(crate) tree: Tree
+    pub(crate) tree: Tree,
 }
 
-impl<C: Context> crate::system::Context for Common<C>
-{
+impl<C: Context> crate::system::Context for Common<C> {
     type Factory = C::Factory;
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
@@ -85,10 +83,12 @@ impl<C: Context> crate::system::Context for Common<C>
 pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
     pub(crate) common: Common<Self>,
     pub(crate) systems: SM,
-    pub(crate) useless: PhantomData<F>
+    pub(crate) useless: PhantomData<F>,
 }
 
-impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context for State<E, S, CM, SM, F> {
+impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context
+    for State<E, S, CM, SM, F>
+{
     type Factory = F;
     type AppState = S;
     type ComponentManager = CM;
@@ -123,8 +123,7 @@ impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Con
     }
 }
 
-impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<E, S, CM, SM, F>
-{
+impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<E, S, CM, SM, F> {
     type SystemManager = SM;
 
     fn systems(&self) -> &Self::SystemManager {

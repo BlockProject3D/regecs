@@ -34,8 +34,7 @@ use std::ops::Deref;
 use crate::object::ObjectRef;
 
 #[derive(Clone)]
-pub struct Event<E>
-{
+pub struct Event<E> {
     sender: Option<ObjectRef>,
     target: Option<ObjectRef>,
     data: E,
@@ -67,7 +66,11 @@ pub struct Builder<E>(Event<E>);
 
 impl<E> Builder<E> {
     pub fn new(data: E) -> Self {
-        Self(Event { data, sender: None, target: None })
+        Self(Event {
+            data,
+            sender: None,
+            target: None,
+        })
     }
 
     pub fn sender(mut self, sender: ObjectRef) -> Self {
@@ -90,13 +93,13 @@ impl<E> Builder<E> {
 // manager (which only manages events of Context::Event type, common to all objects).
 
 pub struct EventManager<E> {
-    events: VecDeque<Event<E>>
+    events: VecDeque<Event<E>>,
 }
 
 impl<E> EventManager<E> {
     pub fn new() -> EventManager<E> {
         EventManager {
-            events: VecDeque::new()
+            events: VecDeque::new(),
         }
     }
 

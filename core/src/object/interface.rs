@@ -33,22 +33,19 @@ use crate::event::Event;
 /// *serves also as entry point into REGECS entity layer*
 pub type ObjectRef = u32;
 
-pub trait Context: crate::system::Context
-{
+pub trait Context: crate::system::Context {
     type SystemManager;
 
     fn systems(&self) -> &Self::SystemManager;
     fn systems_mut(&mut self) -> &mut Self::SystemManager;
 }
 
-pub trait Index
-{
+pub trait Index {
     fn index(&self) -> ObjectRef;
 }
 
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait Object<C: Context>
-{
+pub trait Object<C: Context> {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
