@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  version:
+    name: Get Version
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.version.outputs.name }}
+      version: ${{ steps.version.outputs.version }}
+      cname: ${{ steps.cversion.outputs.name }}
+      cversion: ${{ steps.cversion.outputs.version }}
+      isnew: ${{ steps.version.outputs.isnew }}
+      ispre: ${{ steps.version.outputs.ispre }}
+      cisnew: ${{ steps.cversion.outputs.isnew }}
+      cispre: ${{ steps.cversion.outputs.ispre }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get Version | Core
+        id: version
+        uses: bp3d-actions/cargo-version@main
+        with:
+          mode: get
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cwd: core
+      - name: Get Version | Codegen
+        id: cversion
+        uses: bp3d-actions/cargo-version@main
+        with:
+          mode: get
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cwd: codegen
+
+  create-release:
+    name: Release
+    needs: version
+    if: github.ref == 'refs/heads/develop' && ((needs.version.outputs.isnew == 'true' && needs.version.outputs.ispre == 'true') || (needs.version.outputs.cisnew == 'true' && needs.cversion.outputs.cispre == 'true'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Setup cargo
+        run: cargo login ${{ secrets.RELEASE_TOKEN }}
+      - name: Publish | Core
+        if: needs.version.outputs.isnew == 'true' && needs.version.outputs.ispre == 'true'
+        run: |
+          cd core
+          cargo publish
+      - name: Publish | Codegen
+        if: needs.version.outputs.cisnew == 'true' && needs.version.outputs.cispre == 'true'
+        run: |
+          cd codegen
+          cargo publish
+      - name: Create
+        uses: ncipollo/release-action@main
+        with:
+          tag: ${{ needs.version.outputs.version }}
+          commit: ${{ github.ref }}
+          prerelease: true
+          name: ${{ needs.version.outputs.name }} release ${{ needs.version.outputs.version }}
+          body: |
+            Core v${{ needs.version.outputs.version }} [Link to crates.io](https://crates.io/crates/${{ needs.version.outputs.name }})
+            Codegen v${{ needs.version.outputs.cversion }} [Link to crates.io](https://crates.io/crates/${{ needs.version.outputs.cname }})            
