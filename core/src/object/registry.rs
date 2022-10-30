@@ -26,8 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::collections::HashMap;
 use crate::object::{Context, Object};
+use std::collections::HashMap;
 
 pub trait NewFactory<C: Context, T: Object<C>> {
     /// A provider to provide "object safe" factory traits.
@@ -37,7 +37,7 @@ pub trait NewFactory<C: Context, T: Object<C>> {
 }
 
 pub struct ClassMap<F> {
-    map: HashMap<&'static str, F>
+    map: HashMap<&'static str, F>,
 }
 
 impl<F> ClassMap<F> {

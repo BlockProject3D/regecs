@@ -28,85 +28,70 @@
 
 //! REGECS component interfaces
 
+use crate::component::pool::ComponentPool;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use crate::component::pool::ComponentPool;
 
 use crate::object::ObjectRef;
 
 /// Represents a component
-pub trait Component: Sized
-{
+pub trait Component: Sized {
     /// The type of ComponentPool to use for storing instances of this component
     type Pool: ComponentPool<Self>;
 }
 
-pub struct ComponentRef<T: Component>
-{
+pub struct ComponentRef<T: Component> {
     pub index: usize,
-    useless: std::marker::PhantomData<T>
+    useless: std::marker::PhantomData<T>,
 }
 
 impl<T: Component> Copy for ComponentRef<T> {}
 
-impl<T: Component> Clone for ComponentRef<T>
-{
-    fn clone(&self) -> Self
-    {
+impl<T: Component> Clone for ComponentRef<T> {
+    fn clone(&self) -> Self {
         Self {
             index: self.index,
-            useless: self.useless
+            useless: self.useless,
         }
     }
 }
 
-impl<T: Component> PartialEq for ComponentRef<T>
-{
-    fn eq(&self, other: &Self) -> bool
-    {
+impl<T: Component> PartialEq for ComponentRef<T> {
+    fn eq(&self, other: &Self) -> bool {
         self.index == other.index
     }
 }
 
-impl<T: Component> Eq for ComponentRef<T> { }
+impl<T: Component> Eq for ComponentRef<T> {}
 
-impl<T: Component> Hash for ComponentRef<T>
-{
-    fn hash<H: Hasher>(&self, state: &mut H)
-    {
+impl<T: Component> Hash for ComponentRef<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.index.hash(state)
     }
 }
 
-impl<T: Component> Debug for ComponentRef<T>
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
-    {
+impl<T: Component> Debug for ComponentRef<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <usize as Debug>::fmt(&self.index, f)
     }
 }
 
-impl<T: Component> Display for ComponentRef<T>
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
-    {
+impl<T: Component> Display for ComponentRef<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <usize as Display>::fmt(&self.index, f)
     }
 }
 
-impl<T: Component> ComponentRef<T>
-{
-    pub fn new(index: usize) -> Self
-    {
+impl<T: Component> ComponentRef<T> {
+    pub fn new(index: usize) -> Self {
         Self {
             index,
-            useless: Default::default()
+            useless: Default::default(),
         }
     }
 }
 
-pub trait Clear
-{
+pub trait Clear {
     /// Clears all components attached to the given entity
     fn clear(&mut self, entity: ObjectRef);
 }

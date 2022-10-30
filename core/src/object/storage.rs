@@ -29,57 +29,48 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    ops::{Index, IndexMut}
+    ops::{Index, IndexMut},
 };
 
-use crate::object::{Context, ObjectRef};
 use crate::object::factory::Factory;
+use crate::object::{Context, ObjectRef};
 
-pub struct Tree
-{
+pub struct Tree {
     enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
     by_id: HashSet<ObjectRef>,
-    count: usize
+    count: usize,
 }
 
-impl Tree
-{
-    pub fn is_enabled(&self, obj: ObjectRef) -> bool
-    {
+impl Tree {
+    pub fn is_enabled(&self, obj: ObjectRef) -> bool {
         return self.enabled.contains(&obj);
     }
 
-    pub fn exists(&self, obj: ObjectRef) -> bool
-    {
+    pub fn exists(&self, obj: ObjectRef) -> bool {
         return self.by_id.contains(&obj);
     }
 
-    pub fn get_count(&self) -> usize
-    {
+    pub fn get_count(&self) -> usize {
         return self.count;
     }
 
-    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef>
-    {
+    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.enabled.iter();
     }
 
-    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef>
-    {
+    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.by_id.iter();
     }
 
-    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]>
-    {
+    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]> {
         if let Some(v) = self.by_class.get(class) {
             return Cow::from(v);
         }
         return Cow::from(Vec::new());
     }
 
-    pub(crate) fn insert(&mut self, obj: ObjectRef, class: &str)
-    {
+    pub(crate) fn insert(&mut self, obj: ObjectRef, class: &str) {
         self.by_id.insert(obj);
         let var = self
             .by_class
@@ -89,8 +80,7 @@ impl Tree
         self.count += 1;
     }
 
-    pub(crate) fn remove(&mut self, obj: ObjectRef, class: &str)
-    {
+    pub(crate) fn remove(&mut self, obj: ObjectRef, class: &str) {
         self.by_id.remove(&obj);
         self.enabled.remove(&obj);
         if let Some(v) = self.by_class.get_mut(class) {
@@ -107,36 +97,37 @@ impl Tree
         }
     }
 
-    pub(crate) fn new() -> Tree
-    {
+    pub(crate) fn new() -> Tree {
         return Tree {
             enabled: HashSet::new(),
             by_class: HashMap::new(),
             by_id: HashSet::new(),
-            count: 0
+            count: 0,
         };
     }
 }
 
 pub struct Storage<C: Context>
-    where C::Factory: Factory<C>
+where
+    C::Factory: Factory<C>,
 {
-    objects: Vec<Option<Box<<C::Factory as Factory<C>>::Object>>>
+    objects: Vec<Option<Box<<C::Factory as Factory<C>>::Object>>>,
 }
 
 impl<C: Context> Storage<C>
-    where C::Factory: Factory<C>
+where
+    C::Factory: Factory<C>,
 {
-    pub fn new() -> Storage<C>
-    {
-        Storage { objects: Vec::new() }
+    pub fn new() -> Storage<C> {
+        Storage {
+            objects: Vec::new(),
+        }
     }
 
     pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Factory as Factory<C>>::Object>>(
         &mut self,
-        func: F
-    ) -> (ObjectRef, &mut Box<<C::Factory as Factory<C>>::Object>)
-    {
+        func: F,
+    ) -> (ObjectRef, &mut Box<<C::Factory as Factory<C>>::Object>) {
         let empty_slot = {
             let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
@@ -166,28 +157,29 @@ impl<C: Context> Storage<C>
         self.objects[obj as usize] = None;
     }
 
-    pub fn objects(&mut self) -> impl Iterator<Item = &mut Option<Box<<C::Factory as Factory<C>>::Object>>>
-    {
+    pub fn objects(
+        &mut self,
+    ) -> impl Iterator<Item = &mut Option<Box<<C::Factory as Factory<C>>::Object>>> {
         return self.objects.iter_mut();
     }
 }
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
-    where C::Factory: Factory<C>
+where
+    C::Factory: Factory<C>,
 {
     type Output = Box<<C::Factory as Factory<C>>::Object>;
 
-    fn index(&self, index: ObjectRef) -> &Self::Output
-    {
+    fn index(&self, index: ObjectRef) -> &Self::Output {
         return self.objects[index as usize].as_ref().unwrap();
     }
 }
 
 impl<C: Context> IndexMut<ObjectRef> for Storage<C>
-    where C::Factory: Factory<C>
+where
+    C::Factory: Factory<C>,
 {
-    fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output
-    {
+    fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
         return self.objects[index as usize].as_mut().unwrap();
     }
 }

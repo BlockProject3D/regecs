@@ -77,7 +77,8 @@ pub mod property {
         fn write_string(&mut self, val: &str) -> Result<(), Self::Error>;
     }
 
-    pub trait Object : Sized + Send { // This must be Send otherwise it's impossible to safely write the
+    pub trait Object: Sized + Send {
+        // This must be Send otherwise it's impossible to safely write the
         // object properties as a network packet.
         fn read<T: Reader>(reader: &mut T) -> Result<Self, T::Error>;
         fn write<T: Writer>(&self, writer: &mut T) -> Result<(), T::Error>;

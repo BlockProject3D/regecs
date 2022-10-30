@@ -26,11 +26,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use super::trait_body::{Arguments, TraitBody};
+use super::NewImpl;
+use crate::dispatch::{
+    Dispatch, FieldDispatch, FieldName, MultiFieldVariantDispatch, VariantDispatch,
+};
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use crate::dispatch::{Dispatch, FieldDispatch, FieldName, MultiFieldVariantDispatch, VariantDispatch};
-use super::trait_body::{TraitBody, Arguments};
-use super::NewImpl;
 
 impl NewImpl {
     fn get_args_type_name(&self) -> Ident {
@@ -54,22 +56,28 @@ impl NewImpl {
                     let ty = &v.ty;
                     match &v.name {
                         FieldName::Ident(name) => TraitBody {
-                            args: Arguments::Inline(quote! { <#ty as regecs::object::New<#ctx>>::Arguments }),
+                            args: Arguments::Inline(
+                                quote! { <#ty as regecs::object::New<#ctx>>::Arguments },
+                            ),
                             new_body: quote! { Self { #name: <#ty as regecs::object::New<#ctx>>::new(ctx, state, this, args) } },
                             will_update_body: quote! { <#ty as regecs::object::New<#ctx>>::will_update(args) },
                         },
                         FieldName::Index(_) => TraitBody {
-                            args: Arguments::Inline(quote! { <#ty as regecs::object::New<#ctx>>::Arguments }),
+                            args: Arguments::Inline(
+                                quote! { <#ty as regecs::object::New<#ctx>>::Arguments },
+                            ),
                             new_body: quote! { Self(<#ty as regecs::object::New<#ctx>>::new(ctx, state, this, args)) },
                             will_update_body: quote! { <#ty as regecs::object::New<#ctx>>::will_update(args) },
-                        }
+                        },
                     }
                 },
                 Dispatch::Variant(v) => {
                     let ty = &v.ty;
                     let variant_name = &v.variant_name;
                     TraitBody {
-                        args: Arguments::Inline(quote! { <#ty as regecs::object::New<#ctx>>::Arguments }),
+                        args: Arguments::Inline(
+                            quote! { <#ty as regecs::object::New<#ctx>>::Arguments },
+                        ),
                         new_body: quote! { Self::#variant_name(<#ty as regecs::object::New<#ctx>>::new(ctx, state, this, args)) },
                         will_update_body: quote! { <#ty as regecs::object::New<#ctx>>::will_update(args) },
                     }
@@ -77,10 +85,18 @@ impl NewImpl {
                 Dispatch::VariantMultiField(v) => {
                     if v.children.iter().any(|v| v.name.is_ident()) {
                         //All fields must be idents otherwise it's a compile error.
-                        let items = v.children.iter()
+                        let items = v
+                            .children
+                            .iter()
                             .map(|v| self.inner.get_args(&v.ty, Some(v.name.to_ident())));
-                        let new_calls = v.children.iter().map(|v| self.inner.get_new(&v.ty, &v.name));
-                        let will_update_calls = v.children.iter().map(|v| self.inner.get_will_update(&v.ty, &v.name));
+                        let new_calls = v
+                            .children
+                            .iter()
+                            .map(|v| self.inner.get_new(&v.ty, &v.name));
+                        let will_update_calls = v
+                            .children
+                            .iter()
+                            .map(|v| self.inner.get_will_update(&v.ty, &v.name));
                         let variant_name = &v.variant_name;
                         TraitBody {
                             args: Arguments::Struct {
@@ -89,7 +105,7 @@ impl NewImpl {
                                         #(#items,)*
                                     }
                                 },
-                                name
+                                name,
                             },
                             new_body: quote! {
                                 Self::#variant_name {
@@ -99,13 +115,19 @@ impl NewImpl {
                             will_update_body: quote! {
                                 #(#will_update_calls)*
                                 false
-                            }
+                            },
                         }
                     } else {
                         //All fields must be indices otherwise it's a compile error.
                         let items = v.children.iter().map(|v| self.inner.get_args(&v.ty, None));
-                        let new_calls = v.children.iter().map(|v| self.inner.get_new(&v.ty, &v.name));
-                        let will_update_calls = v.children.iter().map(|v| self.inner.get_will_update(&v.ty, &v.name));
+                        let new_calls = v
+                            .children
+                            .iter()
+                            .map(|v| self.inner.get_new(&v.ty, &v.name));
+                        let will_update_calls = v
+                            .children
+                            .iter()
+                            .map(|v| self.inner.get_will_update(&v.ty, &v.name));
                         let variant_name = &v.variant_name;
                         TraitBody {
                             args: Arguments::Struct {
@@ -114,16 +136,16 @@ impl NewImpl {
                                         #(#items,)*
                                     }
                                 },
-                                name
+                                name,
                             },
                             new_body: quote! { Self::#variant_name(#(#new_calls,)*) },
                             will_update_body: quote! {
                                 #(#will_update_calls)*
                                 false
-                            }
+                            },
                         }
                     }
-                }
+                },
             }
         } else if dispatches.len() > 1 {
             if self.is_enum {
@@ -137,7 +159,7 @@ impl NewImpl {
                                 ty: ty.clone(),
                                 variant: quote! { #generated_name::#name(v) },
                                 target: quote! { v },
-                                variant_name: name.clone()
+                                variant_name: name.clone(),
                             })
                         },
                         Dispatch::VariantMultiField(v) => {
@@ -145,18 +167,21 @@ impl NewImpl {
                             Dispatch::VariantMultiField(MultiFieldVariantDispatch {
                                 variant: quote! { #generated_name::#name },
                                 variant_name: name.clone(),
-                                children: v.children.clone()
+                                children: v.children.clone(),
                             })
                         },
-                        _ => std::unreachable!()
+                        _ => std::unreachable!(),
                     }
                 });
                 TraitBody::from_enum(items, name.clone(), &ctx)
             } else {
-                let fields: Vec<&FieldDispatch> = dispatches.iter().map(|v| match v {
-                    Dispatch::Field(v) => v,
-                    _ => std::unreachable!()
-                }).collect();
+                let fields: Vec<&FieldDispatch> = dispatches
+                    .iter()
+                    .map(|v| match v {
+                        Dispatch::Field(v) => v,
+                        _ => std::unreachable!(),
+                    })
+                    .collect();
                 if fields.iter().any(|v| v.name.is_ident()) {
                     //All fields must be idents otherwise it's a compile error.
                     let mut struct_fields = Vec::new();
@@ -174,7 +199,7 @@ impl NewImpl {
                                     #(#struct_fields,)*
                                 }
                             },
-                            name
+                            name,
                         },
                         new_body: quote! {
                             Self {
@@ -184,7 +209,7 @@ impl NewImpl {
                         will_update_body: quote! {
                             #(#will_update_calls)*
                             false
-                        }
+                        },
                     }
                 } else {
                     //All fields must be indices otherwise it's a compile error.
@@ -204,7 +229,7 @@ impl NewImpl {
                         will_update_body: quote! {
                             #(#will_update_calls)*
                             false
-                        }
+                        },
                     }
                 }
             }

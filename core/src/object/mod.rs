@@ -28,11 +28,11 @@
 
 //! REGECS object layer.
 
-mod interface;
-mod storage;
 pub mod factory;
+mod interface;
 pub mod registry;
+mod storage;
 
+pub use factory::Factory;
 pub use interface::*;
 pub use storage::{Storage, Tree};
-pub use factory::Factory;

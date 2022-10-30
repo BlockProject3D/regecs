@@ -26,11 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use proc_macro2::{Ident, TokenStream};
-use quote::{quote, TokenStreamExt, ToTokens};
-use syn::{Field, Type, Variant, Visibility};
 use crate::dispatch::DispatchParser;
 use crate::Impl;
+use proc_macro2::{Ident, TokenStream};
+use quote::{quote, ToTokens, TokenStreamExt};
+use syn::{Field, Type, Variant, Visibility};
 
 mod build_arguments;
 mod inner;
@@ -41,7 +41,7 @@ pub struct NewImpl {
     inner: inner::Inner,
     is_enum: bool,
     vis: Visibility,
-    parser: DispatchParser
+    parser: DispatchParser,
 }
 
 impl Impl for NewImpl {
@@ -53,7 +53,7 @@ impl Impl for NewImpl {
             name,
             vis,
             is_enum: false,
-            parser: DispatchParser::new()
+            parser: DispatchParser::new(),
         }
     }
 
@@ -73,9 +73,13 @@ impl Impl for NewImpl {
         let args = self.build_arguments();
         let (type_arg, body) = match args.args {
             trait_body::Arguments::None => (quote! { () }, None),
-            trait_body::Arguments::Enum { name, code } => (name.into_token_stream(), Some(quote! { #vis #code })),
+            trait_body::Arguments::Enum { name, code } => {
+                (name.into_token_stream(), Some(quote! { #vis #code }))
+            },
             trait_body::Arguments::Inline(v) => (v, None),
-            trait_body::Arguments::Struct { name, code } => (name.into_token_stream(), Some(quote! { #vis #code })),
+            trait_body::Arguments::Struct { name, code } => {
+                (name.into_token_stream(), Some(quote! { #vis #code }))
+            },
         };
         let new_body = args.new_body;
         let will_update_body = args.will_update_body;
