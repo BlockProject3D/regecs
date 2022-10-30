@@ -28,87 +28,69 @@
 
 //! REGECS entity layer.
 
-use crate::{
-    component::{Component},
-    object::ObjectRef
-};
-use crate::component::ComponentRef;
 use crate::component::pool::{Attachments, ComponentManager};
+use crate::component::ComponentRef;
+use crate::{component::Component, object::ObjectRef};
 
-pub struct ComponentType<T: Component>
-{
-    useless: std::marker::PhantomData<T>
+pub struct ComponentType<T: Component> {
+    useless: std::marker::PhantomData<T>,
 }
 
-impl<T: Component> ComponentType<T>
-{
-    pub fn new() -> ComponentType<T>
-    {
+impl<T: Component> ComponentType<T> {
+    pub fn new() -> ComponentType<T> {
         return ComponentType {
-            useless: std::marker::PhantomData::default()
+            useless: std::marker::PhantomData::default(),
         };
     }
 }
 
-pub trait ComponentTypeProvider<T: Component>
-{
+pub trait ComponentTypeProvider<T: Component> {
     fn class() -> ComponentType<T>;
 }
 
-impl<T: Component> ComponentTypeProvider<T> for T
-{
-    fn class() -> ComponentType<T>
-    {
+impl<T: Component> ComponentTypeProvider<T> for T {
+    fn class() -> ComponentType<T> {
         return ComponentType::<T>::new();
     }
 }
 
-pub struct Entity<'a, ComponentManager>
-{
+pub struct Entity<'a, ComponentManager> {
     mgr: &'a mut ComponentManager,
-    entity: ObjectRef
+    entity: ObjectRef,
 }
 
-pub trait EntityPart<T: Component, CM: ComponentManager<T>>
-{
+pub trait EntityPart<T: Component, CM: ComponentManager<T>> {
     fn add_attach(&mut self, comp: T) -> ComponentRef<T>;
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, CM: ComponentManager<T>>
-    EntityPart<T, CM> for Entity<'a, CM>
+impl<'a, T: Component, CM: ComponentManager<T>> EntityPart<T, CM> for Entity<'a, CM>
 where
-    T::Pool: Attachments<T>
+    T::Pool: Attachments<T>,
 {
-    fn add_attach(&mut self, comp: T) -> ComponentRef<T>
-    {
+    fn add_attach(&mut self, comp: T) -> ComponentRef<T> {
         let r = self.mgr.add(comp);
         self.mgr.pool_mut().attach(self.entity, r);
         return r;
     }
 
-    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>
-    {
+    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>> {
         return self.mgr.pool().list(self.entity);
     }
 
-    fn get_first(&self, _: ComponentType<T>) -> Option<&T>
-    {
+    fn get_first(&self, _: ComponentType<T>) -> Option<&T> {
         self.mgr.pool().get_first(self.entity)
     }
 
-    fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>
-    {
+    fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T> {
         self.mgr.pool_mut().get_first_mut(self.entity)
     }
 }
 
-impl<'a, ComponentManager> Entity<'a, ComponentManager>
-{
-    pub fn new(mgr: &'a mut ComponentManager, entity: ObjectRef) -> Entity<'a, ComponentManager>
-    {
+impl<'a, ComponentManager> Entity<'a, ComponentManager> {
+    pub fn new(mgr: &'a mut ComponentManager, entity: ObjectRef) -> Entity<'a, ComponentManager> {
         return Entity { mgr, entity };
     }
 }

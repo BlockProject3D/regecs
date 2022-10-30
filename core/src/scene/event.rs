@@ -32,18 +32,18 @@ use crate::object::{Context, ObjectRef};
 pub enum Type<C: Context> {
     EnableObject(bool),
     RemoveObject,
-    SpawnObject(C::Factory)
+    SpawnObject(C::Factory),
 }
 
 pub struct Event<C: Context> {
     pub notify: bool,
-    pub ty: Type<C>
+    pub ty: Type<C>,
 }
 
 pub struct EventInfo {
     sender: Option<ObjectRef>,
     target: Option<ObjectRef>,
-    notify: bool
+    notify: bool,
 }
 
 impl EventInfo {
@@ -51,7 +51,7 @@ impl EventInfo {
         EventInfo {
             sender: None,
             target: None,
-            notify: false
+            notify: false,
         }
     }
 
@@ -73,7 +73,7 @@ impl EventInfo {
     pub(crate) fn into_event<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
         let ev = Event {
             notify: self.notify,
-            ty
+            ty,
         };
         let mut builder = Builder::new(ev);
         if let Some(sender) = self.sender {

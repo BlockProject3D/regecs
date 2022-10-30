@@ -28,11 +28,14 @@
 
 use std::collections::HashSet;
 
-use proc_macro2::{TokenStream, Ident};
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::{Variant, Field};
+use syn::{Field, Variant};
 
-use crate::{r#impl::Impl, dispatch::{DispatchParser, Dispatch, FieldName}};
+use crate::{
+    dispatch::{Dispatch, DispatchParser, FieldName},
+    r#impl::Impl,
+};
 
 fn to_token_stream(dispatch: &Dispatch, no_clear: &HashSet<FieldName>) -> Option<TokenStream> {
     match dispatch {
@@ -57,17 +60,21 @@ fn to_token_stream(dispatch: &Dispatch, no_clear: &HashSet<FieldName>) -> Option
         },
         Dispatch::VariantMultiField(v) => {
             let v1 = &v.variant;
-            let vec: Vec<TokenStream> = v.children.iter().map(|v| {
-                let ty = &v.ty;
-                let target = &v.target;
-                quote! { <#ty as regecs::component::Clear>::clear(#target, entity) }
-            }).collect();
+            let vec: Vec<TokenStream> = v
+                .children
+                .iter()
+                .map(|v| {
+                    let ty = &v.ty;
+                    let target = &v.target;
+                    quote! { <#ty as regecs::component::Clear>::clear(#target, entity) }
+                })
+                .collect();
             if no_clear.contains(&FieldName::Ident(v.variant_name.clone())) {
                 None
             } else {
                 Some(quote! { #v1 => { #(#vec;)* } })
             }
-        }
+        },
     }
 }
 
@@ -75,7 +82,7 @@ pub struct ClearImpl {
     name: Ident,
     parser: DispatchParser,
     no_clear: HashSet<FieldName>,
-    is_enum: bool
+    is_enum: bool,
 }
 
 impl Impl for ClearImpl {
@@ -86,31 +93,37 @@ impl Impl for ClearImpl {
             name,
             parser: DispatchParser::new(),
             no_clear: HashSet::new(),
-            is_enum: false
+            is_enum: false,
         }
     }
 
     fn parse_variant(&mut self, v: Variant) {
         self.is_enum = true;
-        let no_clear = v.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into()));
+        let no_clear = v.attrs.iter().any(|v| {
+            v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())
+        });
         let v = self.parser.parse_variant(self.name.clone(), v);
         if no_clear {
             if let Some(v) = v {
                 match v {
                     Dispatch::Variant(v) => {
-                        self.no_clear.insert(FieldName::Ident(v.variant_name.clone()));
+                        self.no_clear
+                            .insert(FieldName::Ident(v.variant_name.clone()));
                     },
                     Dispatch::VariantMultiField(v) => {
-                        self.no_clear.insert(FieldName::Ident(v.variant_name.clone()));
+                        self.no_clear
+                            .insert(FieldName::Ident(v.variant_name.clone()));
                     },
-                    _ => std::unreachable!()
+                    _ => std::unreachable!(),
                 }
             }
         }
     }
 
     fn parse_field(&mut self, f: Field) {
-        let no_clear = f.attrs.iter().any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into()));
+        let no_clear = f.attrs.iter().any(|v| {
+            v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())
+        });
         let f = self.parser.parse_field(f);
         if no_clear {
             self.no_clear.insert(f.name.clone());
@@ -120,7 +133,9 @@ impl Impl for ClearImpl {
     fn into_token_stream(self) -> TokenStream {
         let name = self.name;
         let dispatches = self.parser.into_inner();
-        let tokens = dispatches.iter().map(|v| to_token_stream(v, &self.no_clear));
+        let tokens = dispatches
+            .iter()
+            .map(|v| to_token_stream(v, &self.no_clear));
         if self.is_enum {
             quote! {
                 impl regecs::component::Clear for #name {
@@ -130,7 +145,7 @@ impl Impl for ClearImpl {
                         }
                     }
                 }
-            }    
+            }
         } else {
             quote! {
                 impl regecs::component::Clear for #name {
@@ -138,7 +153,7 @@ impl Impl for ClearImpl {
                         #(#tokens;)*
                     }
                 }
-            }    
+            }
         }
     }
 }

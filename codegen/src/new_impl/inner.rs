@@ -26,10 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::dispatch::FieldName;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Index, Type};
-use crate::dispatch::FieldName;
 
 pub struct Inner {
     pub context: Type,
@@ -40,7 +40,7 @@ impl Inner {
         let ctx = &self.context;
         match name {
             None => quote! { <#ty as regecs::object::New<#ctx>>::Arguments },
-            Some(name) => quote! { #name: <#ty as regecs::object::New<#ctx>>::Arguments }
+            Some(name) => quote! { #name: <#ty as regecs::object::New<#ctx>>::Arguments },
         }
     }
 

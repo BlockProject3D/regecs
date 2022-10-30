@@ -26,11 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{component::Clear, event::EventManager, object::Tree};
 use crate::scene::EventInfo;
+use crate::{component::Clear, event::EventManager, object::Tree};
 
-pub trait Context
-{
+pub trait Context {
     type Factory;
     type AppState;
     type ComponentManager: Clear;
@@ -46,7 +45,6 @@ pub trait Context
 }
 
 /// Update functionality.
-pub trait Update<C: Context>
-{
+pub trait Update<C: Context> {
     fn update(&mut self, ctx: &mut C, state: &C::AppState);
 }

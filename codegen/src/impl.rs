@@ -50,7 +50,7 @@ pub trait Impl: Sized {
                     obj.parse_field(f);
                 }
             },
-            _ => panic!("unions are not supported")
+            _ => panic!("unions are not supported"),
         }
         obj
     }

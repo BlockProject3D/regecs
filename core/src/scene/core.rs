@@ -26,13 +26,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::event::{Builder, Event, EventManager};
+use crate::object::{Context, Factory, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
-use crate::event::{Builder, Event, EventManager};
-use crate::object::{Context, Object, ObjectRef, Storage, Tree, Factory};
 //use crate::object::factory::Function;
+use crate::scene::state::{Common, State};
 use crate::scene::{Interface, ObjectContext};
-use crate::scene::state::{State, Common};
 use crate::system::Update;
 
 /// Represents a scene, provides storage for systems and objects
@@ -40,11 +40,10 @@ pub struct Scene<I: Interface> {
     state: ObjectContext<I>,
     objects: Storage<ObjectContext<I>>,
     updatable: HashSet<ObjectRef>,
-    init_updatable: HashSet<ObjectRef>
+    init_updatable: HashSet<ObjectRef>,
 }
 
-impl<I: Interface> Scene<I>
-{
+impl<I: Interface> Scene<I> {
     pub fn new(component_manager: I::ComponentManager, systems: I::SystemManager) -> Scene<I> {
         return Scene {
             state: State {
@@ -52,19 +51,23 @@ impl<I: Interface> Scene<I>
                     component_manager,
                     event_manager: EventManager::new(),
                     system_event_manager: EventManager::new(),
-                    tree: Tree::new()
+                    tree: Tree::new(),
                 },
                 systems,
-                useless: PhantomData::default()
+                useless: PhantomData::default(),
             },
             objects: Storage::new(),
             updatable: HashSet::new(),
-            init_updatable: HashSet::new()
+            init_updatable: HashSet::new(),
         };
     }
 
-    fn object_event_call(&mut self, state: &I::AppState, obj_ref: ObjectRef, event: &Event<I::Event>)
-    {
+    fn object_event_call(
+        &mut self,
+        state: &I::AppState,
+        obj_ref: ObjectRef,
+        event: &Event<I::Event>,
+    ) {
         if !self.state.common.tree.is_enabled(obj_ref) {
             //Disabled objects are not allowed to handle any event
             return;
@@ -73,8 +76,11 @@ impl<I: Interface> Scene<I>
         obj.on_event(&mut self.state, state, &event);
     }
 
-    fn handle_system_event(&mut self, state: &I::AppState, ev: Event<super::event::Event<ObjectContext<I>>>)
-    {
+    fn handle_system_event(
+        &mut self,
+        state: &I::AppState,
+        ev: Event<super::event::Event<ObjectContext<I>>>,
+    ) {
         let sender = ev.sender();
         let target = ev.target();
         let inner = ev.into_inner();
@@ -90,7 +96,9 @@ impl<I: Interface> Scene<I>
             },
             super::event::Type::SpawnObject(factory) => {
                 let updatable = factory.can_update_object();
-                let (obj_ref, obj) = self.objects.insert(|this_ref| Box::new(factory.spawn(&mut self.state, state, this_ref)));
+                let (obj_ref, obj) = self
+                    .objects
+                    .insert(|this_ref| Box::new(factory.spawn(&mut self.state, state, this_ref)));
                 self.state.common.tree.insert(obj_ref, obj.class());
                 if updatable {
                     self.updatable.insert(obj_ref);
@@ -100,24 +108,26 @@ impl<I: Interface> Scene<I>
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");
                 self.objects[target].on_remove(&mut self.state, state);
-                self.state.common.tree.remove(target, self.objects[target].class());
+                self.state
+                    .common
+                    .tree
+                    .remove(target, self.objects[target].class());
                 self.objects.destroy(target);
-            }
+            },
         };
         if inner.notify {
             match sender {
                 None => {
                     //TODO: Broadcast notification event
-                }
+                },
                 Some(_target) => {
                     //TODO: Send notification event to `target`
-                }
+                },
             }
         }
     }
 
-    pub fn update(&mut self, state: &I::AppState)
-    {
+    pub fn update(&mut self, state: &I::AppState) {
         self.state.systems.update(&mut self.state.common, state);
         while let Some(ev) = self.state.common.system_event_manager.poll() {
             self.handle_system_event(state, ev);
@@ -140,27 +150,28 @@ impl<I: Interface> Scene<I>
         }
     }
 
-    pub fn spawn_object(&mut self, factory: I::Factory)
-    {
+    pub fn spawn_object(&mut self, factory: I::Factory) {
         let ev = super::event::Event {
             notify: false,
-            ty: super::event::Type::SpawnObject(factory)
+            ty: super::event::Type::SpawnObject(factory),
         };
-        self.state.common.system_event_manager.send(Builder::new(ev));
+        self.state
+            .common
+            .system_event_manager
+            .send(Builder::new(ev));
     }
 
     pub fn state_mut(&mut self) -> &mut impl Context {
         &mut self.state
     }
 
-    pub fn state(&self) -> & impl Context {
+    pub fn state(&self) -> &impl Context {
         &self.state
     }
 
     //TODO: Allow turning the scene into it's system manager and component manager
 
-    pub fn consume(self) -> I::ComponentManager
-    {
+    pub fn consume(self) -> I::ComponentManager {
         return self.state.common.component_manager;
     }
 }

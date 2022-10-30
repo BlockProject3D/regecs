@@ -26,28 +26,22 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::dispatch::Dispatch;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, TokenStreamExt};
 use syn::Type;
-use crate::dispatch::Dispatch;
 
 pub enum Arguments {
     None,
-    Enum {
-        code: TokenStream,
-        name: Ident
-    },
+    Enum { code: TokenStream, name: Ident },
     Inline(TokenStream),
-    Struct {
-        code: TokenStream,
-        name: Ident
-    }
+    Struct { code: TokenStream, name: Ident },
 }
 
 pub struct TraitBody {
     pub args: Arguments,
     pub new_body: TokenStream,
-    pub will_update_body: TokenStream
+    pub will_update_body: TokenStream,
 }
 
 impl TraitBody {
@@ -55,11 +49,15 @@ impl TraitBody {
         Self {
             args: Arguments::None,
             new_body: TokenStream::new(),
-            will_update_body: TokenStream::new()
+            will_update_body: TokenStream::new(),
         }
     }
 
-    pub fn from_enum(variants: impl Iterator<Item = Dispatch>, name_generated: Ident, ctx: &Type) -> Self {
+    pub fn from_enum(
+        variants: impl Iterator<Item = Dispatch>,
+        name_generated: Ident,
+        ctx: &Type,
+    ) -> Self {
         let mut new1 = Vec::new();
         let mut will_update1 = Vec::new();
         let mut variants1 = Vec::new();
@@ -70,8 +68,10 @@ impl TraitBody {
                     let variant_name = &v.variant_name;
                     let ty = &v.ty;
                     let new = quote! { #variant => Self::#variant_name(<#ty as regecs::object::New<#ctx>>::new(ctx, state, this, v)) };
-                    let will_update = quote! { #variant => <#ty as regecs::object::New<#ctx>>::will_update(v) };
-                    let enum_variant = quote! { #variant_name(<#ty as regecs::object::New<#ctx>>::Arguments) };
+                    let will_update =
+                        quote! { #variant => <#ty as regecs::object::New<#ctx>>::will_update(v) };
+                    let enum_variant =
+                        quote! { #variant_name(<#ty as regecs::object::New<#ctx>>::Arguments) };
                     (new, will_update, enum_variant)
                 },
                 Dispatch::VariantMultiField(v) => {
@@ -85,11 +85,15 @@ impl TraitBody {
                         let ty = &v.ty;
                         let target = &v.target;
                         if with_idents {
-                            items_variant.append_all(quote! { #target: <#ty as regecs::object::New<#ctx>>::Arguments, });
+                            items_variant.append_all(
+                                quote! { #target: <#ty as regecs::object::New<#ctx>>::Arguments, },
+                            );
                             items_new.append_all(quote! { #target: <#ty as regecs::object::New<#ctx>>::new(ctx, state, this, #target), });
                         } else {
                             items_new.append_all(quote! { <#ty as regecs::object::New<#ctx>>::new(ctx, state, this, #target), });
-                            items_variant.append_all(quote! { <#ty as regecs::object::New<#ctx>>::Arguments, });
+                            items_variant.append_all(
+                                quote! { <#ty as regecs::object::New<#ctx>>::Arguments, },
+                            );
                         }
                         items_will_update.append_all(quote! {
                             if <#ty as regecs::object::New<#ctx>>::will_update(#target) {
@@ -114,7 +118,7 @@ impl TraitBody {
                     };
                     (new, will_update, enum_variant)
                 },
-                _ => std::unreachable!()
+                _ => std::unreachable!(),
             };
             new1.push(new);
             will_update1.push(will_update);
@@ -123,11 +127,11 @@ impl TraitBody {
         Self {
             args: Arguments::Enum {
                 code: quote! {
-                        enum #name_generated {
-                            #(#variants1,)*
-                        }
-                    },
-                name: name_generated
+                    enum #name_generated {
+                        #(#variants1,)*
+                    }
+                },
+                name: name_generated,
             },
             new_body: quote! {
                 match args {
@@ -138,7 +142,7 @@ impl TraitBody {
                 match args {
                     #(#will_update1,)*
                 }
-            }
+            },
         }
     }
 }
