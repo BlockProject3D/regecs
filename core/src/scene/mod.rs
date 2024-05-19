@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -35,4 +35,6 @@ mod state;
 
 pub use self::core::Scene;
 pub use self::event::EventInfo;
+pub use self::state::SystemState;
+pub use self::state::ObjectState;
 pub use self::interface::*;

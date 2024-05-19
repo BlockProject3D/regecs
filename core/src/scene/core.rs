@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -31,23 +31,24 @@ use crate::object::{Context, Factory, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
 //use crate::object::factory::Function;
-use crate::scene::state::{Common, State};
-use crate::scene::{Interface, ObjectContext};
+use crate::scene::Interface;
+use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<I: Interface> {
-    state: ObjectContext<I>,
-    objects: Storage<ObjectContext<I>>,
+    state: ObjectState<I>,
+    objects: Storage<ObjectState<I>>,
     updatable: HashSet<ObjectRef>,
     init_updatable: HashSet<ObjectRef>,
 }
 
 impl<I: Interface> Scene<I> {
-    pub fn new(component_manager: I::ComponentManager, systems: I::SystemManager) -> Scene<I> {
+    pub fn new(interface: I) -> Scene<I> {
+        let (component_manager, systems) = interface.new();
         return Scene {
-            state: State {
-                common: Common {
+            state: ObjectState {
+                common: SystemState {
                     component_manager,
                     event_manager: EventManager::new(),
                     system_event_manager: EventManager::new(),
@@ -79,7 +80,7 @@ impl<I: Interface> Scene<I> {
     fn handle_system_event(
         &mut self,
         state: &I::AppState,
-        ev: Event<super::event::Event<ObjectContext<I>>>,
+        ev: Event<super::event::Event<ObjectState<I>>>,
     ) {
         let sender = ev.sender();
         let target = ev.target();
@@ -161,12 +162,20 @@ impl<I: Interface> Scene<I> {
             .send(Builder::new(ev));
     }
 
-    pub fn state_mut(&mut self) -> &mut impl Context {
-        &mut self.state
+    pub fn component_manager_mut(&mut self) -> &mut I::ComponentManager {
+        &mut self.state.common.component_manager
     }
 
-    pub fn state(&self) -> &impl Context {
-        &self.state
+    pub fn system_manager_mut(&mut self) -> &mut I::SystemManager {
+        &mut self.state.systems
+    }
+
+    pub fn component_manager(&self) -> &I::ComponentManager {
+        &self.state.common.component_manager
+    }
+
+    pub fn system_manager(&self) -> &I::SystemManager {
+        &self.state.systems
     }
 
     //TODO: Allow turning the scene into it's system manager and component manager

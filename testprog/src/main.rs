@@ -32,7 +32,7 @@ use regecs::component::pool::ComponentPool;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
 use regecs::object::{Context as _, Object, ObjectRef};
-use regecs::scene::{EventInfo, ObjectContext, SystemContext};
+use regecs::scene::{EventInfo, ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
     entity::{Entity, EntityPart},
@@ -259,8 +259,8 @@ pub enum RootObject1 {
     Test(Test),
 }
 
-type Ctx = SystemContext<Interface>;
-type Ctx1 = ObjectContext<Interface>;
+type Ctx1 = ObjectState<Interface>;
+type Ctx = SystemState<Ctx1>;
 
 regecs::register_objects2! {
     pub factory RootFactory for object RootObject<Ctx1> {
@@ -286,6 +286,10 @@ impl regecs::scene::Interface for Interface {
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
     type Factory = RootFactory;
+
+    fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
+        (components::TestComponentManager::default(), TestSystemManager::default())
+    }
 }
 
 //TODO: Create a derive macro for Update<T>
@@ -297,11 +301,10 @@ impl Update<Ctx> for TestSystemManager {
 }
 
 fn main() {
-    use regecs::Create;
-    let factort = Test::create(());
+    let mut sc = Scene::new(Interface);
     let ctx = 42;
-    let mut mgr = components::TestComponentManager::default();
-    let mut entity = Entity::new(&mut mgr, 0);
+    let mgr = sc.component_manager_mut();
+    let mut entity = Entity::new(mgr, 0);
     let test = entity.add_attach(components::Test { value: 12 });
     mgr.get_mut(test).value = 1;
     let test1 = mgr.add(components::Test { value: 0 });
@@ -310,12 +313,11 @@ fn main() {
     mgr.add(ComplexComponent::new(1, 1));
     mgr.add(ComplexComponent::new(2, 4));
     mgr.add(ComplexComponent::new(1, 2));
-    let mut systems = TestSystemManager::default();
+    let systems = sc.system_manager_mut();
     systems.my.val = 42;
-    let mut sc: Scene<Interface> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
-    mgr = sc.consume();
+    let mut mgr = sc.consume();
     assert_eq!(mgr.get(test).value, 12);
     assert_eq!(mgr.get(test2).value2, 42);
     mgr.remove(test);

@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -30,19 +30,19 @@ use crate::component::Clear;
 use crate::event::EventManager;
 use crate::object::{Context, Factory, Tree};
 use crate::scene::event::Event;
-use crate::scene::EventInfo;
+use crate::scene::{EventInfo, Interface};
 use std::marker::PhantomData;
 
 //TODO: Find better names for fields.
 
-pub struct Common<C: Context> {
+pub struct SystemState<C: Context> {
     pub(crate) component_manager: C::ComponentManager,
     pub(crate) event_manager: EventManager<C::Event>,
     pub(crate) system_event_manager: EventManager<Event<C>>,
     pub(crate) tree: Tree,
 }
 
-impl<C: Context> crate::system::Context for Common<C> {
+impl<C: Context> crate::system::Context for SystemState<C> {
     type Factory = C::Factory;
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
@@ -80,19 +80,17 @@ impl<C: Context> crate::system::Context for Common<C> {
     }
 }
 
-pub struct State<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> {
-    pub(crate) common: Common<Self>,
-    pub(crate) systems: SM,
-    pub(crate) useless: PhantomData<F>,
+pub struct ObjectState<I: Interface> {
+    pub(crate) common: SystemState<Self>,
+    pub(crate) systems: I::SystemManager,
+    pub(crate) useless: PhantomData<I::Factory>,
 }
 
-impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Context
-    for State<E, S, CM, SM, F>
-{
-    type Factory = F;
-    type AppState = S;
-    type ComponentManager = CM;
-    type Event = E;
+impl<I: Interface> crate::system::Context for ObjectState<I> {
+    type Factory = I::Factory;
+    type AppState = I::AppState;
+    type ComponentManager = I::ComponentManager;
+    type Event = I::Event;
 
     fn components(&self) -> &Self::ComponentManager {
         return &self.common.component_manager;
@@ -123,8 +121,8 @@ impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> crate::system::Con
     }
 }
 
-impl<E, S, CM: Clear, SM, F: Factory<State<E, S, CM, SM, F>>> Context for State<E, S, CM, SM, F> {
-    type SystemManager = SM;
+impl<I: Interface> Context for ObjectState<I> {
+    type SystemManager = I::SystemManager;
 
     fn systems(&self) -> &Self::SystemManager {
         return &self.systems;

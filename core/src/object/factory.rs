@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -28,7 +28,7 @@
 
 use crate::event::Event;
 use crate::object::{Context, New, Object, ObjectRef};
-use crate::scene::{Interface, ObjectContext};
+use crate::scene::{Interface, ObjectState};
 use std::marker::PhantomData;
 
 pub trait Factory<C: Context> {
@@ -64,10 +64,10 @@ pub struct NullFactory<I: Interface> {
     useless: PhantomData<I>,
 }
 
-impl<I: Interface> Factory<ObjectContext<I>> for NullFactory<I> {
+impl<I: Interface> Factory<ObjectState<I>> for NullFactory<I> {
     type Object = NullObject;
 
-    fn spawn(self, _: &mut ObjectContext<I>, _: &I::AppState, _: ObjectRef) -> Self::Object {
+    fn spawn(self, _: &mut ObjectState<I>, _: &I::AppState, _: ObjectRef) -> Self::Object {
         NullObject
     }
 
