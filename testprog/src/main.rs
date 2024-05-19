@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -221,6 +221,33 @@ impl regecs::object::New<Ctx1> for Test {
 use regecs_codegen::New;
 use regecs_codegen::Object;
 
+pub struct Test2(regecs::object::factory::NullObject);
+impl Object<Ctx1> for Test2 {
+    fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
+        todo!()
+    }
+
+    fn on_remove(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
+
+    fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
+
+    fn class(&self) -> &str {
+        todo!()
+    }
+}
+
+impl regecs::object::New<Ctx1> for Test2 {
+    type Arguments = ();
+
+    fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
+        Self(regecs::object::factory::NullObject::new(ctx, state, v, args))
+    }
+}
+
 #[derive(Object, New)]
 #[context(Ctx1)]
 pub struct NullObject(regecs::object::factory::NullObject);
@@ -235,11 +262,14 @@ pub enum RootObject1 {
 type Ctx = SystemContext<Interface>;
 type Ctx1 = ObjectContext<Interface>;
 
-regecs::test_macro! {pub RootFactory for RootObject where context = Ctx1 [
-    (Test: Test)
-]}
+regecs::register_objects2! {
+    pub factory RootFactory for object RootObject<Ctx1> {
+        Test: Test,
+        Null: Test2,
+    }
+}
 
-regecs::register_objects!(
+/*regecs::register_objects!(
     /// The root factory for all objects of this test.
     pub RootFactory {
         context = Ctx1;
@@ -247,7 +277,7 @@ regecs::register_objects!(
         object = RootObject;
         map = [(Test: Test)];
     }
-);
+);*/
 
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
