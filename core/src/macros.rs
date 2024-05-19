@@ -108,10 +108,10 @@ macro_rules! register_objects2 {
             )*
         }
 
-        impl regecs::object::Factory<$ctx> for $factory_name {
+        impl regecs::object::Builder<$ctx> for $factory_name {
             type Object = $object_name;
 
-            fn spawn(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
+            fn build(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
                 this: ObjectRef) -> Self::Object {
                 match self {
                     $($factory_name::$class_name(v) =>

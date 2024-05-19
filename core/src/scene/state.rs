@@ -28,7 +28,7 @@
 
 use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Factory, Tree};
+use crate::object::{Context, Builder, Tree};
 use crate::scene::event::Event;
 use crate::scene::{EventInfo, Interface};
 use std::marker::PhantomData;
@@ -83,11 +83,11 @@ impl<C: Context> crate::system::Context for SystemState<C> {
 pub struct ObjectState<I: Interface> {
     pub(crate) common: SystemState<Self>,
     pub(crate) systems: I::SystemManager,
-    pub(crate) useless: PhantomData<I::Factory>,
+    pub(crate) useless: PhantomData<I::Builder>,
 }
 
 impl<I: Interface> crate::system::Context for ObjectState<I> {
-    type Factory = I::Factory;
+    type Factory = I::Builder;
     type AppState = I::AppState;
     type ComponentManager = I::ComponentManager;
     type Event = I::Event;

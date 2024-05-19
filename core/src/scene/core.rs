@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Context, Factory, Object, ObjectRef, Storage, Tree};
+use crate::object::{Context, Builder as ObjectBuilder, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
 //use crate::object::factory::Function;
@@ -95,11 +95,11 @@ impl<I: Interface> Scene<I> {
                     self.updatable.insert(target);
                 }
             },
-            super::event::Type::SpawnObject(factory) => {
-                let updatable = factory.can_update_object();
+            super::event::Type::SpawnObject(builder) => {
+                let updatable = builder.can_update_object();
                 let (obj_ref, obj) = self
                     .objects
-                    .insert(|this_ref| Box::new(factory.spawn(&mut self.state, state, this_ref)));
+                    .insert(|this_ref| Box::new(builder.build(&mut self.state, state, this_ref)));
                 self.state.common.tree.insert(obj_ref, obj.class());
                 if updatable {
                     self.updatable.insert(obj_ref);
@@ -151,7 +151,7 @@ impl<I: Interface> Scene<I> {
         }
     }
 
-    pub fn spawn_object(&mut self, factory: I::Factory) {
+    pub fn spawn_object(&mut self, factory: I::Builder) {
         let ev = super::event::Event {
             notify: false,
             ty: super::event::Type::SpawnObject(factory),

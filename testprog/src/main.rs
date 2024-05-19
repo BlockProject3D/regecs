@@ -221,7 +221,7 @@ impl regecs::object::New<Ctx1> for Test {
 use regecs_codegen::New;
 use regecs_codegen::Object;
 
-pub struct Test2(regecs::object::factory::NullObject);
+pub struct Test2(regecs::object::builder::NullObject);
 impl Object<Ctx1> for Test2 {
     fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
         todo!()
@@ -244,18 +244,18 @@ impl regecs::object::New<Ctx1> for Test2 {
     type Arguments = ();
 
     fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
-        Self(regecs::object::factory::NullObject::new(ctx, state, v, args))
+        Self(regecs::object::builder::NullObject::new(ctx, state, v, args))
     }
 }
 
 #[derive(Object, New)]
 #[context(Ctx1)]
-pub struct NullObject(regecs::object::factory::NullObject);
+pub struct NullObject(regecs::object::builder::NullObject);
 
 #[derive(Object, New)]
 #[context(Ctx1)]
 pub enum RootObject1 {
-    Null(regecs::object::factory::NullObject),
+    Null(regecs::object::builder::NullObject),
     Test(Test),
 }
 
@@ -285,7 +285,7 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Factory = RootFactory;
+    type Builder = RootFactory;
 
     fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
         (components::TestComponentManager::default(), TestSystemManager::default())

@@ -28,13 +28,11 @@
 
 use crate::event::Event;
 use crate::object::{Context, New, Object, ObjectRef};
-use crate::scene::{Interface, ObjectState};
-use std::marker::PhantomData;
 
-pub trait Factory<C: Context> {
+pub trait Builder<C: Context> {
     type Object: Object<C>;
 
-    fn spawn(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
+    fn build(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
     fn can_update_object(&self) -> bool;
 }
 
@@ -57,21 +55,5 @@ impl<C: Context> New<C> for NullObject {
 
     fn new(_: &mut C, _: &C::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
         Self
-    }
-}
-
-pub struct NullFactory<I: Interface> {
-    useless: PhantomData<I>,
-}
-
-impl<I: Interface> Factory<ObjectState<I>> for NullFactory<I> {
-    type Object = NullObject;
-
-    fn spawn(self, _: &mut ObjectState<I>, _: &I::AppState, _: ObjectRef) -> Self::Object {
-        NullObject
-    }
-
-    fn can_update_object(&self) -> bool {
-        false
     }
 }

@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::Clear;
-use crate::object::Factory;
+use crate::object::Builder;
 use crate::scene::{ObjectState, SystemState};
 use crate::system::Update;
 
@@ -36,7 +36,7 @@ pub trait Interface: Sized {
     type AppState;
     type ComponentManager: Clear;
     type SystemManager: Update<SystemState<ObjectState<Self>>>;
-    type Factory: Factory<ObjectState<Self>>;
+    type Builder: Builder<ObjectState<Self>>;
 
     fn new(self) -> (Self::ComponentManager, Self::SystemManager);
 }
