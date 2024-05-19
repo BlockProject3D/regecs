@@ -27,10 +27,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Context, Builder as ObjectBuilder, Object, ObjectRef, Storage, Tree};
+use crate::object::{Builder as ObjectBuilder, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
-//use crate::object::factory::Function;
 use crate::scene::Interface;
 use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
@@ -39,8 +38,7 @@ use crate::system::Update;
 pub struct Scene<I: Interface> {
     state: ObjectState<I>,
     objects: Storage<ObjectState<I>>,
-    updatable: HashSet<ObjectRef>,
-    init_updatable: HashSet<ObjectRef>,
+    updatable: HashSet<ObjectRef>
 }
 
 impl<I: Interface> Scene<I> {
@@ -58,8 +56,7 @@ impl<I: Interface> Scene<I> {
                 useless: PhantomData::default(),
             },
             objects: Storage::new(),
-            updatable: HashSet::new(),
-            init_updatable: HashSet::new(),
+            updatable: HashSet::new()
         };
     }
 
@@ -69,7 +66,7 @@ impl<I: Interface> Scene<I> {
         obj_ref: ObjectRef,
         event: &Event<I::Event>,
     ) {
-        if !self.state.common.tree.is_enabled(obj_ref) {
+        if !self.state.common.tree.can_handle_events(obj_ref) {
             //Disabled objects are not allowed to handle any event
             return;
         }
@@ -89,22 +86,21 @@ impl<I: Interface> Scene<I> {
             super::event::Type::EnableObject(flag) => {
                 let target = target.expect("No target given to EnableObject");
                 self.state.common.tree.set_enabled(target, flag);
-                if !flag {
-                    self.updatable.remove(&target);
-                } else if flag && self.init_updatable.contains(&target) {
-                    self.updatable.insert(target);
+                if unsafe { self.state.common.tree.get_flags(target).unwrap_unchecked().is_updatable() } {
+                    if flag {
+                        self.updatable.insert(target);
+                    } else {
+                        self.updatable.remove(&target);
+                    }
                 }
             },
             super::event::Type::SpawnObject(builder) => {
-                let updatable = builder.can_update_object();
-                let (obj_ref, obj) = self
-                    .objects
-                    .insert(|this_ref| Box::new(builder.build(&mut self.state, state, this_ref)));
-                self.state.common.tree.insert(obj_ref, obj.class());
-                if updatable {
+                let (obj_ref, obj) = self.objects.insert(|obj_ref| Box::new(builder.build(&mut self.state, state, obj_ref)));
+                let flags = obj.flags();
+                if flags.is_updatable() {
                     self.updatable.insert(obj_ref);
-                    self.init_updatable.insert(obj_ref);
                 }
+                self.state.common.tree.insert(obj_ref, flags, obj.class());
             },
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");

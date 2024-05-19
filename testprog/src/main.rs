@@ -263,8 +263,11 @@ type Ctx1 = ObjectState<Interface>;
 type Ctx = SystemState<Ctx1>;
 
 regecs::register_objects2! {
+    /// The root factory for all objects of this test.
     pub factory RootFactory for object RootObject<Ctx1> {
+        /// A test object.
         Test: Test,
+        /// A null object.
         Null: Test2,
     }
 }

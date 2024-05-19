@@ -33,12 +33,12 @@ use std::{
 };
 
 use crate::object::builder::Builder;
-use crate::object::{Context, ObjectRef};
+use crate::object::{Context, Flags, ObjectRef};
 
 pub struct Tree {
     enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
-    by_id: HashSet<ObjectRef>,
+    by_id: HashMap<ObjectRef, Flags>,
     count: usize,
 }
 
@@ -48,7 +48,7 @@ impl Tree {
     }
 
     pub fn exists(&self, obj: ObjectRef) -> bool {
-        return self.by_id.contains(&obj);
+        return self.by_id.contains_key(&obj);
     }
 
     pub fn get_count(&self) -> usize {
@@ -60,7 +60,12 @@ impl Tree {
     }
 
     pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef> {
-        return self.by_id.iter();
+        return self.by_id.keys();
+    }
+
+    pub fn can_handle_events(&self, obj: ObjectRef) -> bool {
+        self.is_enabled(obj) && self.get_flags(obj).map(|v| v.is_event_aware())
+            .unwrap_or(false)
     }
 
     pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]> {
@@ -70,8 +75,12 @@ impl Tree {
         return Cow::from(Vec::new());
     }
 
-    pub(crate) fn insert(&mut self, obj: ObjectRef, class: &str) {
-        self.by_id.insert(obj);
+    pub fn get_flags(&self, obj: ObjectRef) -> Option<&Flags> {
+        self.by_id.get(&obj)
+    }
+
+    pub(crate) fn insert(&mut self, obj: ObjectRef, flags: Flags, class: &str) {
+        self.by_id.insert(obj, flags);
         let var = self
             .by_class
             .entry(String::from(class))
@@ -101,7 +110,7 @@ impl Tree {
         return Tree {
             enabled: HashSet::new(),
             by_class: HashMap::new(),
-            by_id: HashSet::new(),
+            by_id: HashMap::new(),
             count: 0,
         };
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -44,12 +44,48 @@ pub trait Index {
     fn index(&self) -> ObjectRef;
 }
 
+pub struct Flags {
+    updates: bool,
+    receives_events: bool
+}
+
+impl Flags {
+    pub fn new() -> Flags {
+        Flags {
+            updates: false,
+            receives_events: false
+        }
+    }
+
+    pub fn is_updatable(&self) -> bool {
+        self.updates
+    }
+
+    pub fn is_event_aware(&self) -> bool {
+        self.receives_events
+    }
+
+    pub fn updates(mut self, updates: bool) -> Self {
+        self.updates = updates;
+        self
+    }
+
+    pub fn receives_events(mut self, receives_events: bool) -> Self {
+        self.receives_events = receives_events;
+        self
+    }
+}
+
 /// Low-level object interface to represent all dynamic objects managed by a scene
 pub trait Object<C: Context> {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
     fn class(&self) -> &str;
+
+    fn flags(&self) -> Flags {
+        Flags::new()
+    }
 }
 
 pub trait New<C: Context> {
