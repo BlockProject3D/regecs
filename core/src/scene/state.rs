@@ -27,9 +27,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::EventManager;
-use crate::object::{Context, Tree};
+use crate::object::{Context, ObjectRef, Tree};
 use crate::scene::event::Event;
-use crate::scene::{EventInfo, Interface};
+use crate::scene::{Interface, Notify};
 use std::marker::PhantomData;
 
 //TODO: Find better names for fields.
@@ -63,19 +63,21 @@ impl<C: Context> crate::system::Context for SystemState<C> {
         return &self.tree;
     }
 
-    fn enable_object(&mut self, info: EventInfo, enable: bool) {
-        let ty = super::event::Type::EnableObject(enable);
-        self.system_event_manager.send(info.into_event(ty));
+    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
+        let builder = notify.into_builder(super::event::Type::EnableObject(enable))
+            .target(target);
+        self.system_event_manager.send(builder);
     }
 
-    fn remove_object(&mut self, info: EventInfo) {
-        let ty = super::event::Type::RemoveObject;
-        self.system_event_manager.send(info.into_event(ty));
+    fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
+        let builder = notify.into_builder(super::event::Type::RemoveObject)
+            .target(target);
+        self.system_event_manager.send(builder);
     }
 
-    fn spawn_object(&mut self, info: EventInfo, builder: Self::Builder) {
-        let ty = super::event::Type::SpawnObject(builder);
-        self.system_event_manager.send(info.into_event(ty));
+    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder) {
+        let builder = notify.into_builder(super::event::Type::SpawnObject(builder));
+        self.system_event_manager.send(builder);
     }
 }
 
@@ -107,16 +109,16 @@ impl<I: Interface> crate::system::Context for ObjectState<I> {
         return &self.common.tree;
     }
 
-    fn enable_object(&mut self, info: EventInfo, enable: bool) {
-        self.common.enable_object(info, enable)
+    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
+        self.common.enable_object(notify, target, enable)
     }
 
-    fn remove_object(&mut self, info: EventInfo) {
-        self.common.remove_object(info)
+    fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
+        self.common.remove_object(notify, target)
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Builder) {
-        self.common.spawn_object(info, factory)
+    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder) {
+        self.common.spawn_object(notify, builder)
     }
 }
 

@@ -35,53 +35,32 @@ pub enum Type<C: Context> {
     SpawnObject(C::Builder),
 }
 
+pub enum Notify {
+    Sender(ObjectRef),
+    All,
+    None
+}
+
+impl Notify {
+    pub fn into_builder<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
+        match self {
+            Notify::Sender(v) => Builder::new(Event {
+                notify: true,
+                ty
+            }).sender(v),
+            Notify::All => Builder::new(Event {
+                notify: true,
+                ty
+            }),
+            Notify::None => Builder::new(Event {
+                notify: false,
+                ty
+            })
+        }
+    }
+}
+
 pub struct Event<C: Context> {
     pub notify: bool,
     pub ty: Type<C>,
-}
-
-pub struct EventInfo {
-    sender: Option<ObjectRef>,
-    target: Option<ObjectRef>,
-    notify: bool,
-}
-
-impl EventInfo {
-    pub fn new() -> Self {
-        EventInfo {
-            sender: None,
-            target: None,
-            notify: false,
-        }
-    }
-
-    pub fn sender(mut self, sender: ObjectRef) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn target(mut self, target: ObjectRef) -> Self {
-        self.target = Some(target);
-        self
-    }
-
-    pub fn notify(mut self) -> Self {
-        self.notify = true;
-        self
-    }
-
-    pub(crate) fn into_event<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
-        let ev = Event {
-            notify: self.notify,
-            ty,
-        };
-        let mut builder = Builder::new(ev);
-        if let Some(sender) = self.sender {
-            builder = builder.sender(sender);
-        }
-        if let Some(target) = self.target {
-            builder = builder.target(target);
-        }
-        builder
-    }
 }

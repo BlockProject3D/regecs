@@ -26,7 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::Event;
+use crate::event::{Builder, Event};
+use crate::scene::Notify;
 
 /// Type alias for object references
 ///
@@ -53,6 +54,22 @@ impl ObjectRef {
 
     pub fn into_raw(self) -> u32 {
         self.0
+    }
+
+    pub fn send<C: Context>(&self, ctx: &mut C, sender: Option<ObjectRef>, event: C::Event) {
+        let mut builder = Builder::new(event).target(*self);
+        if let Some(sender) = sender {
+            builder = builder.sender(sender);
+        }
+        ctx.event_manager().send(builder);
+    }
+
+    pub fn enable<C: Context>(&self, ctx: &mut C, notify: Notify, enable: bool) {
+        ctx.enable_object(notify, *self, enable);
+    }
+
+    pub fn remove<C: Context>(&self, ctx: &mut C, notify: Notify) {
+        ctx.remove_object(notify, *self);
     }
 }
 

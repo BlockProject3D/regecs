@@ -32,7 +32,7 @@ use regecs::component::pool::ComponentPool;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
 use regecs::object::{Context as _, Object, ObjectRef};
-use regecs::scene::{EventInfo, ObjectState, SystemState};
+use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
     entity::{Entity, EntityPart},
