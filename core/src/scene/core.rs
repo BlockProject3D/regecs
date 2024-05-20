@@ -30,6 +30,7 @@ use crate::event::{Builder, Event, EventManager};
 use crate::object::{Builder as ObjectBuilder, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
+use crate::component::Clear;
 use crate::scene::Interface;
 use crate::scene::state::{ObjectState, SystemState};
 use crate::system::Update;
@@ -104,6 +105,7 @@ impl<I: Interface> Scene<I> {
             },
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");
+                self.state.common.component_manager.clear(target.into_raw());
                 self.objects[target].on_remove(&mut self.state, state);
                 self.state
                     .common
