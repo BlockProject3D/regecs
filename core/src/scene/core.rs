@@ -178,7 +178,7 @@ impl<I: Interface> Scene<I> {
 
     //TODO: Allow turning the scene into it's system manager and component manager
 
-    pub fn consume(self) -> I::ComponentManager {
-        return self.state.common.component_manager;
+    pub fn into_inner(self) -> (I::ComponentManager, I::SystemManager) {
+        return (self.state.common.component_manager, self.state.systems);
     }
 }

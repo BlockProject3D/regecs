@@ -321,7 +321,7 @@ fn main() {
     systems.my.val = 42;
     sc.update(&ctx);
     sc.update(&ctx);
-    let mut mgr = sc.consume();
+    let (mut mgr, _) = sc.into_inner();
     assert_eq!(mgr.get(test).value, 12);
     assert_eq!(mgr.get(test2).value2, 42);
     mgr.remove(test);
