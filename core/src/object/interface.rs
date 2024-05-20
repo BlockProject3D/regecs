@@ -49,6 +49,7 @@ impl ObjectRef {
     ///
     /// This function assumes the raw index actually points to an object in the scene, if not
     /// then the behavior when using such dangling reference is undefined.
+    /// *Note: it is forbidden to allocate an ObjectRef of 0.*
     pub unsafe fn from_raw(raw: u32) -> ObjectRef {
         ObjectRef(NonZeroU32::new_unchecked(raw))
     }
