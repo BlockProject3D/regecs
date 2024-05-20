@@ -36,8 +36,7 @@ use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
     entity::{Entity, EntityPart},
-    scene::Scene,
-    Create,
+    scene::Scene
 };
 
 use crate::components::ComplexComponent;
@@ -214,7 +213,7 @@ impl Object<Ctx1> for Test {
 }
 
 impl regecs::object::New<Ctx1> for Test {
-    type Arguments = ();
+    type Arguments = (i32);
 
     fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
@@ -259,7 +258,7 @@ type Ctx = SystemState<Ctx1>;
 
 regecs::register_objects2! {
     /// The root factory for all objects of this test.
-    pub factory RootFactory for object RootObject<Ctx1> {
+    pub builder ObjectBuilder for object RootObject<Ctx1> {
         /// A test object.
         Test: Test,
         /// A null object.
@@ -283,7 +282,7 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Builder = RootFactory;
+    type Builder = ObjectBuilder;
 
     fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
         (components::TestComponentManager::default(), TestSystemManager::default())

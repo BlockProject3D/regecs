@@ -122,7 +122,7 @@ pub trait Class {
     fn class(&self) -> &str;
 }
 
-/// Low-level object interface to represent all dynamic objects managed by a scene
+/// Object interface to represent all objects managed by a scene
 pub trait Object<C: Context>: Class {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);

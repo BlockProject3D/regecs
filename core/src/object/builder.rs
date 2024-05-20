@@ -58,3 +58,7 @@ impl<C: Context> New<C> for NullObject {
         Self
     }
 }
+
+pub trait NewBuilder<C: Context>: New<C> {
+    fn new_builder(args: Self::Arguments) -> C::Builder;
+}

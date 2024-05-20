@@ -33,6 +33,5 @@ mod interface;
 pub mod registry;
 mod storage;
 
-pub use builder::Builder;
 pub use interface::*;
 pub use storage::{Storage, Tree};

@@ -62,7 +62,7 @@ macro_rules! impl_object_wrap {
 macro_rules! register_objects2 {
     (
         $(#[$outer: meta])*
-        $visibility: vis factory $factory_name: ident for object $object_name: ident<$ctx: ty> {
+        $visibility: vis builder $builder_name: ident for object $object_name: ident<$ctx: ty> {
             $(
                 $(#[$field_outer: meta])*
                 $class_name: ident : $object_type: ty,
@@ -104,20 +104,20 @@ macro_rules! register_objects2 {
         }
 
         $(#[$outer])*
-        $visibility enum $factory_name {
+        $visibility enum $builder_name {
             $(
                 $(#[$field_outer])*
                 $class_name(<$object_type as regecs::object::New<$ctx>>::Arguments),
             )*
         }
 
-        impl $crate::object::Builder<$ctx> for $factory_name {
+        impl $crate::object::builder::Builder<$ctx> for $builder_name {
             type Object = $object_name;
 
             fn build(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
                 this: ObjectRef) -> Self::Object {
                 match self {
-                    $($factory_name::$class_name(v) =>
+                    $($builder_name::$class_name(v) =>
                         $object_name::$class_name(<$object_type as regecs::object::New<$ctx>>::new(
                             ctx, state, this, v
                         ))
@@ -127,10 +127,9 @@ macro_rules! register_objects2 {
         }
 
         $(
-            impl $crate::Create<$factory_name> for $object_type {
-                type Arguments = <$object_type as regecs::object::New<$ctx>>::Arguments;
-                fn create(args: Self::Arguments) -> $factory_name {
-                    $factory_name::$class_name(args)
+            impl $crate::object::builder::NewBuilder<$ctx> for $object_type {
+                fn new_builder(args: Self::Arguments) -> $builder_name {
+                    $builder_name::$class_name(args)
                 }
             }
         )*

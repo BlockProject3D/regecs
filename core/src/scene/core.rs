@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
+use crate::object::{builder::Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use crate::component::Clear;
@@ -149,10 +149,10 @@ impl<I: Interface> Scene<I> {
         }
     }
 
-    pub fn spawn_object(&mut self, factory: I::Builder) {
+    pub fn spawn_object(&mut self, builder: I::Builder) {
         let ev = super::event::Event {
             notify: false,
-            ty: super::event::Type::SpawnObject(factory),
+            ty: super::event::Type::SpawnObject(builder),
         };
         self.state
             .common
