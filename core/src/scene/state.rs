@@ -26,9 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::Clear;
 use crate::event::EventManager;
-use crate::object::{Context, Builder, Tree};
+use crate::object::{Context, Tree};
 use crate::scene::event::Event;
 use crate::scene::{EventInfo, Interface};
 use std::marker::PhantomData;

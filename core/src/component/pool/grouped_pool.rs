@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -28,12 +28,12 @@
 
 use crate::component::pool::{Attachments, BasicComponentPool, ComponentPool, Iter};
 use crate::component::{Component, ComponentRef};
-use crate::object::ObjectRef;
 use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     ops::{Index, IndexMut},
 };
+use crate::entity::EntityIndex;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -185,15 +185,15 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> ComponentPool<T>
 impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T>
     for GroupComponentPool<K, T>
 {
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>) {
+    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
         self.comps.attach(entity, r);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>> {
+    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
         return self.comps.list(entity);
     }
 
-    fn clear(&mut self, entity: ObjectRef) {
+    fn clear(&mut self, entity: EntityIndex) {
         if let Some(set) = self.comps.list(entity) {
             for v in set {
                 self.remove(v)
@@ -201,11 +201,11 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T>
         }
     }
 
-    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T> {
+    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T> {
         self.comps.get_first_mut(entity)
     }
 
-    fn get_first(&self, entity: ObjectRef) -> Option<&T> {
+    fn get_first(&self, entity: EntityIndex) -> Option<&T> {
         self.comps.get_first(entity)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -29,11 +29,11 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::component::{Component, ComponentRef};
-use crate::object::ObjectRef;
+use crate::entity::EntityIndex;
 
 pub struct AttachmentsManager<T: Component> {
-    map: HashMap<ObjectRef, HashSet<ComponentRef<T>>>,
-    inv_map: HashMap<ComponentRef<T>, ObjectRef>,
+    map: HashMap<EntityIndex, HashSet<ComponentRef<T>>>,
+    inv_map: HashMap<ComponentRef<T>, EntityIndex>,
 }
 
 impl<T: Component> AttachmentsManager<T> {
@@ -53,7 +53,7 @@ impl<T: Component> AttachmentsManager<T> {
         }
     }
 
-    pub fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>) {
+    pub fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
         if let Some(set) = self.map.get_mut(&entity) {
             set.insert(r);
         } else {
@@ -64,7 +64,7 @@ impl<T: Component> AttachmentsManager<T> {
         self.inv_map.insert(r, entity);
     }
 
-    pub fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>> {
+    pub fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
         if let Some(set) = self.map.get(&entity) {
             let mut vec = Vec::with_capacity(set.len());
             for v in set {
@@ -75,11 +75,11 @@ impl<T: Component> AttachmentsManager<T> {
         return None;
     }
 
-    pub fn clear(&mut self, entity: ObjectRef) {
+    pub fn clear(&mut self, entity: EntityIndex) {
         self.map.remove(&entity);
     }
 
-    pub fn get_first(&self, entity: ObjectRef) -> Option<ComponentRef<T>> {
+    pub fn get_first(&self, entity: EntityIndex) -> Option<ComponentRef<T>> {
         if let Some(set) = self.map.get(&entity) {
             Some(*set.iter().nth(0).unwrap())
         } else {

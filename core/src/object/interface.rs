@@ -31,7 +31,30 @@ use crate::event::Event;
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
-pub type ObjectRef = u32;
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
+pub struct ObjectRef(u32);
+
+impl ObjectRef {
+    /// Creates a new ObjectRef from a raw u32 index.
+    ///
+    /// # Arguments
+    ///
+    /// * `raw`: the raw u32 index.
+    ///
+    /// returns: ObjectRef
+    ///
+    /// # Safety
+    ///
+    /// This function assumes the raw index actually points to an object in the scene, if not
+    /// then the behavior when using such dangling reference is undefined.
+    pub unsafe fn from_raw(raw: u32) -> ObjectRef {
+        ObjectRef(raw)
+    }
+
+    pub fn into_raw(self) -> u32 {
+        self.0
+    }
+}
 
 pub trait Context: crate::system::Context {
     type SystemManager;

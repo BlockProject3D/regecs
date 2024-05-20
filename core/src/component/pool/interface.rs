@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -27,8 +27,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::{Component, ComponentRef};
-use crate::object::ObjectRef;
 use std::ops::{Index, IndexMut};
+use crate::entity::EntityIndex;
 
 /// Represents an allocation pool for a given type of component
 ///
@@ -102,7 +102,7 @@ pub trait Attachments<T: Component> {
     ///
     /// * `entity` - the entity to attach the component to
     /// * `component` - the component index to attach
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>);
+    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>);
 
     /// Lists all attachments of a given entity
     ///
@@ -114,18 +114,18 @@ pub trait Attachments<T: Component> {
     ///
     /// * the list of all components attached to the given entity
     /// * None if the entity does not exist or that the entity does not have any attachements
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>>;
+    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>>;
 
     /// Removes all components attached to a given entity
     ///
     /// # Arguments
     ///
     /// * `entity` - the entity to clear
-    fn clear(&mut self, entity: ObjectRef);
+    fn clear(&mut self, entity: EntityIndex);
 
-    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T>;
+    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T>;
 
-    fn get_first(&self, entity: ObjectRef) -> Option<&T>;
+    fn get_first(&self, entity: EntityIndex) -> Option<&T>;
 }
 
 pub trait ComponentManager<T: Component> {

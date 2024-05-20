@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -29,11 +29,11 @@
 use crate::component::attachments::AttachmentsManager;
 use crate::component::pool::{Attachments, ComponentPool, Iter};
 use crate::component::{Component, ComponentRef};
-use crate::object::ObjectRef;
 use std::{
     ops::{Index, IndexMut},
     vec::Vec,
 };
+use crate::entity::EntityIndex;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -144,15 +144,15 @@ impl<T: Component> ComponentPool<T> for BasicComponentPool<T> {
 }
 
 impl<T: Component> Attachments<T> for BasicComponentPool<T> {
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>) {
+    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
         self.attachments.attach(entity, r);
     }
 
-    fn list(&self, entity: ObjectRef) -> Option<Vec<ComponentRef<T>>> {
+    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
         return self.attachments.list(entity);
     }
 
-    fn clear(&mut self, entity: ObjectRef) {
+    fn clear(&mut self, entity: EntityIndex) {
         if let Some(set) = self.attachments.list(entity) {
             for v in set {
                 self.remove(v)
@@ -161,7 +161,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
         }
     }
 
-    fn get_first_mut(&mut self, entity: ObjectRef) -> Option<&mut T> {
+    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T> {
         if let Some(r) = self.attachments.get_first(entity) {
             Some(&mut self[r])
         } else {
@@ -169,7 +169,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
         }
     }
 
-    fn get_first(&self, entity: ObjectRef) -> Option<&T> {
+    fn get_first(&self, entity: EntityIndex) -> Option<&T> {
         if let Some(r) = self.attachments.get_first(entity) {
             Some(&self[r])
         } else {

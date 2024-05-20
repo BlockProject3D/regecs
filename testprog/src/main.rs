@@ -49,6 +49,7 @@ mod components {
         Component,
     };
     use regecs::component::{Clear, ComponentRef, Pool};
+    use regecs::entity::EntityIndex;
     use regecs::object::ObjectRef;
     use regecs::system::Update;
 
@@ -114,7 +115,7 @@ mod components {
 
     // TODO: Implement a derive proc macro for Clear
     impl Clear for TestComponentManager {
-        fn clear(&mut self, entity: ObjectRef) {
+        fn clear(&mut self, entity: EntityIndex) {
             self.tests.clear(entity);
             self.test2s.clear(entity);
             self.complexes.clear(entity);
