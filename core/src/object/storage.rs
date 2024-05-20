@@ -27,7 +27,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::{
-    borrow::Cow,
     collections::{HashMap, HashSet},
     ops::{Index, IndexMut},
 };
@@ -51,15 +50,15 @@ impl Tree {
         return self.by_id.contains_key(&obj);
     }
 
-    pub fn get_count(&self) -> usize {
+    pub fn len(&self) -> usize {
         return self.count;
     }
 
-    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef> {
+    pub fn enabled(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.enabled.iter();
     }
 
-    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef> {
+    pub fn iter(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.by_id.keys();
     }
 
@@ -68,11 +67,12 @@ impl Tree {
             .unwrap_or(false)
     }
 
-    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]> {
+    pub fn by_class(&self, class: &str) -> impl Iterator<Item = &ObjectRef> {
         if let Some(v) = self.by_class.get(class) {
-            return Cow::from(v);
+            v.iter()
+        } else {
+            [].iter()
         }
-        return Cow::from(Vec::new());
     }
 
     pub fn get_flags(&self, obj: ObjectRef) -> Option<&Flags> {
