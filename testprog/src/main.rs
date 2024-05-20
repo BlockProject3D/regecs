@@ -249,17 +249,6 @@ impl regecs::object::New<Ctx1> for Test2 {
     }
 }
 
-#[derive(Object, New)]
-#[context(Ctx1)]
-pub struct NullObject(regecs::object::builder::NullObject);
-
-#[derive(Object, New)]
-#[context(Ctx1)]
-pub enum RootObject1 {
-    Null(regecs::object::builder::NullObject),
-    Test(Test),
-}
-
 type Ctx1 = ObjectState<Interface>;
 type Ctx = SystemState<Ctx1>;
 

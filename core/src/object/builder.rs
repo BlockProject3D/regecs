@@ -33,7 +33,6 @@ pub trait Builder<C: Context> {
     type Object: Object<C>;
 
     fn build(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
-    fn can_update_object(&self) -> bool;
 }
 
 pub struct NullObject;

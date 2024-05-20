@@ -121,13 +121,6 @@ macro_rules! register_objects2 {
                     ,)*
                 }
             }
-
-            fn can_update_object(&self) -> bool {
-                match self {
-                    $($factory_name::$class_name(v) =>
-                        <$object_type as regecs::object::New<$ctx>>::will_update(v),)*
-                }
-            }
         }
 
         $(
