@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -27,18 +27,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::{
-    borrow::Cow,
     collections::{HashMap, HashSet},
     ops::{Index, IndexMut},
 };
 
-use crate::object::factory::Factory;
-use crate::object::{Context, ObjectRef};
+use crate::object::builder::Builder;
+use crate::object::{Context, Flags, ObjectRef};
 
 pub struct Tree {
     enabled: HashSet<ObjectRef>,
     by_class: HashMap<String, Vec<ObjectRef>>,
-    by_id: HashSet<ObjectRef>,
+    by_id: HashMap<ObjectRef, Flags>,
     count: usize,
 }
 
@@ -48,30 +47,40 @@ impl Tree {
     }
 
     pub fn exists(&self, obj: ObjectRef) -> bool {
-        return self.by_id.contains(&obj);
+        return self.by_id.contains_key(&obj);
     }
 
-    pub fn get_count(&self) -> usize {
+    pub fn len(&self) -> usize {
         return self.count;
     }
 
-    pub fn get_all(&self) -> impl Iterator<Item = &ObjectRef> {
+    pub fn enabled(&self) -> impl Iterator<Item = &ObjectRef> {
         return self.enabled.iter();
     }
 
-    pub fn get_all_ignore_enable(&self) -> impl Iterator<Item = &ObjectRef> {
-        return self.by_id.iter();
+    pub fn iter(&self) -> impl Iterator<Item = &ObjectRef> {
+        return self.by_id.keys();
     }
 
-    pub fn find_by_class(&self, class: &str) -> Cow<'_, [ObjectRef]> {
+    pub fn can_handle_events(&self, obj: ObjectRef) -> bool {
+        self.is_enabled(obj) && self.get_flags(obj).map(|v| v.is_event_aware())
+            .unwrap_or(false)
+    }
+
+    pub fn by_class(&self, class: &str) -> impl Iterator<Item = &ObjectRef> {
         if let Some(v) = self.by_class.get(class) {
-            return Cow::from(v);
+            v.iter()
+        } else {
+            [].iter()
         }
-        return Cow::from(Vec::new());
     }
 
-    pub(crate) fn insert(&mut self, obj: ObjectRef, class: &str) {
-        self.by_id.insert(obj);
+    pub fn get_flags(&self, obj: ObjectRef) -> Option<&Flags> {
+        self.by_id.get(&obj)
+    }
+
+    pub(crate) fn insert(&mut self, obj: ObjectRef, flags: Flags, class: &str) {
+        self.by_id.insert(obj, flags);
         let var = self
             .by_class
             .entry(String::from(class))
@@ -101,7 +110,7 @@ impl Tree {
         return Tree {
             enabled: HashSet::new(),
             by_class: HashMap::new(),
-            by_id: HashSet::new(),
+            by_id: HashMap::new(),
             count: 0,
         };
     }
@@ -109,14 +118,14 @@ impl Tree {
 
 pub struct Storage<C: Context>
 where
-    C::Factory: Factory<C>,
+    C::Builder: Builder<C>,
 {
-    objects: Vec<Option<Box<<C::Factory as Factory<C>>::Object>>>,
+    objects: Vec<Option<Box<<C::Builder as Builder<C>>::Object>>>,
 }
 
 impl<C: Context> Storage<C>
 where
-    C::Factory: Factory<C>,
+    C::Builder: Builder<C>,
 {
     pub fn new() -> Storage<C> {
         Storage {
@@ -124,10 +133,10 @@ where
         }
     }
 
-    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Factory as Factory<C>>::Object>>(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Builder as Builder<C>>::Object>>(
         &mut self,
         func: F,
-    ) -> (ObjectRef, &mut Box<<C::Factory as Factory<C>>::Object>) {
+    ) -> (ObjectRef, &mut Box<<C::Builder as Builder<C>>::Object>) {
         let empty_slot = {
             let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
@@ -142,44 +151,44 @@ where
 
         let obj_ref;
         if let Some(slot) = empty_slot {
-            obj_ref = slot as ObjectRef;
+            obj_ref = unsafe { ObjectRef::from_raw((slot + 1) as _) };
             self.objects[slot] = Some(func(obj_ref));
         } else {
-            let id = self.objects.len() as ObjectRef;
+            let id = unsafe { ObjectRef::from_raw((self.objects.len() + 1) as _) };
             obj_ref = id;
             self.objects.push(Some(func(obj_ref)));
         }
-        let o = unsafe { self.objects[obj_ref as usize].as_mut().unwrap_unchecked() };
-        return (obj_ref, o);
+        let o = unsafe { self.objects[(obj_ref.into_raw() - 1) as usize].as_mut().unwrap_unchecked() };
+        (obj_ref, o)
     }
 
     pub fn destroy(&mut self, obj: ObjectRef) {
-        self.objects[obj as usize] = None;
+        self.objects[(obj.into_raw() - 1) as usize] = None;
     }
 
-    pub fn objects(
+    pub fn iter_mut(
         &mut self,
-    ) -> impl Iterator<Item = &mut Option<Box<<C::Factory as Factory<C>>::Object>>> {
-        return self.objects.iter_mut();
+    ) -> impl Iterator<Item = &mut Option<Box<<C::Builder as Builder<C>>::Object>>> {
+        self.objects.iter_mut()
     }
 }
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
 where
-    C::Factory: Factory<C>,
+    C::Builder: Builder<C>,
 {
-    type Output = Box<<C::Factory as Factory<C>>::Object>;
+    type Output = Box<<C::Builder as Builder<C>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output {
-        return self.objects[index as usize].as_ref().unwrap();
+        return self.objects[(index.into_raw() - 1) as usize].as_ref().unwrap();
     }
 }
 
 impl<C: Context> IndexMut<ObjectRef> for Storage<C>
 where
-    C::Factory: Factory<C>,
+    C::Builder: Builder<C>,
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
-        return self.objects[index as usize].as_mut().unwrap();
+        return self.objects[(index.into_raw() - 1) as usize].as_mut().unwrap();
     }
 }

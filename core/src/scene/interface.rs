@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -27,23 +27,16 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::Clear;
-use crate::object::Factory;
-use crate::scene::state::{Common, State};
+use crate::object::builder::Builder;
+use crate::scene::{ObjectState, SystemState};
 use crate::system::Update;
 
-pub trait Interface {
+pub trait Interface: Sized {
     type Event;
     type AppState;
     type ComponentManager: Clear;
-    type SystemManager: Update<SystemContext<Self>>;
-    type Factory: Factory<ObjectContext<Self>>;
-}
+    type SystemManager: Update<SystemState<ObjectState<Self>>>;
+    type Builder: Builder<ObjectState<Self>>;
 
-pub type ObjectContext<I> = State<
-    <I as Interface>::Event,
-    <I as Interface>::AppState,
-    <I as Interface>::ComponentManager,
-    <I as Interface>::SystemManager,
-    <I as Interface>::Factory,
->;
-pub type SystemContext<I> = Common<ObjectContext<I>>;
+    fn new(self) -> (Self::ComponentManager, Self::SystemManager);
+}

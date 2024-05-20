@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -31,8 +31,7 @@
 use crate::component::pool::ComponentPool;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-
-use crate::object::ObjectRef;
+use crate::entity::EntityIndex;
 
 /// Represents a component
 pub trait Component: Sized {
@@ -93,7 +92,7 @@ impl<T: Component> ComponentRef<T> {
 
 pub trait Clear {
     /// Clears all components attached to the given entity
-    fn clear(&mut self, entity: ObjectRef);
+    fn clear(&mut self, entity: EntityIndex);
 }
 
 pub type Pool<T> = <T as Component>::Pool;

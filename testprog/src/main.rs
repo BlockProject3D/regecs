@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -31,13 +31,12 @@ use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
-use regecs::object::{Context as _, Object, ObjectRef};
-use regecs::scene::{EventInfo, ObjectContext, SystemContext};
+use regecs::object::{Class, Context as _, Object, ObjectRef};
+use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
     entity::{Entity, EntityPart},
-    scene::Scene,
-    Create,
+    scene::Scene
 };
 
 use crate::components::ComplexComponent;
@@ -49,6 +48,7 @@ mod components {
         Component,
     };
     use regecs::component::{Clear, ComponentRef, Pool};
+    use regecs::entity::EntityIndex;
     use regecs::object::ObjectRef;
     use regecs::system::Update;
 
@@ -114,7 +114,7 @@ mod components {
 
     // TODO: Implement a derive proc macro for Clear
     impl Clear for TestComponentManager {
-        fn clear(&mut self, entity: ObjectRef) {
+        fn clear(&mut self, entity: EntityIndex) {
             self.tests.clear(entity);
             self.test2s.clear(entity);
             self.complexes.clear(entity);
@@ -192,6 +192,12 @@ pub struct TestSystemManager {
 
 pub struct Test;
 
+impl Class for Test {
+    fn class(&self) -> &str {
+        todo!()
+    }
+}
+
 impl Object<Ctx1> for Test {
     fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
         todo!()
@@ -204,14 +210,10 @@ impl Object<Ctx1> for Test {
     fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
         todo!()
     }
-
-    fn class(&self) -> &str {
-        todo!()
-    }
 }
 
 impl regecs::object::New<Ctx1> for Test {
-    type Arguments = ();
+    type Arguments = (i32);
 
     fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
@@ -221,25 +223,50 @@ impl regecs::object::New<Ctx1> for Test {
 use regecs_codegen::New;
 use regecs_codegen::Object;
 
-#[derive(Object, New)]
-#[context(Ctx1)]
-pub struct NullObject(regecs::object::factory::NullObject);
+pub struct Test2(regecs::object::builder::NullObject);
 
-#[derive(Object, New)]
-#[context(Ctx1)]
-pub enum RootObject1 {
-    Null(regecs::object::factory::NullObject),
-    Test(Test),
+impl Class for Test2 {
+    fn class(&self) -> &str {
+        todo!()
+    }
 }
 
-type Ctx = SystemContext<Interface>;
-type Ctx1 = ObjectContext<Interface>;
+impl Object<Ctx1> for Test2 {
+    fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
+        todo!()
+    }
 
-regecs::test_macro! {pub RootFactory for RootObject where context = Ctx1 [
-    (Test: Test)
-]}
+    fn on_remove(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
 
-regecs::register_objects!(
+    fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
+        todo!()
+    }
+}
+
+impl regecs::object::New<Ctx1> for Test2 {
+    type Arguments = ();
+
+    fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
+        Self(regecs::object::builder::NullObject::new(ctx, state, v, args))
+    }
+}
+
+type Ctx1 = ObjectState<Interface>;
+type Ctx = SystemState<Ctx1>;
+
+regecs::register_objects2! {
+    /// The root factory for all objects of this test.
+    pub builder ObjectBuilder for object RootObject<Ctx1> {
+        /// A test object.
+        Test: Test,
+        /// A null object.
+        Null: Test2,
+    }
+}
+
+/*regecs::register_objects!(
     /// The root factory for all objects of this test.
     pub RootFactory {
         context = Ctx1;
@@ -247,7 +274,7 @@ regecs::register_objects!(
         object = RootObject;
         map = [(Test: Test)];
     }
-);
+);*/
 
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
@@ -255,7 +282,11 @@ impl regecs::scene::Interface for Interface {
     type AppState = i32;
     type ComponentManager = components::TestComponentManager;
     type SystemManager = TestSystemManager;
-    type Factory = RootFactory;
+    type Builder = ObjectBuilder;
+
+    fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
+        (components::TestComponentManager::default(), TestSystemManager::default())
+    }
 }
 
 //TODO: Create a derive macro for Update<T>
@@ -267,11 +298,10 @@ impl Update<Ctx> for TestSystemManager {
 }
 
 fn main() {
-    use regecs::Create;
-    let factort = Test::create(());
+    let mut sc = Scene::new(Interface);
     let ctx = 42;
-    let mut mgr = components::TestComponentManager::default();
-    let mut entity = Entity::new(&mut mgr, 0);
+    let mgr = sc.component_manager_mut();
+    let mut entity = Entity::new(mgr, 0);
     let test = entity.add_attach(components::Test { value: 12 });
     mgr.get_mut(test).value = 1;
     let test1 = mgr.add(components::Test { value: 0 });
@@ -280,12 +310,11 @@ fn main() {
     mgr.add(ComplexComponent::new(1, 1));
     mgr.add(ComplexComponent::new(2, 4));
     mgr.add(ComplexComponent::new(1, 2));
-    let mut systems = TestSystemManager::default();
+    let systems = sc.system_manager_mut();
     systems.my.val = 42;
-    let mut sc: Scene<Interface> = Scene::new(mgr, systems);
     sc.update(&ctx);
     sc.update(&ctx);
-    mgr = sc.consume();
+    let (mut mgr, _) = sc.into_inner();
     assert_eq!(mgr.get(test).value, 12);
     assert_eq!(mgr.get(test2).value2, 42);
     mgr.remove(test);

@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,12 +26,54 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::Event;
+use std::num::NonZeroU32;
+use crate::event::{Builder, Event};
+use crate::scene::Notify;
 
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*
-pub type ObjectRef = u32;
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
+pub struct ObjectRef(NonZeroU32);
+
+impl ObjectRef {
+    /// Creates a new ObjectRef from a raw u32 index.
+    ///
+    /// # Arguments
+    ///
+    /// * `raw`: the raw u32 index.
+    ///
+    /// returns: ObjectRef
+    ///
+    /// # Safety
+    ///
+    /// This function assumes the raw index actually points to an object in the scene, if not
+    /// then the behavior when using such dangling reference is undefined.
+    /// *Note: it is forbidden to allocate an ObjectRef of 0.*
+    pub unsafe fn from_raw(raw: u32) -> ObjectRef {
+        ObjectRef(NonZeroU32::new_unchecked(raw))
+    }
+
+    pub fn into_raw(self) -> u32 {
+        self.0.get()
+    }
+
+    pub fn send<C: Context>(&self, ctx: &mut C, sender: Option<ObjectRef>, event: C::Event) {
+        let mut builder = Builder::new(event).target(*self);
+        if let Some(sender) = sender {
+            builder = builder.sender(sender);
+        }
+        ctx.event_manager().send(builder);
+    }
+
+    pub fn enable<C: Context>(&self, ctx: &mut C, notify: Notify, enable: bool) {
+        ctx.enable_object(notify, *self, enable);
+    }
+
+    pub fn remove<C: Context>(&self, ctx: &mut C, notify: Notify) {
+        ctx.remove_object(notify, *self);
+    }
+}
 
 pub trait Context: crate::system::Context {
     type SystemManager;
@@ -44,13 +86,50 @@ pub trait Index {
     fn index(&self) -> ObjectRef;
 }
 
-/// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait Object<C: Context> {
+pub struct Flags {
+    updates: bool,
+    receives_events: bool
+}
+
+impl Flags {
+    pub fn new() -> Flags {
+        Flags {
+            updates: false,
+            receives_events: false
+        }
+    }
+
+    pub fn is_updatable(&self) -> bool {
+        self.updates
+    }
+
+    pub fn is_event_aware(&self) -> bool {
+        self.receives_events
+    }
+
+    pub fn updates(mut self, updates: bool) -> Self {
+        self.updates = updates;
+        self
+    }
+
+    pub fn receives_events(mut self, receives_events: bool) -> Self {
+        self.receives_events = receives_events;
+        self
+    }
+}
+
+pub trait Class {
+    fn class(&self) -> &str;
+}
+
+/// Object interface to represent all objects managed by a scene
+pub trait Object<C: Context>: Class {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
-    fn class(&self) -> &str {
-        std::any::type_name::<Self>()
+
+    fn flags(&self) -> Flags {
+        Flags::new()
     }
 }
 
@@ -58,8 +137,4 @@ pub trait New<C: Context> {
     type Arguments;
 
     fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
-
-    fn will_update(_: &Self::Arguments) -> bool {
-        false
-    }
 }

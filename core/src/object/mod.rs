@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -28,11 +28,10 @@
 
 //! REGECS object layer.
 
-pub mod factory;
+pub mod builder;
 mod interface;
 pub mod registry;
 mod storage;
 
-pub use factory::Factory;
 pub use interface::*;
 pub use storage::{Storage, Tree};

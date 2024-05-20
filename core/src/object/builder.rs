@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -27,18 +27,21 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::{Context, New, Object, ObjectRef};
-use crate::scene::{Interface, ObjectContext};
-use std::marker::PhantomData;
+use crate::object::{Class, Context, New, Object, ObjectRef};
 
-pub trait Factory<C: Context> {
+pub trait Builder<C: Context> {
     type Object: Object<C>;
 
-    fn spawn(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
-    fn can_update_object(&self) -> bool;
+    fn build(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
 }
 
 pub struct NullObject;
+
+impl Class for NullObject {
+    fn class(&self) -> &str {
+        "null"
+    }
+}
 
 impl<C: Context> Object<C> for NullObject {
     fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {}
@@ -46,10 +49,6 @@ impl<C: Context> Object<C> for NullObject {
     fn on_remove(&mut self, _: &mut C, _: &C::AppState) {}
 
     fn on_update(&mut self, _: &mut C, _: &C::AppState) {}
-
-    fn class(&self) -> &str {
-        "null"
-    }
 }
 
 impl<C: Context> New<C> for NullObject {
@@ -60,18 +59,6 @@ impl<C: Context> New<C> for NullObject {
     }
 }
 
-pub struct NullFactory<I: Interface> {
-    useless: PhantomData<I>,
-}
-
-impl<I: Interface> Factory<ObjectContext<I>> for NullFactory<I> {
-    type Object = NullObject;
-
-    fn spawn(self, _: &mut ObjectContext<I>, _: &I::AppState, _: ObjectRef) -> Self::Object {
-        NullObject
-    }
-
-    fn can_update_object(&self) -> bool {
-        false
-    }
+pub trait NewBuilder<C: Context>: New<C> {
+    fn new_builder(args: Self::Arguments) -> C::Builder;
 }

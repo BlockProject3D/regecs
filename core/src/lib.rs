@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -34,8 +34,3 @@ pub mod object;
 pub mod reflection;
 pub mod scene;
 pub mod system;
-
-pub trait Create<T> {
-    type Arguments;
-    fn create(args: Self::Arguments) -> T;
-}

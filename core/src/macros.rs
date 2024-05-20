@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -59,13 +59,81 @@ macro_rules! impl_object_wrap {
 }
 
 #[macro_export]
-macro_rules! test_macro {
+macro_rules! register_objects2 {
     (
         $(#[$outer: meta])*
-        $visibility: vis $factory_name: ident for $object: ty where context = $ctx: ty [
-            $(($class_name: ident : $object_type: ty)),*
-        ]
-    ) => {};
+        $visibility: vis builder $builder_name: ident for object $object_name: ident<$ctx: ty> {
+            $(
+                $(#[$field_outer: meta])*
+                $class_name: ident : $object_type: ty,
+            )*
+        }
+    ) => {
+        $(#[$outer])*
+        $visibility enum $object_name {
+            $(
+                $(#[$field_outer])*
+                $class_name($object_type),
+            )*
+        }
+
+        impl $crate::object::Class for $object_name {
+            fn class(&self) -> &str {
+                match self {
+                    $($object_name::$class_name(v) => v.class(),)*
+                }
+            }
+        }
+
+        impl $crate::object::Object<$ctx> for $object_name {
+            fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
+                match self {
+                    $($object_name::$class_name(v) => v.on_event(ctx, state, event),)*
+                }
+            }
+            fn on_remove(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+                match self {
+                    $($object_name::$class_name(v) => v.on_remove(ctx, state),)*
+                }
+            }
+            fn on_update(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+                match self {
+                    $($object_name::$class_name(v) => v.on_update(ctx, state),)*
+                }
+            }
+        }
+
+        $(#[$outer])*
+        $visibility enum $builder_name {
+            $(
+                $(#[$field_outer])*
+                $class_name(<$object_type as regecs::object::New<$ctx>>::Arguments),
+            )*
+        }
+
+        impl $crate::object::builder::Builder<$ctx> for $builder_name {
+            type Object = $object_name;
+
+            fn build(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
+                this: ObjectRef) -> Self::Object {
+                match self {
+                    $($builder_name::$class_name(v) =>
+                        $object_name::$class_name(<$object_type as regecs::object::New<$ctx>>::new(
+                            ctx, state, this, v
+                        ))
+                    ,)*
+                }
+            }
+        }
+
+        $(
+            impl $crate::object::builder::NewBuilder<$ctx> for $object_type {
+                fn new_builder(args: Self::Arguments) -> $builder_name {
+                    $builder_name::$class_name(args)
+                }
+            }
+        )*
+    };
 }
 
 #[macro_export]

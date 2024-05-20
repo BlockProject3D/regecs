@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -30,7 +30,9 @@
 
 use crate::component::pool::{Attachments, ComponentManager};
 use crate::component::ComponentRef;
-use crate::{component::Component, object::ObjectRef};
+use crate::component::Component;
+
+pub type EntityIndex = u32;
 
 pub struct ComponentType<T: Component> {
     useless: std::marker::PhantomData<T>,
@@ -56,7 +58,7 @@ impl<T: Component> ComponentTypeProvider<T> for T {
 
 pub struct Entity<'a, ComponentManager> {
     mgr: &'a mut ComponentManager,
-    entity: ObjectRef,
+    entity: EntityIndex,
 }
 
 pub trait EntityPart<T: Component, CM: ComponentManager<T>> {
@@ -90,7 +92,7 @@ where
 }
 
 impl<'a, ComponentManager> Entity<'a, ComponentManager> {
-    pub fn new(mgr: &'a mut ComponentManager, entity: ObjectRef) -> Entity<'a, ComponentManager> {
+    pub fn new(mgr: &'a mut ComponentManager, entity: EntityIndex) -> Entity<'a, ComponentManager> {
         return Entity { mgr, entity };
     }
 }

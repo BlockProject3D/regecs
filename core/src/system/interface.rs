@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,11 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::scene::EventInfo;
+use crate::scene::Notify;
 use crate::{component::Clear, event::EventManager, object::Tree};
+use crate::object::ObjectRef;
 
 pub trait Context {
-    type Factory;
+    type Builder;
     type AppState;
     type ComponentManager: Clear;
     type Event;
@@ -39,9 +40,9 @@ pub trait Context {
     fn components_mut(&mut self) -> &mut Self::ComponentManager;
     fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn objects(&self) -> &Tree;
-    fn enable_object(&mut self, info: EventInfo, enable: bool);
-    fn remove_object(&mut self, info: EventInfo);
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory);
+    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool);
+    fn remove_object(&mut self, notify: Notify, target: ObjectRef);
+    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder);
 }
 
 /// Update functionality.
