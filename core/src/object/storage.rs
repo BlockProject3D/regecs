@@ -151,25 +151,25 @@ where
 
         let obj_ref;
         if let Some(slot) = empty_slot {
-            obj_ref = unsafe { ObjectRef::from_raw(slot as _) };
+            obj_ref = unsafe { ObjectRef::from_raw((slot + 1) as _) };
             self.objects[slot] = Some(func(obj_ref));
         } else {
-            let id = unsafe { ObjectRef::from_raw(self.objects.len() as _) };
+            let id = unsafe { ObjectRef::from_raw((self.objects.len() + 1) as _) };
             obj_ref = id;
             self.objects.push(Some(func(obj_ref)));
         }
-        let o = unsafe { self.objects[obj_ref.into_raw() as usize].as_mut().unwrap_unchecked() };
-        return (obj_ref, o);
+        let o = unsafe { self.objects[(obj_ref.into_raw() - 1) as usize].as_mut().unwrap_unchecked() };
+        (obj_ref, o)
     }
 
     pub fn destroy(&mut self, obj: ObjectRef) {
-        self.objects[obj.into_raw() as usize] = None;
+        self.objects[(obj.into_raw() - 1) as usize] = None;
     }
 
-    pub fn objects(
+    pub fn iter_mut(
         &mut self,
     ) -> impl Iterator<Item = &mut Option<Box<<C::Builder as Builder<C>>::Object>>> {
-        return self.objects.iter_mut();
+        self.objects.iter_mut()
     }
 }
 
@@ -180,7 +180,7 @@ where
     type Output = Box<<C::Builder as Builder<C>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output {
-        return self.objects[index.into_raw() as usize].as_ref().unwrap();
+        return self.objects[(index.into_raw() - 1) as usize].as_ref().unwrap();
     }
 }
 
@@ -189,6 +189,6 @@ where
     C::Builder: Builder<C>,
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
-        return self.objects[index.into_raw() as usize].as_mut().unwrap();
+        return self.objects[(index.into_raw() - 1) as usize].as_mut().unwrap();
     }
 }

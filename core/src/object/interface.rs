@@ -26,6 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::num::NonZeroU32;
 use crate::event::{Builder, Event};
 use crate::scene::Notify;
 
@@ -33,7 +34,7 @@ use crate::scene::Notify;
 ///
 /// *serves also as entry point into REGECS entity layer*
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
-pub struct ObjectRef(u32);
+pub struct ObjectRef(NonZeroU32);
 
 impl ObjectRef {
     /// Creates a new ObjectRef from a raw u32 index.
@@ -49,11 +50,11 @@ impl ObjectRef {
     /// This function assumes the raw index actually points to an object in the scene, if not
     /// then the behavior when using such dangling reference is undefined.
     pub unsafe fn from_raw(raw: u32) -> ObjectRef {
-        ObjectRef(raw)
+        ObjectRef(NonZeroU32::new_unchecked(raw))
     }
 
     pub fn into_raw(self) -> u32 {
-        self.0
+        self.0.get()
     }
 
     pub fn send<C: Context>(&self, ctx: &mut C, sender: Option<ObjectRef>, event: C::Event) {

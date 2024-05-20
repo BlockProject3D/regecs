@@ -138,7 +138,7 @@ impl<I: Interface> Scene<I> {
             if let Some(obj_ref) = event.target() {
                 self.object_event_call(state, obj_ref, &event);
             } else {
-                for (obj_ref, obj) in self.objects.objects().enumerate() {
+                for (obj_ref, obj) in self.objects.iter_mut().enumerate() {
                     if let Some(o) = obj.as_mut() {
                         if self.state.common.tree.is_enabled(unsafe { ObjectRef::from_raw(obj_ref as _) }) {
                             o.on_event(&mut self.state, state, &event);
