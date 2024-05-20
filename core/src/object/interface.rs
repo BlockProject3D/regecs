@@ -116,12 +116,15 @@ impl Flags {
     }
 }
 
+pub trait Class {
+    fn class(&self) -> &str;
+}
+
 /// Low-level object interface to represent all dynamic objects managed by a scene
-pub trait Object<C: Context> {
+pub trait Object<C: Context>: Class {
     fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
     fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
     fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
-    fn class(&self) -> &str;
 
     fn flags(&self) -> Flags {
         Flags::new()

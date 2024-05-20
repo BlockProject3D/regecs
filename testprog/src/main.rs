@@ -31,7 +31,7 @@ use regecs::component::pool::ComponentManager;
 use regecs::component::pool::ComponentPool;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
-use regecs::object::{Context as _, Object, ObjectRef};
+use regecs::object::{Class, Context as _, Object, ObjectRef};
 use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
@@ -193,6 +193,12 @@ pub struct TestSystemManager {
 
 pub struct Test;
 
+impl Class for Test {
+    fn class(&self) -> &str {
+        todo!()
+    }
+}
+
 impl Object<Ctx1> for Test {
     fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
         todo!()
@@ -203,10 +209,6 @@ impl Object<Ctx1> for Test {
     }
 
     fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
-        todo!()
-    }
-
-    fn class(&self) -> &str {
         todo!()
     }
 }
@@ -223,6 +225,13 @@ use regecs_codegen::New;
 use regecs_codegen::Object;
 
 pub struct Test2(regecs::object::builder::NullObject);
+
+impl Class for Test2 {
+    fn class(&self) -> &str {
+        todo!()
+    }
+}
+
 impl Object<Ctx1> for Test2 {
     fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
         todo!()
@@ -233,10 +242,6 @@ impl Object<Ctx1> for Test2 {
     }
 
     fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
-        todo!()
-    }
-
-    fn class(&self) -> &str {
         todo!()
     }
 }

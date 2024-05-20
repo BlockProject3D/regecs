@@ -77,7 +77,15 @@ macro_rules! register_objects2 {
             )*
         }
 
-        impl regecs::object::Object<$ctx> for $object_name {
+        impl $crate::object::Class for $object_name {
+            fn class(&self) -> &str {
+                match self {
+                    $($object_name::$class_name(v) => v.class(),)*
+                }
+            }
+        }
+
+        impl $crate::object::Object<$ctx> for $object_name {
             fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
                 match self {
                     $($object_name::$class_name(v) => v.on_event(ctx, state, event),)*
@@ -93,11 +101,6 @@ macro_rules! register_objects2 {
                     $($object_name::$class_name(v) => v.on_update(ctx, state),)*
                 }
             }
-            fn class(&self) -> &str {
-                match self {
-                    $($object_name::$class_name(v) => v.class(),)*
-                }
-            }
         }
 
         $(#[$outer])*
@@ -108,7 +111,7 @@ macro_rules! register_objects2 {
             )*
         }
 
-        impl regecs::object::Builder<$ctx> for $factory_name {
+        impl $crate::object::Builder<$ctx> for $factory_name {
             type Object = $object_name;
 
             fn build(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
@@ -124,7 +127,7 @@ macro_rules! register_objects2 {
         }
 
         $(
-            impl regecs::Create<$factory_name> for $object_type {
+            impl $crate::Create<$factory_name> for $object_type {
                 type Arguments = <$object_type as regecs::object::New<$ctx>>::Arguments;
                 fn create(args: Self::Arguments) -> $factory_name {
                     $factory_name::$class_name(args)

@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, Event, EventManager};
-use crate::object::{Builder as ObjectBuilder, Object, ObjectRef, Storage, Tree};
+use crate::object::{Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use crate::component::Clear;

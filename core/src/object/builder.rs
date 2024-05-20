@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::{Context, New, Object, ObjectRef};
+use crate::object::{Class, Context, New, Object, ObjectRef};
 
 pub trait Builder<C: Context> {
     type Object: Object<C>;
@@ -37,16 +37,18 @@ pub trait Builder<C: Context> {
 
 pub struct NullObject;
 
+impl Class for NullObject {
+    fn class(&self) -> &str {
+        "null"
+    }
+}
+
 impl<C: Context> Object<C> for NullObject {
     fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {}
 
     fn on_remove(&mut self, _: &mut C, _: &C::AppState) {}
 
     fn on_update(&mut self, _: &mut C, _: &C::AppState) {}
-
-    fn class(&self) -> &str {
-        "null"
-    }
 }
 
 impl<C: Context> New<C> for NullObject {
