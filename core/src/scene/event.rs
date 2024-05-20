@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -32,7 +32,7 @@ use crate::object::{Context, ObjectRef};
 pub enum Type<C: Context> {
     EnableObject(bool),
     RemoveObject,
-    SpawnObject(C::Factory),
+    SpawnObject(C::Builder),
 }
 
 pub struct Event<C: Context> {
@@ -80,7 +80,7 @@ impl EventInfo {
             builder = builder.sender(sender);
         }
         if let Some(target) = self.target {
-            builder = builder.sender(target);
+            builder = builder.target(target);
         }
         builder
     }

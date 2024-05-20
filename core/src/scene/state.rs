@@ -43,7 +43,7 @@ pub struct SystemState<C: Context> {
 }
 
 impl<C: Context> crate::system::Context for SystemState<C> {
-    type Factory = C::Factory;
+    type Builder = C::Builder;
     type AppState = C::AppState;
     type ComponentManager = C::ComponentManager;
     type Event = C::Event;
@@ -74,8 +74,8 @@ impl<C: Context> crate::system::Context for SystemState<C> {
         self.system_event_manager.send(info.into_event(ty));
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory) {
-        let ty = super::event::Type::SpawnObject(factory);
+    fn spawn_object(&mut self, info: EventInfo, builder: Self::Builder) {
+        let ty = super::event::Type::SpawnObject(builder);
         self.system_event_manager.send(info.into_event(ty));
     }
 }
@@ -87,7 +87,7 @@ pub struct ObjectState<I: Interface> {
 }
 
 impl<I: Interface> crate::system::Context for ObjectState<I> {
-    type Factory = I::Builder;
+    type Builder = I::Builder;
     type AppState = I::AppState;
     type ComponentManager = I::ComponentManager;
     type Event = I::Event;
@@ -116,7 +116,7 @@ impl<I: Interface> crate::system::Context for ObjectState<I> {
         self.common.remove_object(info)
     }
 
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory) {
+    fn spawn_object(&mut self, info: EventInfo, factory: Self::Builder) {
         self.common.spawn_object(info, factory)
     }
 }

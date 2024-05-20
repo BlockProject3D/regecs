@@ -118,14 +118,14 @@ impl Tree {
 
 pub struct Storage<C: Context>
 where
-    C::Factory: Builder<C>,
+    C::Builder: Builder<C>,
 {
-    objects: Vec<Option<Box<<C::Factory as Builder<C>>::Object>>>,
+    objects: Vec<Option<Box<<C::Builder as Builder<C>>::Object>>>,
 }
 
 impl<C: Context> Storage<C>
 where
-    C::Factory: Builder<C>,
+    C::Builder: Builder<C>,
 {
     pub fn new() -> Storage<C> {
         Storage {
@@ -133,10 +133,10 @@ where
         }
     }
 
-    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Factory as Builder<C>>::Object>>(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Builder as Builder<C>>::Object>>(
         &mut self,
         func: F,
-    ) -> (ObjectRef, &mut Box<<C::Factory as Builder<C>>::Object>) {
+    ) -> (ObjectRef, &mut Box<<C::Builder as Builder<C>>::Object>) {
         let empty_slot = {
             let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
@@ -168,16 +168,16 @@ where
 
     pub fn objects(
         &mut self,
-    ) -> impl Iterator<Item = &mut Option<Box<<C::Factory as Builder<C>>::Object>>> {
+    ) -> impl Iterator<Item = &mut Option<Box<<C::Builder as Builder<C>>::Object>>> {
         return self.objects.iter_mut();
     }
 }
 
 impl<C: Context> Index<ObjectRef> for Storage<C>
 where
-    C::Factory: Builder<C>,
+    C::Builder: Builder<C>,
 {
-    type Output = Box<<C::Factory as Builder<C>>::Object>;
+    type Output = Box<<C::Builder as Builder<C>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output {
         return self.objects[index as usize].as_ref().unwrap();
@@ -186,7 +186,7 @@ where
 
 impl<C: Context> IndexMut<ObjectRef> for Storage<C>
 where
-    C::Factory: Builder<C>,
+    C::Builder: Builder<C>,
 {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
         return self.objects[index as usize].as_mut().unwrap();

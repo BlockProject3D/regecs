@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -30,7 +30,7 @@ use crate::scene::EventInfo;
 use crate::{component::Clear, event::EventManager, object::Tree};
 
 pub trait Context {
-    type Factory;
+    type Builder;
     type AppState;
     type ComponentManager: Clear;
     type Event;
@@ -41,7 +41,7 @@ pub trait Context {
     fn objects(&self) -> &Tree;
     fn enable_object(&mut self, info: EventInfo, enable: bool);
     fn remove_object(&mut self, info: EventInfo);
-    fn spawn_object(&mut self, info: EventInfo, factory: Self::Factory);
+    fn spawn_object(&mut self, info: EventInfo, builder: Self::Builder);
 }
 
 /// Update functionality.
