@@ -65,14 +65,33 @@ impl<'a, T: Component> Iterator for Iter<'a, T> {
 
 pub struct ComponentStore<T: Component> {
     list: T::List,
-    attachements: AttachmentsManager<T>
+    attachments: AttachmentsManager<T>
+}
+
+impl<T: Component> Default for ComponentStore<T>
+    where T::List: Default{
+    fn default() -> Self {
+        Self::new(T::List::default())
+    }
+}
+
+impl<T: Component> AsRef<T::List> for ComponentStore<T> {
+    fn as_ref(&self) -> &T::List {
+        &self.list
+    }
+}
+
+impl<T: Component> AsMut<T::List> for ComponentStore<T> {
+    fn as_mut(&mut self) -> &mut T::List {
+        &mut self.list
+    }
 }
 
 impl<T: Component> ComponentStore<T> {
     pub fn new(list: T::List) -> Self {
         Self {
             list,
-            attachements: AttachmentsManager::new()
+            attachments: AttachmentsManager::new()
         }
     }
 
@@ -80,47 +99,47 @@ impl<T: Component> ComponentStore<T> {
         self.list.len()
     }
 
-    pub fn add(&mut self, comp: T) -> usize {
-        self.list.add(comp)
+    pub fn add(&mut self, comp: T) -> ComponentRef<T> {
+        ComponentRef::new(self.list.add(comp))
     }
 
-    pub fn add_attach(&mut self, entity: EntityIndex, comp: T) -> usize {
+    pub fn add_attach(&mut self, entity: EntityIndex, comp: T) -> ComponentRef<T> {
         let r = self.list.add(comp);
-        self.attachements.attach(entity, ComponentRef::new(r));
-        r
+        self.attachments.attach(entity, ComponentRef::new(r));
+        ComponentRef::new(r)
     }
 
-    pub fn remove(&mut self, r: usize) {
-        self.list.remove(r);
-        self.attachements.remove(ComponentRef::new(r));
+    pub fn remove(&mut self, r: ComponentRef<T>) {
+        self.list.remove(r.index);
+        self.attachments.remove(ComponentRef::new(r.index));
     }
 
     pub fn attachments(&self, entity: EntityIndex) -> Iter<T> {
         Iter {
-            attachments: self.attachements.list2(entity),
+            attachments: self.attachments.list2(entity),
             list: &self.list
         }
     }
 
     pub fn attachments_mut(&mut self, entity: EntityIndex) -> IterMut<T> {
         IterMut {
-            attachments: self.attachements.list2(entity),
+            attachments: self.attachments.list2(entity),
             list: &mut self.list
         }
     }
 }
 
-impl<T: Component> Index<usize> for ComponentStore<T> {
+impl<T: Component> Index<ComponentRef<T>> for ComponentStore<T> {
     type Output = T;
 
-    fn index(&self, index: usize) -> &Self::Output {
-        self.list.index(index)
+    fn index(&self, index: ComponentRef<T>) -> &Self::Output {
+        self.list.index(index.index)
     }
 }
 
-impl<T: Component> IndexMut<usize> for ComponentStore<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        self.list.index_mut(index)
+impl<T: Component> IndexMut<ComponentRef<T>> for ComponentStore<T> {
+    fn index_mut(&mut self, index: ComponentRef<T>) -> &mut Self::Output {
+        self.list.index_mut(index.index)
     }
 }
 
@@ -140,9 +159,9 @@ impl<'a, T: 'a + Component> super::list::Iter<'a, T> for ComponentStore<T>
 
 impl<T: Component> Clear for ComponentStore<T> {
     fn clear(&mut self, entity: EntityIndex) {
-        for index in self.attachements.list2(entity) {
+        for index in self.attachments.list2(entity) {
             self.list.remove(index);
         }
-        self.attachements.clear(entity);
+        self.attachments.clear(entity);
     }
 }

@@ -34,4 +34,4 @@ mod interface;
 pub use interface::*;
 
 mod attachments;
-mod store;
+pub mod store;

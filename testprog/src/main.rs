@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use components::ComplexSystem;
-use regecs::component::list::ComponentPool;
+use regecs::component::list::{ComponentPool, ComponentPool2};
 use regecs::component::list::List;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
@@ -38,16 +38,18 @@ use regecs::{
     entity::{Entity, EntityPart},
     scene::Scene
 };
+use regecs::component::store::ComponentStore;
 
 use crate::components::ComplexComponent;
 
 mod components {
-    use regecs::component::list::{Attachments, ComponentPool, Iter};
+    use regecs::component::list::{Attachments, ComponentPool, ComponentPool2, Iter};
     use regecs::component::{
         list::{BasicComponentPool, GroupComponentPool},
         Component,
     };
     use regecs::component::{Clear, ComponentRef, Pool};
+    use regecs::component::store::ComponentStore;
     use regecs::entity::EntityIndex;
     use regecs::object::ObjectRef;
     use regecs::system::Update;
@@ -105,9 +107,9 @@ mod components {
 
     #[derive(Default)]
     pub struct TestComponentManager {
-        tests: Pool<Test>,
-        test2s: Pool<Test2>,
-        complexes: Pool<ComplexComponent>,
+        tests: ComponentStore<Test>,
+        test2s: ComponentStore<Test2>,
+        complexes: ComponentStore<ComplexComponent>,
     }
 
     regecs::impl_component_manager!(TestComponentManager { (tests: Test) (test2s: Test2) (complexes: ComplexComponent) });
@@ -135,16 +137,16 @@ mod components {
 
     impl<C: regecs::system::Context> Update<C> for ComplexSystem
     where
-        C::ComponentManager: ComponentPool<ComplexComponent>,
+        C::ComponentManager: ComponentPool2<ComplexComponent>,
     {
         fn update(&mut self, ctx: &mut C, _: &C::AppState) {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut()
-                    .pool_mut()
+                    .store_mut().as_mut()
                     .update_group(component.index, new_order);
             }
-            for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
+            for (i, v) in ctx.components_mut().store_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((ComponentRef::new(i), v.order));
@@ -168,14 +170,14 @@ impl Default for MySystem {
 
 impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
 where
-    C::ComponentManager: ComponentPool<components::Test> + ComponentPool<components::Test2>,
+    C::ComponentManager: ComponentPool2<components::Test> + ComponentPool2<components::Test2>,
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);
-        ctx.components_mut().get_mut(test).value = 12;
-        ctx.components_mut().get_mut(test2).value2 = 42;
-        assert_eq!(ctx.components().get(test2).value2, 42);
+        ctx.components_mut().store_mut()[test].value = 12;
+        ctx.components_mut().store_mut()[test2].value2 = 42;
+        assert_eq!(ctx.components().store()[test2].value2, 42);
         assert_eq!(*state, 42);
     }
 }
@@ -301,32 +303,33 @@ fn main() {
     let mut sc = Scene::new(Interface);
     let ctx = 42;
     let mgr = sc.component_manager_mut();
-    let mut entity = Entity::new(mgr, 0);
-    let test = entity.add_attach(components::Test { value: 12 });
-    mgr.get_mut(test).value = 1;
-    let test1 = mgr.add(components::Test { value: 0 });
-    let test2 = mgr.add(components::Test2 { value2: 0 });
-    mgr.add(ComplexComponent::new(2, 3));
-    mgr.add(ComplexComponent::new(1, 1));
-    mgr.add(ComplexComponent::new(2, 4));
-    mgr.add(ComplexComponent::new(1, 2));
+    //let mut entity = Entity::new(mgr, 0);
+    //let test = entity.add_attach(components::Test { value: 12 });
+    let test = mgr.store_mut().add_attach(0, components::Test { value: 12 });
+    mgr.store_mut()[test].value = 1;
+    let test1 = mgr.store_mut().add(components::Test { value: 0 });
+    let test2 = mgr.store_mut().add(components::Test2 { value2: 0 });
+    mgr.store_mut().add(ComplexComponent::new(2, 3));
+    mgr.store_mut().add(ComplexComponent::new(1, 1));
+    mgr.store_mut().add(ComplexComponent::new(2, 4));
+    mgr.store_mut().add(ComplexComponent::new(1, 2));
     let systems = sc.system_manager_mut();
     systems.my.val = 42;
     sc.update(&ctx);
     sc.update(&ctx);
     let (mut mgr, _) = sc.into_inner();
-    assert_eq!(mgr.get(test).value, 12);
-    assert_eq!(mgr.get(test2).value2, 42);
-    mgr.remove(test);
-    mgr.remove(test2);
+    assert_eq!(mgr.store()[test].value, 12);
+    assert_eq!(mgr.store()[test2].value2, 42);
+    mgr.store_mut().remove(test);
+    mgr.store_mut().remove(test2);
     let sfdk =
-        <components::TestComponentManager as ComponentPool<components::Test>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool2<components::Test>>::store(&mgr).len();
     let fh =
-        <components::TestComponentManager as ComponentPool<components::Test2>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool2<components::Test2>>::store(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
-    mgr.remove(test1);
+    mgr.store_mut().remove(test1);
     let test =
-        <components::TestComponentManager as ComponentPool<components::Test>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool2<components::Test>>::store(&mgr).len();
     assert_eq!(test, 0);
 }

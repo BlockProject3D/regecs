@@ -32,12 +32,12 @@ macro_rules! impl_component_manager {
         $name: ty { $(($pname: ident : $ptype: ty))* }
     ) => {
         $(
-            impl regecs::component::list::ComponentPool<$ptype> for $name {
-                fn pool(&self) -> & <$ptype as regecs::component::Component>::List {
+            impl $crate::component::list::ComponentPool2<$ptype> for $name {
+                fn store(&self) -> &$crate::component::store::ComponentStore<$ptype> {
                     &self.$pname
                 }
 
-                fn pool_mut(&mut self) -> &mut <$ptype as regecs::component::Component>::List {
+                fn store_mut(&mut self) -> &mut $crate::component::store::ComponentStore<$ptype> {
                     &mut self.$pname
                 }
             }
