@@ -36,7 +36,7 @@ use crate::entity::EntityIndex;
 /// Represents a component
 pub trait Component: Sized {
     /// The type of ComponentPool to use for storing instances of this component
-    type Pool: List<Self>;
+    type List: List<Self>;
 }
 
 pub struct ComponentRef<T: Component> {
@@ -95,4 +95,4 @@ pub trait Clear {
     fn clear(&mut self, entity: EntityIndex);
 }
 
-pub type Pool<T> = <T as Component>::Pool;
+pub type Pool<T> = <T as Component>::List;

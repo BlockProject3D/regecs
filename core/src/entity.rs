@@ -70,7 +70,7 @@ pub trait EntityPart<T: Component, CM: ComponentManager<T>> {
 
 impl<'a, T: Component, CM: ComponentManager<T>> EntityPart<T, CM> for Entity<'a, CM>
 where
-    T::Pool: Attachments<T>,
+    T::List: Attachments<T>,
 {
     fn add_attach(&mut self, comp: T) -> ComponentRef<T> {
         let r = self.mgr.add(comp);

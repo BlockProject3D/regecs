@@ -57,7 +57,7 @@ mod components {
     }
 
     impl Component for Test {
-        type Pool = BasicComponentPool<Test>;
+        type List = BasicComponentPool<Test>;
     }
 
     //impl ClassConnector for Test
@@ -80,7 +80,7 @@ mod components {
     }
 
     impl Component for Test2 {
-        type Pool = BasicComponentPool<Test2>;
+        type List = BasicComponentPool<Test2>;
     }
 
     pub struct ComplexComponent {
@@ -100,7 +100,7 @@ mod components {
     }
 
     impl Component for ComplexComponent {
-        type Pool = GroupComponentPool<u32, ComplexComponent>;
+        type List = GroupComponentPool<u32, ComplexComponent>;
     }
 
     #[derive(Default)]

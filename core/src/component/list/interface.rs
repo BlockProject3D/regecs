@@ -153,8 +153,8 @@ pub trait List<'a, T: 'a + Component> {
 }*/
 
 pub trait ComponentManager<T: Component> {
-    fn pool(&self) -> &T::Pool;
-    fn pool_mut(&mut self) -> &mut T::Pool;
+    fn pool(&self) -> &T::List;
+    fn pool_mut(&mut self) -> &mut T::List;
 
     fn get(&self, r: ComponentRef<T>) -> &T {
         &self.pool()[r.index]
