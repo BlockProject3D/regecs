@@ -26,15 +26,15 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ops::{Index, IndexMut};
 use crate::component::attachments::AttachmentsManager;
-use crate::component::{Clear, Component, ComponentRef};
 use crate::component::list::List;
+use crate::component::{Clear, Component, ComponentRef};
 use crate::entity::EntityIndex;
+use std::ops::{Index, IndexMut};
 
 pub struct IterMut<'a, T: Component> {
     list: &'a mut T::List,
-    attachments: super::attachments::Iter<'a, T>
+    attachments: super::attachments::Iter<'a, T>,
 }
 
 impl<'a, T: Component> Iterator for IterMut<'a, T> {
@@ -51,7 +51,7 @@ impl<'a, T: Component> Iterator for IterMut<'a, T> {
 
 pub struct Iter<'a, T: Component> {
     list: &'a T::List,
-    attachments: super::attachments::Iter<'a, T>
+    attachments: super::attachments::Iter<'a, T>,
 }
 
 impl<'a, T: Component> Iterator for Iter<'a, T> {
@@ -65,11 +65,13 @@ impl<'a, T: Component> Iterator for Iter<'a, T> {
 
 pub struct ComponentStore<T: Component> {
     list: T::List,
-    attachments: AttachmentsManager<T>
+    attachments: AttachmentsManager<T>,
 }
 
 impl<T: Component> Default for ComponentStore<T>
-    where T::List: Default{
+where
+    T::List: Default,
+{
     fn default() -> Self {
         Self::new(T::List::default())
     }
@@ -85,7 +87,7 @@ impl<T: Component> ComponentStore<T> {
     pub fn new(list: T::List) -> Self {
         Self {
             list,
-            attachments: AttachmentsManager::new()
+            attachments: AttachmentsManager::new(),
         }
     }
 
@@ -120,14 +122,14 @@ impl<T: Component> ComponentStore<T> {
     pub fn attachments(&self, entity: EntityIndex) -> Iter<T> {
         Iter {
             attachments: self.attachments.list(entity),
-            list: &self.list
+            list: &self.list,
         }
     }
 
     pub fn attachments_mut(&mut self, entity: EntityIndex) -> IterMut<T> {
         IterMut {
             attachments: self.attachments.list(entity),
-            list: &mut self.list
+            list: &mut self.list,
         }
     }
 }
@@ -147,7 +149,9 @@ impl<T: Component> IndexMut<ComponentRef<T>> for ComponentStore<T> {
 }
 
 impl<'a, T: 'a + Component> super::list::Iter<'a, T> for ComponentStore<T>
-    where T::List : super::list::Iter<'a, T> {
+where
+    T::List: super::list::Iter<'a, T>,
+{
     type Iter = <<T as Component>::List as super::list::Iter<'a, T>>::Iter;
     type IterMut = <<T as Component>::List as super::list::Iter<'a, T>>::IterMut;
 

@@ -35,6 +35,6 @@ mod state;
 
 pub use self::core::Scene;
 pub use self::event::Notify;
-pub use self::state::SystemState;
-pub use self::state::ObjectState;
 pub use self::interface::*;
+pub use self::state::ObjectState;
+pub use self::state::SystemState;

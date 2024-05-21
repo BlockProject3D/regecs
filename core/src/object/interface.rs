@@ -26,9 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::num::NonZeroU32;
 use crate::event::{Builder, Event};
 use crate::scene::Notify;
+use std::num::NonZeroU32;
 
 /// Type alias for object references
 ///
@@ -88,14 +88,14 @@ pub trait Index {
 
 pub struct Flags {
     updates: bool,
-    receives_events: bool
+    receives_events: bool,
 }
 
 impl Flags {
     pub fn new() -> Flags {
         Flags {
             updates: false,
-            receives_events: false
+            receives_events: false,
         }
     }
 

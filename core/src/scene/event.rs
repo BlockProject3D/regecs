@@ -38,24 +38,15 @@ pub enum Type<C: Context> {
 pub enum Notify {
     Sender(ObjectRef),
     All,
-    None
+    None,
 }
 
 impl Notify {
     pub fn into_builder<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
         match self {
-            Notify::Sender(v) => Builder::new(Event {
-                notify: true,
-                ty
-            }).sender(v),
-            Notify::All => Builder::new(Event {
-                notify: true,
-                ty
-            }),
-            Notify::None => Builder::new(Event {
-                notify: false,
-                ty
-            })
+            Notify::Sender(v) => Builder::new(Event { notify: true, ty }).sender(v),
+            Notify::All => Builder::new(Event { notify: true, ty }),
+            Notify::None => Builder::new(Event { notify: false, ty }),
         }
     }
 }

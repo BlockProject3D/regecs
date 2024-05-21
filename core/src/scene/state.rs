@@ -64,13 +64,15 @@ impl<C: Context> crate::system::Context for SystemState<C> {
     }
 
     fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
-        let builder = notify.into_builder(super::event::Type::EnableObject(enable))
+        let builder = notify
+            .into_builder(super::event::Type::EnableObject(enable))
             .target(target);
         self.system_event_manager.send(builder);
     }
 
     fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
-        let builder = notify.into_builder(super::event::Type::RemoveObject)
+        let builder = notify
+            .into_builder(super::event::Type::RemoveObject)
             .target(target);
         self.system_event_manager.send(builder);
     }

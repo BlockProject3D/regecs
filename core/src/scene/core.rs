@@ -26,20 +26,20 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{builder::Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
+use crate::scene::state::{ObjectState, SystemState};
+use crate::scene::Interface;
+use crate::system::Update;
 use std::collections::HashSet;
 use std::marker::PhantomData;
-use crate::component::Clear;
-use crate::scene::Interface;
-use crate::scene::state::{ObjectState, SystemState};
-use crate::system::Update;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<I: Interface> {
     state: ObjectState<I>,
     objects: Storage<ObjectState<I>>,
-    updatable: HashSet<ObjectRef>
+    updatable: HashSet<ObjectRef>,
 }
 
 impl<I: Interface> Scene<I> {
@@ -57,7 +57,7 @@ impl<I: Interface> Scene<I> {
                 useless: PhantomData::default(),
             },
             objects: Storage::new(),
-            updatable: HashSet::new()
+            updatable: HashSet::new(),
         };
     }
 
@@ -87,7 +87,14 @@ impl<I: Interface> Scene<I> {
             super::event::Type::EnableObject(flag) => {
                 let target = target.expect("No target given to EnableObject");
                 self.state.common.tree.set_enabled(target, flag);
-                if unsafe { self.state.common.tree.get_flags(target).unwrap_unchecked().is_updatable() } {
+                if unsafe {
+                    self.state
+                        .common
+                        .tree
+                        .get_flags(target)
+                        .unwrap_unchecked()
+                        .is_updatable()
+                } {
                     if flag {
                         self.updatable.insert(target);
                     } else {
@@ -96,7 +103,9 @@ impl<I: Interface> Scene<I> {
                 }
             },
             super::event::Type::SpawnObject(builder) => {
-                let (obj_ref, obj) = self.objects.insert(|obj_ref| Box::new(builder.build(&mut self.state, state, obj_ref)));
+                let (obj_ref, obj) = self
+                    .objects
+                    .insert(|obj_ref| Box::new(builder.build(&mut self.state, state, obj_ref)));
                 let flags = obj.flags();
                 if flags.is_updatable() {
                     self.updatable.insert(obj_ref);
@@ -140,7 +149,12 @@ impl<I: Interface> Scene<I> {
             } else {
                 for (obj_ref, obj) in self.objects.iter_mut().enumerate() {
                     if let Some(o) = obj.as_mut() {
-                        if self.state.common.tree.is_enabled(unsafe { ObjectRef::from_raw(obj_ref as _) }) {
+                        if self
+                            .state
+                            .common
+                            .tree
+                            .is_enabled(unsafe { ObjectRef::from_raw(obj_ref as _) })
+                        {
                             o.on_event(&mut self.state, state, &event);
                         }
                     }

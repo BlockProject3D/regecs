@@ -26,9 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::object::ObjectRef;
 use crate::scene::Notify;
 use crate::{component::Clear, event::EventManager, object::Tree};
-use crate::object::ObjectRef;
 
 pub trait Context {
     type Builder;
