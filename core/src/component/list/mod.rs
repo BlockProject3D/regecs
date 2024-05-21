@@ -26,11 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-mod basic_pool;
-mod grouped_pool;
+mod basic;
+mod grouped;
 mod interface;
 
 pub use interface::*;
 
-pub use basic_pool::BasicComponentPool;
-pub use grouped_pool::GroupComponentPool;
+pub use basic::BasicComponentList;
+pub use grouped::GroupComponentList;

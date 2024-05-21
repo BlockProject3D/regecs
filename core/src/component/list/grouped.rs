@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::list::{Attachments, BasicComponentPool, List, Iter};
+use crate::component::list::{Attachments, BasicComponentList, List, Iter};
 use crate::component::{Component, ComponentRef};
 use std::{
     collections::{hash_map::Values, HashMap},
@@ -39,7 +39,7 @@ macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
         pub struct $name<'a, K: Sized + Eq + Hash + Copy, T: Component>
         {
-            comps: &'a $($su)? BasicComponentPool<T>,
+            comps: &'a $($su)? BasicComponentList<T>,
             values: Values<'a, K, Vec<usize>>,
             vec: Option<&'a Vec<usize>>,
             pos: usize
@@ -47,7 +47,7 @@ macro_rules! gcp_iterator {
 
         impl <'a, K: Sized + Eq + Hash + Copy, T: Component> $name<'a, K, T>
         {
-            pub fn new(comps: &'a $($su)? BasicComponentPool<T>, values: Values<'a, K, Vec<usize>>) -> $name<'a, K, T>
+            pub fn new(comps: &'a $($su)? BasicComponentList<T>, values: Values<'a, K, Vec<usize>>) -> $name<'a, K, T>
             {
                 return $name {
                     comps,
@@ -114,13 +114,13 @@ gcp_iterator!(GcpIteratorMut, mut);
 /// *This list is optimized for rendering systems to reduce the number of pipeline changes*
 ///
 /// _NOTE: The K::default() group is reserved to store components that are not yet attached to a group_
-pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy + Default, T: Component> {
-    comps: BasicComponentPool<T>,
+pub struct GroupComponentList<K: Sized + Eq + Hash + Copy + Default, T: Component> {
+    comps: BasicComponentList<T>,
     map: HashMap<K, Vec<usize>>,
     group_map: HashMap<usize, K>,
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> GroupComponentPool<K, T> {
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> GroupComponentList<K, T> {
     /// Update the group of a component
     ///
     /// # Arguments
@@ -145,10 +145,10 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> GroupComponentPool<K, 
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default for GroupComponentPool<K, T> {
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default for GroupComponentList<K, T> {
     fn default() -> Self {
-        return GroupComponentPool {
-            comps: BasicComponentPool::default(),
+        return GroupComponentList {
+            comps: BasicComponentList::default(),
             group_map: HashMap::new(),
             map: HashMap::new(),
         };
@@ -156,7 +156,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default for GroupCompo
 }
 
 impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T>
-    for GroupComponentPool<K, T>
+    for GroupComponentList<K, T>
 {
     fn add(&mut self, comp: T) -> usize {
         let r = self.comps.add(comp);
@@ -183,7 +183,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T>
 }
 
 impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T>
-    for GroupComponentPool<K, T>
+    for GroupComponentList<K, T>
 {
     fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
         self.comps.attach(entity, r);
@@ -211,7 +211,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T>
 }
 
 impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component> Iter<'a, T>
-    for GroupComponentPool<K, T>
+    for GroupComponentList<K, T>
 {
     type Iter = GcpIterator<'a, K, T>;
     type IterMut = GcpIteratorMut<'a, K, T>;
@@ -226,7 +226,7 @@ impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component> Iter<'a,
 }
 
 impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Index<usize>
-    for GroupComponentPool<K, T>
+    for GroupComponentList<K, T>
 {
     type Output = T;
 
@@ -236,7 +236,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Index<usize>
 }
 
 impl<K: Sized + Eq + Hash + Copy + Default, T: Component> IndexMut<usize>
-    for GroupComponentPool<K, T>
+    for GroupComponentList<K, T>
 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         return self.comps.index_mut(index);

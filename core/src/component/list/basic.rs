@@ -96,15 +96,15 @@ bcp_iterator!(BcpIteratorMut, mut);
 /// Basic component list (stores components in a single simple array list)
 ///
 /// *May not be optimized for rendering 3D model components*
-pub struct BasicComponentPool<T: Component> {
+pub struct BasicComponentList<T: Component> {
     comps: Vec<Option<T>>,
     size: usize,
     attachments: AttachmentsManager<T>,
 }
 
-impl<T: Component> Default for BasicComponentPool<T> {
+impl<T: Component> Default for BasicComponentList<T> {
     fn default() -> Self {
-        return BasicComponentPool {
+        return BasicComponentList {
             comps: Vec::new(),
             size: 0,
             attachments: AttachmentsManager::new(),
@@ -112,7 +112,7 @@ impl<T: Component> Default for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> List<T> for BasicComponentPool<T> {
+impl<T: Component> List<T> for BasicComponentList<T> {
     fn add(&mut self, comp: T) -> usize {
         let mut i = 0;
         while i < self.comps.len() && self.comps[i].is_some() {
@@ -143,7 +143,7 @@ impl<T: Component> List<T> for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> Attachments<T> for BasicComponentPool<T> {
+impl<T: Component> Attachments<T> for BasicComponentList<T> {
     fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
         self.attachments.attach(entity, r);
     }
@@ -178,7 +178,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
     }
 }
 
-impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T> {
+impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentList<T> {
     type Iter = BcpIterator<'a, T>;
     type IterMut = BcpIteratorMut<'a, T>;
 
@@ -191,7 +191,7 @@ impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> Index<usize> for BasicComponentPool<T> {
+impl<T: Component> Index<usize> for BasicComponentList<T> {
     type Output = T;
 
     fn index(&self, r: usize) -> &Self::Output {
@@ -199,7 +199,7 @@ impl<T: Component> Index<usize> for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> IndexMut<usize> for BasicComponentPool<T> {
+impl<T: Component> IndexMut<usize> for BasicComponentList<T> {
     fn index_mut(&mut self, r: usize) -> &mut Self::Output {
         return self.comps[r].as_mut().unwrap();
     }

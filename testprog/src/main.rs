@@ -45,7 +45,7 @@ use crate::components::ComplexComponent;
 mod components {
     use regecs::component::list::{Attachments, ComponentPool, ComponentPool2, Iter};
     use regecs::component::{
-        list::{BasicComponentPool, GroupComponentPool},
+        list::{BasicComponentList, GroupComponentList},
         Component,
     };
     use regecs::component::{Clear, ComponentRef, Pool};
@@ -59,7 +59,7 @@ mod components {
     }
 
     impl Component for Test {
-        type List = BasicComponentPool<Test>;
+        type List = BasicComponentList<Test>;
     }
 
     //impl ClassConnector for Test
@@ -82,7 +82,7 @@ mod components {
     }
 
     impl Component for Test2 {
-        type List = BasicComponentPool<Test2>;
+        type List = BasicComponentList<Test2>;
     }
 
     pub struct ComplexComponent {
@@ -102,7 +102,7 @@ mod components {
     }
 
     impl Component for ComplexComponent {
-        type List = GroupComponentPool<u32, ComplexComponent>;
+        type List = GroupComponentList<u32, ComplexComponent>;
     }
 
     #[derive(Default)]
