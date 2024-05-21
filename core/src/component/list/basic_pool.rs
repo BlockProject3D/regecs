@@ -57,7 +57,7 @@ macro_rules! bcp_iterator {
 
         impl<'a, T: Component> Iterator for $name<'a, T>
         {
-            type Item = (ComponentRef<T>, &'a $($su)? T);
+            type Item = (usize, &'a $($su)? T);
 
             fn next(&mut self) -> Option<Self::Item>
             {
@@ -67,7 +67,7 @@ macro_rules! bcp_iterator {
                 macro_rules! bcp_iter_internal {
                     () => {
                         if let Some(v) = &self.comps[self.pos] {
-                            return Some((ComponentRef::new(self.pos), v));
+                            return Some((self.pos, v));
                         } else {
                             return None;
                         }
@@ -77,7 +77,7 @@ macro_rules! bcp_iterator {
                             unsafe
                             {
                                 let ptr = v as *mut T;
-                                return Some((ComponentRef::new(self.pos), &mut *ptr));
+                                return Some((self.pos, &mut *ptr));
                             }
                         } else {
                             return None;
@@ -113,7 +113,7 @@ impl<T: Component> Default for BasicComponentPool<T> {
 }
 
 impl<T: Component> List<T> for BasicComponentPool<T> {
-    fn add(&mut self, comp: T) -> ComponentRef<T> {
+    fn add(&mut self, comp: T) -> usize {
         let mut i = 0;
         while i < self.comps.len() && self.comps[i].is_some() {
             i += 1;
@@ -124,18 +124,18 @@ impl<T: Component> List<T> for BasicComponentPool<T> {
             self.comps[i] = Some(comp);
         }
         self.size += 1;
-        ComponentRef::new(i)
+        i
     }
 
-    fn remove(&mut self, r: ComponentRef<T>) {
-        self.comps[r.index] = None; //Mark slot as unclaimed
+    fn remove(&mut self, r: usize) {
+        self.comps[r] = None; //Mark slot as unclaimed
         let mut i = self.comps.len() - 1; //Trim end of array
         while i > 0 && self.comps[i].is_none() {
             self.comps.remove(i);
             i -= 1;
         }
         self.size -= 1;
-        self.attachments.remove(r);
+        self.attachments.remove(ComponentRef::new(r));
     }
 
     fn len(&self) -> usize {
@@ -155,7 +155,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
     fn clear(&mut self, entity: EntityIndex) {
         if let Some(set) = self.attachments.list(entity) {
             for v in set {
-                self.remove(v)
+                self.remove(v.index)
             }
             self.attachments.clear(entity);
         }
@@ -163,7 +163,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
 
     fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T> {
         if let Some(r) = self.attachments.get_first(entity) {
-            Some(&mut self[r])
+            Some(&mut self[r.index])
         } else {
             None
         }
@@ -171,7 +171,7 @@ impl<T: Component> Attachments<T> for BasicComponentPool<T> {
 
     fn get_first(&self, entity: EntityIndex) -> Option<&T> {
         if let Some(r) = self.attachments.get_first(entity) {
-            Some(&self[r])
+            Some(&self[r.index])
         } else {
             None
         }
@@ -191,16 +191,16 @@ impl<'a, T: 'a + Component> Iter<'a, T> for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> Index<ComponentRef<T>> for BasicComponentPool<T> {
+impl<T: Component> Index<usize> for BasicComponentPool<T> {
     type Output = T;
 
-    fn index(&self, r: ComponentRef<T>) -> &Self::Output {
-        return self.comps[r.index].as_ref().unwrap();
+    fn index(&self, r: usize) -> &Self::Output {
+        return self.comps[r].as_ref().unwrap();
     }
 }
 
-impl<T: Component> IndexMut<ComponentRef<T>> for BasicComponentPool<T> {
-    fn index_mut(&mut self, r: ComponentRef<T>) -> &mut Self::Output {
-        return self.comps[r.index].as_mut().unwrap();
+impl<T: Component> IndexMut<usize> for BasicComponentPool<T> {
+    fn index_mut(&mut self, r: usize) -> &mut Self::Output {
+        return self.comps[r].as_mut().unwrap();
     }
 }

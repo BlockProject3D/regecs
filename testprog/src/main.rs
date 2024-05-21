@@ -142,12 +142,12 @@ mod components {
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut()
                     .pool_mut()
-                    .update_group(component, new_order);
+                    .update_group(component.index, new_order);
             }
             for (i, v) in ctx.components_mut().pool_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
-                    self.events.push((i, v.order));
+                    self.events.push((ComponentRef::new(i), v.order));
                     v.last_order = v.order;
                 }
                 println!("{}, {}", i, v.value);

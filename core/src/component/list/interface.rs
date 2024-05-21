@@ -30,11 +30,11 @@ use std::ops::{Index, IndexMut};
 use crate::component::{Component, ComponentRef};
 use crate::entity::EntityIndex;
 
-/// Represents an allocation list for a given type of component
+/// Represents an allocation list for a given type of component.
 ///
-/// *The ComponentPool is a trait to allow customizing the data structure used to store components*
+/// *The [List] is a trait to allow customizing the data structure used to store components.*
 pub trait List<T: Component>:
-    Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
+    Index<usize, Output = T> + IndexMut<usize>
 where
     Self: Sized,
 {
@@ -47,14 +47,14 @@ where
     /// # Returns
     ///
     /// * a reference to the new stored component
-    fn add(&mut self, comp: T) -> ComponentRef<T>;
+    fn add(&mut self, comp: T) -> usize;
 
     /// Removes a component from this list
     ///
     /// # Arguments
     ///
     /// * `r` - a reference to the component to remove
-    fn remove(&mut self, r: ComponentRef<T>);
+    fn remove(&mut self, r: usize);
 
     /// Returns the number of components stored in this list
     ///
@@ -75,10 +75,10 @@ where
 /// *to get the actual component instance use index or index_mut*
 pub trait Iter<'a, T: 'a + Component> {
     /// The type of immutable iterator
-    type Iter: Iterator<Item = (ComponentRef<T>, &'a T)>;
+    type Iter: Iterator<Item = (usize, &'a T)>;
 
     /// The type of mutable iterator
-    type IterMut: Iterator<Item = (ComponentRef<T>, &'a mut T)>;
+    type IterMut: Iterator<Item = (usize, &'a mut T)>;
 
     /// Returns an iterator into this list
     ///
@@ -157,18 +157,18 @@ pub trait ComponentManager<T: Component> {
     fn pool_mut(&mut self) -> &mut T::Pool;
 
     fn get(&self, r: ComponentRef<T>) -> &T {
-        &self.pool()[r]
+        &self.pool()[r.index]
     }
 
     fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T {
-        &mut self.pool_mut()[r]
+        &mut self.pool_mut()[r.index]
     }
 
     fn add(&mut self, comp: T) -> ComponentRef<T> {
-        self.pool_mut().add(comp)
+        ComponentRef::new(self.pool_mut().add(comp))
     }
 
     fn remove(&mut self, r: ComponentRef<T>) {
-        self.pool_mut().remove(r);
+        self.pool_mut().remove(r.index);
     }
 }
