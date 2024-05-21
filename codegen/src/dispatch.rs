@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -31,7 +31,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{Field, Fields, Index, Type, Variant};
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub enum FieldName {
     Ident(Ident),
     Index(usize),
