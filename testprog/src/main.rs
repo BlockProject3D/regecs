@@ -28,7 +28,7 @@
 
 use components::ComplexSystem;
 use regecs::component::list::List;
-use regecs::component::{ComponentPool2, ComponentRef};
+use regecs::component::{ComponentPool, ComponentRef};
 use regecs::event::Event;
 use regecs::object::{Class, Context as _, Object, ObjectRef};
 use regecs::scene::{ObjectState, SystemState};
@@ -39,7 +39,7 @@ use crate::components::ComplexComponent;
 
 mod components {
     use regecs::component::list::Iter;
-    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool2};
+    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool};
     use regecs::component::{Clear, ComponentRef};
     use regecs::component::store::ComponentStore;
     use regecs::entity::EntityIndex;
@@ -128,7 +128,7 @@ mod components {
 
     impl<C: regecs::system::Context> Update<C> for ComplexSystem
     where
-        C::ComponentManager: ComponentPool2<ComplexComponent>,
+        C::ComponentManager: ComponentPool<ComplexComponent>,
     {
         fn update(&mut self, ctx: &mut C, _: &C::AppState) {
             println!("____");
@@ -161,7 +161,7 @@ impl Default for MySystem {
 
 impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
 where
-    C::ComponentManager: ComponentPool2<components::Test> + ComponentPool2<components::Test2>,
+    C::ComponentManager: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
@@ -314,13 +314,13 @@ fn main() {
     mgr.store_mut().remove(test);
     mgr.store_mut().remove(test2);
     let sfdk =
-        <components::TestComponentManager as ComponentPool2<components::Test>>::store(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test>>::store(&mgr).len();
     let fh =
-        <components::TestComponentManager as ComponentPool2<components::Test2>>::store(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test2>>::store(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
     mgr.store_mut().remove(test1);
     let test =
-        <components::TestComponentManager as ComponentPool2<components::Test>>::store(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test>>::store(&mgr).len();
     assert_eq!(test, 0);
 }

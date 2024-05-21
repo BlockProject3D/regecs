@@ -28,7 +28,7 @@
 
 //! REGECS entity layer.
 
-use crate::component::ComponentPool2;
+use crate::component::ComponentPool;
 use crate::component::Component;
 use crate::component::store::{Iter, IterMut};
 
@@ -61,14 +61,14 @@ pub struct EntityHelper<'a, CP> {
     entity: EntityIndex,
 }
 
-pub trait EntityPart<T: Component, CP: ComponentPool2<T>> {
+pub trait EntityPart<T: Component, CP: ComponentPool<T>> {
     fn iter(&self, _: ComponentType<T>) -> Iter<T>;
     fn iter_mut(&mut self, _: ComponentType<T>) -> IterMut<T>;
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, CP: ComponentPool2<T>> EntityPart<T, CP> for EntityHelper<'a, CP> {
+impl<'a, T: Component, CP: ComponentPool<T>> EntityPart<T, CP> for EntityHelper<'a, CP> {
     fn iter(&self, _: ComponentType<T>) -> Iter<T> {
         return self.mgr.store().attachments(self.entity);
     }

@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::ops::{Index, IndexMut};
-use crate::component::{Component, ComponentRef};
+use crate::component::Component;
 
 /// Represents an allocation list for a given type of component.
 ///
@@ -92,25 +92,4 @@ pub trait Iter<'a, T: 'a + Component> {
     ///
     /// * a new mutable iterator instance
     fn iter_mut(&'a mut self) -> Self::IterMut;
-}
-
-pub trait ComponentPool<T: Component> {
-    fn pool(&self) -> &T::List;
-    fn pool_mut(&mut self) -> &mut T::List;
-
-    fn get(&self, r: ComponentRef<T>) -> &T {
-        &self.pool()[r.index]
-    }
-
-    fn get_mut(&mut self, r: ComponentRef<T>) -> &mut T {
-        &mut self.pool_mut()[r.index]
-    }
-
-    fn add(&mut self, comp: T) -> ComponentRef<T> {
-        ComponentRef::new(self.pool_mut().add(comp))
-    }
-
-    fn remove(&mut self, r: ComponentRef<T>) {
-        self.pool_mut().remove(r.index);
-    }
 }

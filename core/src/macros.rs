@@ -32,7 +32,7 @@ macro_rules! impl_component_manager {
         $name: ty { $(($pname: ident : $ptype: ty))* }
     ) => {
         $(
-            impl $crate::component::ComponentPool2<$ptype> for $name {
+            impl $crate::component::ComponentPool<$ptype> for $name {
                 fn store(&self) -> &$crate::component::store::ComponentStore<$ptype> {
                     &self.$pname
                 }

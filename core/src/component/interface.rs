@@ -96,7 +96,7 @@ pub trait Clear {
     fn clear(&mut self, entity: EntityIndex);
 }
 
-pub trait ComponentPool2<T: Component> {
+pub trait ComponentPool<T: Component> {
     fn store(&self) -> &ComponentStore<T>;
     fn store_mut(&mut self) -> &mut ComponentStore<T>;
 }
