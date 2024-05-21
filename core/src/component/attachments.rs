@@ -31,6 +31,20 @@ use std::collections::{HashMap, HashSet};
 use crate::component::{Component, ComponentRef};
 use crate::entity::EntityIndex;
 
+pub struct Iter<'a, T: Component>(Option<std::collections::hash_set::Iter<'a, ComponentRef<T>>>);
+
+impl<'a, T: Component> Iterator for Iter<'a, T> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(v) = &mut self.0 {
+            v.next().map(|v| v.index)
+        } else {
+            None
+        }
+    }
+}
+
 pub struct AttachmentsManager<T: Component> {
     map: HashMap<EntityIndex, HashSet<ComponentRef<T>>>,
     inv_map: HashMap<ComponentRef<T>, EntityIndex>,
@@ -73,6 +87,14 @@ impl<T: Component> AttachmentsManager<T> {
             return Some(vec);
         }
         return None;
+    }
+
+    pub fn list2(&self, entity: EntityIndex) -> Iter<T> {
+        if let Some(set) = self.map.get(&entity) {
+            Iter(Some(set.iter()))
+        } else {
+            Iter(None)
+        }
     }
 
     pub fn clear(&mut self, entity: EntityIndex) {
