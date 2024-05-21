@@ -28,7 +28,7 @@
 
 //! REGECS entity layer.
 
-use crate::component::list::{Attachments, ComponentManager};
+use crate::component::list::{Attachments, ComponentPool};
 use crate::component::ComponentRef;
 use crate::component::Component;
 
@@ -61,14 +61,14 @@ pub struct Entity<'a, ComponentManager> {
     entity: EntityIndex,
 }
 
-pub trait EntityPart<T: Component, CM: ComponentManager<T>> {
+pub trait EntityPart<T: Component, CM: ComponentPool<T>> {
     fn add_attach(&mut self, comp: T) -> ComponentRef<T>;
     fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, CM: ComponentManager<T>> EntityPart<T, CM> for Entity<'a, CM>
+impl<'a, T: Component, CM: ComponentPool<T>> EntityPart<T, CM> for Entity<'a, CM>
 where
     T::List: Attachments<T>,
 {

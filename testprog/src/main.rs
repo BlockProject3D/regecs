@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use components::ComplexSystem;
-use regecs::component::list::ComponentManager;
+use regecs::component::list::ComponentPool;
 use regecs::component::list::List;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
@@ -42,7 +42,7 @@ use regecs::{
 use crate::components::ComplexComponent;
 
 mod components {
-    use regecs::component::list::{Attachments, ComponentManager, Iter};
+    use regecs::component::list::{Attachments, ComponentPool, Iter};
     use regecs::component::{
         list::{BasicComponentPool, GroupComponentPool},
         Component,
@@ -135,7 +135,7 @@ mod components {
 
     impl<C: regecs::system::Context> Update<C> for ComplexSystem
     where
-        C::ComponentManager: ComponentManager<ComplexComponent>,
+        C::ComponentManager: ComponentPool<ComplexComponent>,
     {
         fn update(&mut self, ctx: &mut C, _: &C::AppState) {
             println!("____");
@@ -168,7 +168,7 @@ impl Default for MySystem {
 
 impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
 where
-    C::ComponentManager: ComponentManager<components::Test> + ComponentManager<components::Test2>,
+    C::ComponentManager: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
@@ -320,13 +320,13 @@ fn main() {
     mgr.remove(test);
     mgr.remove(test2);
     let sfdk =
-        <components::TestComponentManager as ComponentManager<components::Test>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test>>::pool(&mgr).len();
     let fh =
-        <components::TestComponentManager as ComponentManager<components::Test2>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test2>>::pool(&mgr).len();
     assert_eq!(sfdk, 1);
     assert_eq!(fh, 0);
     mgr.remove(test1);
     let test =
-        <components::TestComponentManager as ComponentManager<components::Test>>::pool(&mgr).len();
+        <components::TestComponentManager as ComponentPool<components::Test>>::pool(&mgr).len();
     assert_eq!(test, 0);
 }
