@@ -32,7 +32,7 @@ macro_rules! impl_component_manager {
         $name: ty { $(($pname: ident : $ptype: ty))* }
     ) => {
         $(
-            impl regecs::component::pool::ComponentManager<$ptype> for $name {
+            impl regecs::component::list::ComponentManager<$ptype> for $name {
                 fn pool(&self) -> & <$ptype as regecs::component::Component>::Pool {
                     &self.$pname
                 }

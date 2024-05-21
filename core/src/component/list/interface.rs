@@ -71,7 +71,7 @@ where
 
 /// Allows a component list to be iterated
 ///
-/// *All iterators in component pools returns indices of components*
+/// *All iterators in component lists returns indices of components*
 /// *to get the actual component instance use index or index_mut*
 pub trait Iter<'a, T: 'a + Component> {
     /// The type of immutable iterator
