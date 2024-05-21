@@ -27,8 +27,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use components::ComplexSystem;
-use regecs::component::pool::ComponentManager;
-use regecs::component::pool::ComponentPool;
+use regecs::component::list::ComponentManager;
+use regecs::component::list::List;
 use regecs::component::ComponentRef;
 use regecs::event::Event;
 use regecs::object::{Class, Context as _, Object, ObjectRef};
@@ -42,9 +42,9 @@ use regecs::{
 use crate::components::ComplexComponent;
 
 mod components {
-    use regecs::component::pool::{Attachments, ComponentManager, Iter};
+    use regecs::component::list::{Attachments, ComponentManager, Iter};
     use regecs::component::{
-        pool::{BasicComponentPool, GroupComponentPool},
+        list::{BasicComponentPool, GroupComponentPool},
         Component,
     };
     use regecs::component::{Clear, ComponentRef, Pool};

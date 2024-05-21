@@ -28,7 +28,7 @@
 
 //! REGECS entity layer.
 
-use crate::component::pool::{Attachments, ComponentManager};
+use crate::component::list::{Attachments, ComponentManager};
 use crate::component::ComponentRef;
 use crate::component::Component;
 

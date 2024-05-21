@@ -28,7 +28,7 @@
 
 //! REGECS component interfaces
 
-use crate::component::pool::ComponentPool;
+use crate::component::list::List;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use crate::entity::EntityIndex;
@@ -36,7 +36,7 @@ use crate::entity::EntityIndex;
 /// Represents a component
 pub trait Component: Sized {
     /// The type of ComponentPool to use for storing instances of this component
-    type Pool: ComponentPool<Self>;
+    type Pool: List<Self>;
 }
 
 pub struct ComponentRef<T: Component> {

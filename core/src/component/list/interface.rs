@@ -28,17 +28,17 @@
 
 use std::ops::{Index, IndexMut};
 use crate::component::{Component, ComponentRef};
-use crate::object::ObjectRef;
+use crate::entity::EntityIndex;
 
-/// Represents an allocation pool for a given type of component
+/// Represents an allocation list for a given type of component
 ///
 /// *The ComponentPool is a trait to allow customizing the data structure used to store components*
-pub trait ComponentPool<T: Component>:
+pub trait List<T: Component>:
     Index<ComponentRef<T>, Output = T> + IndexMut<ComponentRef<T>>
 where
     Self: Sized,
 {
-    /// Stores a new component in this pool
+    /// Stores a new component in this list
     ///
     /// # Arguments
     ///
@@ -49,27 +49,27 @@ where
     /// * a reference to the new stored component
     fn add(&mut self, comp: T) -> ComponentRef<T>;
 
-    /// Removes a component from this pool
+    /// Removes a component from this list
     ///
     /// # Arguments
     ///
     /// * `r` - a reference to the component to remove
     fn remove(&mut self, r: ComponentRef<T>);
 
-    /// Returns the number of components stored in this pool
+    /// Returns the number of components stored in this list
     ///
     /// # Returns
     ///
     /// * the component count
     fn len(&self) -> usize;
 
-    /// Returns true if this component pool is empty
+    /// Returns true if this component list is empty
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
 }
 
-/// Allows a component pool to be iterated
+/// Allows a component list to be iterated
 ///
 /// *All iterators in component pools returns indices of components*
 /// *to get the actual component instance use index or index_mut*
@@ -80,14 +80,14 @@ pub trait Iter<'a, T: 'a + Component> {
     /// The type of mutable iterator
     type IterMut: Iterator<Item = (ComponentRef<T>, &'a mut T)>;
 
-    /// Returns an iterator into this pool
+    /// Returns an iterator into this list
     ///
     /// # Returns
     ///
     /// * a new immutable iterator instance
     fn iter(&'a self) -> Self::Iter;
 
-    /// Returns an iterator into this pool
+    /// Returns an iterator into this list
     ///
     /// # Returns
     ///
@@ -128,7 +128,7 @@ pub trait Attachments<T: Component> {
     fn get_first(&self, entity: EntityIndex) -> Option<&T>;
 }
 
-pub trait Attach<T: Component> {
+/*pub trait Attach<T: Component> {
     fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>);
 }
 
@@ -150,7 +150,7 @@ pub trait List<'a, T: 'a + Component> {
     fn get_first(&'a self, entity: u32) -> Option<ComponentRef<T>> {
         self.list(entity)?.nth(0).cloned()
     }
-}
+}*/
 
 pub trait ComponentManager<T: Component> {
     fn pool(&self) -> &T::Pool;

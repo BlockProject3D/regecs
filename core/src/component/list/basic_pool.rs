@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::attachments::AttachmentsManager;
-use crate::component::pool::{Attachments, ComponentPool, Iter};
+use crate::component::list::{Attachments, List, Iter};
 use crate::component::{Component, ComponentRef};
 use std::{
     ops::{Index, IndexMut},
@@ -93,7 +93,7 @@ macro_rules! bcp_iterator {
 bcp_iterator!(BcpIterator);
 bcp_iterator!(BcpIteratorMut, mut);
 
-/// Basic component pool (stores components in a single simple array list)
+/// Basic component list (stores components in a single simple array list)
 ///
 /// *May not be optimized for rendering 3D model components*
 pub struct BasicComponentPool<T: Component> {
@@ -112,7 +112,7 @@ impl<T: Component> Default for BasicComponentPool<T> {
     }
 }
 
-impl<T: Component> ComponentPool<T> for BasicComponentPool<T> {
+impl<T: Component> List<T> for BasicComponentPool<T> {
     fn add(&mut self, comp: T) -> ComponentRef<T> {
         let mut i = 0;
         while i < self.comps.len() && self.comps[i].is_some() {

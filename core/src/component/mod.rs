@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -28,7 +28,7 @@
 
 //! REGECS component layer.
 
-pub mod pool;
+pub mod list;
 
 mod interface;
 pub use interface::*;

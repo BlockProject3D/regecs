@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::pool::{Attachments, BasicComponentPool, ComponentPool, Iter};
+use crate::component::list::{Attachments, BasicComponentPool, List, Iter};
 use crate::component::{Component, ComponentRef};
 use std::{
     collections::{hash_map::Values, HashMap},
@@ -108,10 +108,10 @@ macro_rules! gcp_iterator {
 gcp_iterator!(GcpIterator);
 gcp_iterator!(GcpIteratorMut, mut);
 
-/// A grouped based component pool
+/// A grouped based component list
 ///
-/// *The grouped component pool allows to maintain grouped components when iterating*
-/// *This pool is optimized for rendering systems to reduce the number of pipeline changes*
+/// *The grouped component list allows to maintain grouped components when iterating*
+/// *This list is optimized for rendering systems to reduce the number of pipeline changes*
 ///
 /// _NOTE: The K::default() group is reserved to store components that are not yet attached to a group_
 pub struct GroupComponentPool<K: Sized + Eq + Hash + Copy + Default, T: Component> {
@@ -155,7 +155,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default for GroupCompo
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> ComponentPool<T>
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T>
     for GroupComponentPool<K, T>
 {
     fn add(&mut self, comp: T) -> ComponentRef<T> {
