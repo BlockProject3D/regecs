@@ -78,18 +78,7 @@ impl<T: Component> AttachmentsManager<T> {
         self.inv_map.insert(r, entity);
     }
 
-    pub fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
-        if let Some(set) = self.map.get(&entity) {
-            let mut vec = Vec::with_capacity(set.len());
-            for v in set {
-                vec.push(*v);
-            }
-            return Some(vec);
-        }
-        return None;
-    }
-
-    pub fn list2(&self, entity: EntityIndex) -> Iter<T> {
+    pub fn list(&self, entity: EntityIndex) -> Iter<T> {
         if let Some(set) = self.map.get(&entity) {
             Iter(Some(set.iter()))
         } else {
@@ -99,13 +88,5 @@ impl<T: Component> AttachmentsManager<T> {
 
     pub fn clear(&mut self, entity: EntityIndex) {
         self.map.remove(&entity);
-    }
-
-    pub fn get_first(&self, entity: EntityIndex) -> Option<ComponentRef<T>> {
-        if let Some(set) = self.map.get(&entity) {
-            Some(*set.iter().nth(0).unwrap())
-        } else {
-            None
-        }
     }
 }

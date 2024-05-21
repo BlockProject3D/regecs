@@ -29,7 +29,6 @@
 use std::ops::{Index, IndexMut};
 use crate::component::{Component, ComponentRef};
 use crate::component::store::ComponentStore;
-use crate::entity::EntityIndex;
 
 /// Represents an allocation list for a given type of component.
 ///
@@ -95,63 +94,6 @@ pub trait Iter<'a, T: 'a + Component> {
     /// * a new mutable iterator instance
     fn iter_mut(&'a mut self) -> Self::IterMut;
 }
-
-pub trait Attachments<T: Component> {
-    /// Attach a new component
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to attach the component to
-    /// * `component` - the component index to attach
-    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>);
-
-    /// Lists all attachments of a given entity
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to list
-    ///
-    /// # Returns
-    ///
-    /// * the list of all components attached to the given entity
-    /// * None if the entity does not exist or that the entity does not have any attachements
-    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>>;
-
-    /// Removes all components attached to a given entity
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to clear
-    fn clear(&mut self, entity: EntityIndex);
-
-    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T>;
-
-    fn get_first(&self, entity: EntityIndex) -> Option<&T>;
-}
-
-/*pub trait Attach<T: Component> {
-    fn attach(&mut self, entity: ObjectRef, r: ComponentRef<T>);
-}
-
-pub trait List<'a, T: 'a + Component> {
-    type Iter: Iterator<Item = &'a ComponentRef<T>>;
-
-    /// Lists all attachments of a given entity
-    ///
-    /// # Arguments
-    ///
-    /// * `entity` - the entity to list
-    ///
-    /// # Returns
-    ///
-    /// * the list of all components attached to the given entity
-    /// * None if the entity does not exist or that the entity does not have any attachements
-    fn list(&'a self, entity: u32) -> Option<Self::Iter>;
-
-    fn get_first(&'a self, entity: u32) -> Option<ComponentRef<T>> {
-        self.list(entity)?.nth(0).cloned()
-    }
-}*/
 
 pub trait ComponentPool<T: Component> {
     fn pool(&self) -> &T::List;

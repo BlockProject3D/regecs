@@ -26,14 +26,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::list::{Attachments, BasicComponentList, List, Iter};
-use crate::component::{Component, ComponentRef};
+use crate::component::list::{BasicComponentList, List, Iter};
+use crate::component::Component;
 use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     ops::{Index, IndexMut},
 };
-use crate::entity::EntityIndex;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -179,34 +178,6 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T>
 
     fn len(&self) -> usize {
         return self.comps.len();
-    }
-}
-
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Attachments<T>
-    for GroupComponentList<K, T>
-{
-    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
-        self.comps.attach(entity, r);
-    }
-
-    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
-        return self.comps.list(entity);
-    }
-
-    fn clear(&mut self, entity: EntityIndex) {
-        if let Some(set) = self.comps.list(entity) {
-            for v in set {
-                self.remove(v.index)
-            }
-        }
-    }
-
-    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T> {
-        self.comps.get_first_mut(entity)
-    }
-
-    fn get_first(&self, entity: EntityIndex) -> Option<&T> {
-        self.comps.get_first(entity)
     }
 }
 

@@ -26,14 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::attachments::AttachmentsManager;
-use crate::component::list::{Attachments, List, Iter};
-use crate::component::{Component, ComponentRef};
+use crate::component::list::{List, Iter};
+use crate::component::Component;
 use std::{
     ops::{Index, IndexMut},
     vec::Vec,
 };
-use crate::entity::EntityIndex;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {
@@ -98,16 +96,14 @@ bcp_iterator!(BcpIteratorMut, mut);
 /// *May not be optimized for rendering 3D model components*
 pub struct BasicComponentList<T: Component> {
     comps: Vec<Option<T>>,
-    size: usize,
-    attachments: AttachmentsManager<T>,
+    size: usize
 }
 
 impl<T: Component> Default for BasicComponentList<T> {
     fn default() -> Self {
         return BasicComponentList {
             comps: Vec::new(),
-            size: 0,
-            attachments: AttachmentsManager::new(),
+            size: 0
         };
     }
 }
@@ -135,46 +131,10 @@ impl<T: Component> List<T> for BasicComponentList<T> {
             i -= 1;
         }
         self.size -= 1;
-        self.attachments.remove(ComponentRef::new(r));
     }
 
     fn len(&self) -> usize {
         self.size
-    }
-}
-
-impl<T: Component> Attachments<T> for BasicComponentList<T> {
-    fn attach(&mut self, entity: EntityIndex, r: ComponentRef<T>) {
-        self.attachments.attach(entity, r);
-    }
-
-    fn list(&self, entity: EntityIndex) -> Option<Vec<ComponentRef<T>>> {
-        return self.attachments.list(entity);
-    }
-
-    fn clear(&mut self, entity: EntityIndex) {
-        if let Some(set) = self.attachments.list(entity) {
-            for v in set {
-                self.remove(v.index)
-            }
-            self.attachments.clear(entity);
-        }
-    }
-
-    fn get_first_mut(&mut self, entity: EntityIndex) -> Option<&mut T> {
-        if let Some(r) = self.attachments.get_first(entity) {
-            Some(&mut self[r.index])
-        } else {
-            None
-        }
-    }
-
-    fn get_first(&self, entity: EntityIndex) -> Option<&T> {
-        if let Some(r) = self.attachments.get_first(entity) {
-            Some(&self[r.index])
-        } else {
-            None
-        }
     }
 }
 

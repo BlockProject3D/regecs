@@ -28,9 +28,9 @@
 
 //! REGECS entity layer.
 
-use crate::component::list::{Attachments, ComponentPool};
-use crate::component::ComponentRef;
+use crate::component::list::ComponentPool2;
 use crate::component::Component;
+use crate::component::store::{Iter, IterMut};
 
 pub type EntityIndex = u32;
 
@@ -56,43 +56,38 @@ impl<T: Component> ComponentTypeProvider<T> for T {
     }
 }
 
-pub struct Entity<'a, ComponentManager> {
-    mgr: &'a mut ComponentManager,
+pub struct EntityHelper<'a, CP> {
+    mgr: &'a mut CP,
     entity: EntityIndex,
 }
 
-pub trait EntityPart<T: Component, CM: ComponentPool<T>> {
-    fn add_attach(&mut self, comp: T) -> ComponentRef<T>;
-    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>>;
+pub trait EntityPart<T: Component, CP: ComponentPool2<T>> {
+    fn iter(&self, _: ComponentType<T>) -> Iter<T>;
+    fn iter_mut(&mut self, _: ComponentType<T>) -> IterMut<T>;
     fn get_first(&self, _: ComponentType<T>) -> Option<&T>;
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T>;
 }
 
-impl<'a, T: Component, CM: ComponentPool<T>> EntityPart<T, CM> for Entity<'a, CM>
-where
-    T::List: Attachments<T>,
-{
-    fn add_attach(&mut self, comp: T) -> ComponentRef<T> {
-        let r = self.mgr.add(comp);
-        self.mgr.pool_mut().attach(self.entity, r);
-        return r;
+impl<'a, T: Component, CP: ComponentPool2<T>> EntityPart<T, CP> for EntityHelper<'a, CP> {
+    fn iter(&self, _: ComponentType<T>) -> Iter<T> {
+        return self.mgr.store().attachments(self.entity);
     }
 
-    fn list(&self, _: ComponentType<T>) -> Option<Vec<ComponentRef<T>>> {
-        return self.mgr.pool().list(self.entity);
+    fn iter_mut(&mut self, _: ComponentType<T>) -> IterMut<T> {
+        return self.mgr.store_mut().attachments_mut(self.entity);
     }
 
     fn get_first(&self, _: ComponentType<T>) -> Option<&T> {
-        self.mgr.pool().get_first(self.entity)
+        self.mgr.store().attachments(self.entity).next().map(|(_, v)| v)
     }
 
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T> {
-        self.mgr.pool_mut().get_first_mut(self.entity)
+        self.mgr.store_mut().attachments_mut(self.entity).next().map(|(_, v)| v)
     }
 }
 
-impl<'a, ComponentManager> Entity<'a, ComponentManager> {
-    pub fn new(mgr: &'a mut ComponentManager, entity: EntityIndex) -> Entity<'a, ComponentManager> {
-        return Entity { mgr, entity };
+impl<'a, CP> EntityHelper<'a, CP> {
+    pub fn new(mgr: &'a mut CP, entity: EntityIndex) -> EntityHelper<'a, CP> {
+        return EntityHelper { mgr, entity };
     }
 }

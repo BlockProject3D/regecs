@@ -119,14 +119,14 @@ impl<T: Component> ComponentStore<T> {
 
     pub fn attachments(&self, entity: EntityIndex) -> Iter<T> {
         Iter {
-            attachments: self.attachments.list2(entity),
+            attachments: self.attachments.list(entity),
             list: &self.list
         }
     }
 
     pub fn attachments_mut(&mut self, entity: EntityIndex) -> IterMut<T> {
         IterMut {
-            attachments: self.attachments.list2(entity),
+            attachments: self.attachments.list(entity),
             list: &mut self.list
         }
     }
@@ -162,7 +162,7 @@ impl<'a, T: 'a + Component> super::list::Iter<'a, T> for ComponentStore<T>
 
 impl<T: Component> Clear for ComponentStore<T> {
     fn clear(&mut self, entity: EntityIndex) {
-        for index in self.attachments.list2(entity) {
+        for index in self.attachments.list(entity) {
             self.list.remove(index);
         }
         self.attachments.clear(entity);

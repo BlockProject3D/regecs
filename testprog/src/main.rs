@@ -34,16 +34,12 @@ use regecs::event::Event;
 use regecs::object::{Class, Context as _, Object, ObjectRef};
 use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
-use regecs::{
-    entity::{Entity, EntityPart},
-    scene::Scene
-};
-use regecs::component::store::ComponentStore;
+use regecs::scene::Scene;
 
 use crate::components::ComplexComponent;
 
 mod components {
-    use regecs::component::list::{Attachments, ComponentPool, ComponentPool2, Iter};
+    use regecs::component::list::{ComponentPool2, Iter};
     use regecs::component::{
         list::{BasicComponentList, GroupComponentList},
         Component,
