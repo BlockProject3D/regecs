@@ -27,8 +27,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::component::{Component, ComponentRef};
-use std::ops::{Index, IndexMut};
 use crate::entity::EntityIndex;
+use std::ops::{Index, IndexMut};
 
 /// Represents an allocation pool for a given type of component
 ///

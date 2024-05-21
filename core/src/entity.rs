@@ -29,8 +29,8 @@
 //! REGECS entity layer.
 
 use crate::component::pool::{Attachments, ComponentManager};
-use crate::component::ComponentRef;
 use crate::component::Component;
+use crate::component::ComponentRef;
 
 pub type EntityIndex = u32;
 

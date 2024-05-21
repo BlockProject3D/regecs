@@ -28,12 +28,12 @@
 
 use crate::component::pool::{Attachments, BasicComponentPool, ComponentPool, Iter};
 use crate::component::{Component, ComponentRef};
+use crate::entity::EntityIndex;
 use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     ops::{Index, IndexMut},
 };
-use crate::entity::EntityIndex;
 
 macro_rules! gcp_iterator {
     ($name: ident $(, $su: ident)?) => {

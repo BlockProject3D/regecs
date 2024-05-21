@@ -29,9 +29,9 @@
 //! REGECS component interfaces
 
 use crate::component::pool::ComponentPool;
+use crate::entity::EntityIndex;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use crate::entity::EntityIndex;
 
 /// Represents a component
 pub trait Component: Sized {

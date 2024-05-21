@@ -29,11 +29,11 @@
 use crate::component::attachments::AttachmentsManager;
 use crate::component::pool::{Attachments, ComponentPool, Iter};
 use crate::component::{Component, ComponentRef};
+use crate::entity::EntityIndex;
 use std::{
     ops::{Index, IndexMut},
     vec::Vec,
 };
-use crate::entity::EntityIndex;
 
 macro_rules! bcp_iterator {
     ($name: ident $(, $su: ident)?) => {

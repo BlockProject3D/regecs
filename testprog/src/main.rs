@@ -36,7 +36,7 @@ use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
 use regecs::{
     entity::{Entity, EntityPart},
-    scene::Scene
+    scene::Scene,
 };
 
 use crate::components::ComplexComponent;
@@ -249,7 +249,9 @@ impl regecs::object::New<Ctx1> for Test2 {
     type Arguments = ();
 
     fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
-        Self(regecs::object::builder::NullObject::new(ctx, state, v, args))
+        Self(regecs::object::builder::NullObject::new(
+            ctx, state, v, args,
+        ))
     }
 }
 
@@ -285,7 +287,10 @@ impl regecs::scene::Interface for Interface {
     type Builder = ObjectBuilder;
 
     fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
-        (components::TestComponentManager::default(), TestSystemManager::default())
+        (
+            components::TestComponentManager::default(),
+            TestSystemManager::default(),
+        )
     }
 }
 
