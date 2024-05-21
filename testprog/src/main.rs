@@ -143,7 +143,7 @@ mod components {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut()
-                    .store_mut().as_mut()
+                    .store_mut().unchecked_list_mut()
                     .update_group(component.index, new_order);
             }
             for (i, v) in ctx.components_mut().store_mut().iter_mut() {

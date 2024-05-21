@@ -81,18 +81,21 @@ impl<T: Component> AsRef<T::List> for ComponentStore<T> {
     }
 }
 
-impl<T: Component> AsMut<T::List> for ComponentStore<T> {
-    fn as_mut(&mut self) -> &mut T::List {
-        &mut self.list
-    }
-}
-
 impl<T: Component> ComponentStore<T> {
     pub fn new(list: T::List) -> Self {
         Self {
             list,
             attachments: AttachmentsManager::new()
         }
+    }
+
+    /// Returns a mutable reference to the underlying component [List](List).
+    ///
+    /// **Note: Calling raw functions such as [remove](List::remove) may result in an inconsistent
+    /// attachment state. When using the underlying container, the caller must ensure to not use
+    /// functions which could leave dangling attachments.**
+    pub fn unchecked_list_mut(&mut self) -> &mut T::List {
+        &mut self.list
     }
 
     pub fn len(&self) -> usize {
