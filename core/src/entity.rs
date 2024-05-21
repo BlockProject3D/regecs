@@ -28,7 +28,7 @@
 
 //! REGECS entity layer.
 
-use crate::component::list::ComponentPool2;
+use crate::component::ComponentPool2;
 use crate::component::Component;
 use crate::component::store::{Iter, IterMut};
 

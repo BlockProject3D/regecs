@@ -28,7 +28,6 @@
 
 use std::ops::{Index, IndexMut};
 use crate::component::{Component, ComponentRef};
-use crate::component::store::ComponentStore;
 
 /// Represents an allocation list for a given type of component.
 ///
@@ -114,9 +113,4 @@ pub trait ComponentPool<T: Component> {
     fn remove(&mut self, r: ComponentRef<T>) {
         self.pool_mut().remove(r.index);
     }
-}
-
-pub trait ComponentPool2<T: Component> {
-    fn store(&self) -> &ComponentStore<T>;
-    fn store_mut(&mut self) -> &mut ComponentStore<T>;
 }

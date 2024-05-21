@@ -31,6 +31,7 @@
 use crate::component::list::List;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use crate::component::store::ComponentStore;
 use crate::entity::EntityIndex;
 
 /// Represents a component
@@ -95,4 +96,7 @@ pub trait Clear {
     fn clear(&mut self, entity: EntityIndex);
 }
 
-pub type Pool<T> = <T as Component>::List;
+pub trait ComponentPool2<T: Component> {
+    fn store(&self) -> &ComponentStore<T>;
+    fn store_mut(&mut self) -> &mut ComponentStore<T>;
+}

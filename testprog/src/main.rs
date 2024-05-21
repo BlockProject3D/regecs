@@ -27,9 +27,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use components::ComplexSystem;
-use regecs::component::list::{ComponentPool, ComponentPool2};
 use regecs::component::list::List;
-use regecs::component::ComponentRef;
+use regecs::component::{ComponentPool2, ComponentRef};
 use regecs::event::Event;
 use regecs::object::{Class, Context as _, Object, ObjectRef};
 use regecs::scene::{ObjectState, SystemState};
@@ -39,15 +38,11 @@ use regecs::scene::Scene;
 use crate::components::ComplexComponent;
 
 mod components {
-    use regecs::component::list::{ComponentPool2, Iter};
-    use regecs::component::{
-        list::{BasicComponentList, GroupComponentList},
-        Component,
-    };
-    use regecs::component::{Clear, ComponentRef, Pool};
+    use regecs::component::list::Iter;
+    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool2};
+    use regecs::component::{Clear, ComponentRef};
     use regecs::component::store::ComponentStore;
     use regecs::entity::EntityIndex;
-    use regecs::object::ObjectRef;
     use regecs::system::Update;
 
     pub struct Test {
