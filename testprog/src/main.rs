@@ -255,7 +255,7 @@ impl regecs::object::New<Ctx1> for Test2 {
 type Ctx1 = ObjectState<Interface>;
 type Ctx = SystemState<Ctx1>;
 
-regecs::register_objects2! {
+regecs::register_objects! {
     /// The root factory for all objects of this test.
     pub builder ObjectBuilder for object RootObject<Ctx1> {
         /// A test object.
