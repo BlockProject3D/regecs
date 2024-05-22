@@ -28,9 +28,9 @@
 
 //! REGECS entity layer.
 
-use crate::component::ComponentPool;
-use crate::component::Component;
 use crate::component::store::{Iter, IterMut};
+use crate::component::Component;
+use crate::component::ComponentPool;
 
 pub type EntityIndex = u32;
 
@@ -78,11 +78,19 @@ impl<'a, T: Component, CP: ComponentPool<T>> EntityPart<T, CP> for EntityHelper<
     }
 
     fn get_first(&self, _: ComponentType<T>) -> Option<&T> {
-        self.mgr.store().attachments(self.entity).next().map(|(_, v)| v)
+        self.mgr
+            .store()
+            .attachments(self.entity)
+            .next()
+            .map(|(_, v)| v)
     }
 
     fn get_first_mut(&mut self, _: ComponentType<T>) -> Option<&mut T> {
-        self.mgr.store_mut().attachments_mut(self.entity).next().map(|(_, v)| v)
+        self.mgr
+            .store_mut()
+            .attachments_mut(self.entity)
+            .next()
+            .map(|(_, v)| v)
     }
 }
 

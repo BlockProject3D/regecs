@@ -26,14 +26,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ops::{Index, IndexMut};
 use crate::component::Component;
+use std::ops::{Index, IndexMut};
 
 /// Represents an allocation list for a given type of component.
 ///
 /// *The [List] is a trait to allow customizing the data structure used to store components.*
-pub trait List<T: Component>:
-    Index<usize, Output = T> + IndexMut<usize>
+pub trait List<T: Component>: Index<usize, Output = T> + IndexMut<usize>
 where
     Self: Sized,
 {

@@ -31,17 +31,20 @@ use regecs::component::list::List;
 use regecs::component::{ComponentPool, ComponentRef};
 use regecs::event::Event;
 use regecs::object::{Class, Context as _, Object, ObjectRef};
+use regecs::scene::Scene;
 use regecs::scene::{ObjectState, SystemState};
 use regecs::system::{Context as _, Update};
-use regecs::scene::Scene;
 
 use crate::components::ComplexComponent;
 
 mod components {
     use regecs::component::list::Iter;
-    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool};
-    use regecs::component::{Clear, ComponentRef};
     use regecs::component::store::ComponentStore;
+    use regecs::component::{
+        list::{BasicComponentList, GroupComponentList},
+        Component, ComponentPool,
+    };
+    use regecs::component::{Clear, ComponentRef};
     use regecs::entity::EntityIndex;
     use regecs::system::Update;
 
@@ -134,7 +137,8 @@ mod components {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.components_mut()
-                    .store_mut().unchecked_list_mut()
+                    .store_mut()
+                    .unchecked_list_mut()
                     .update_group(component.index, new_order);
             }
             for (i, v) in ctx.components_mut().store_mut().iter_mut() {
@@ -242,7 +246,9 @@ impl regecs::object::New<Ctx1> for Test2 {
     type Arguments = ();
 
     fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
-        Self(regecs::object::builder::NullObject::new(ctx, state, v, args))
+        Self(regecs::object::builder::NullObject::new(
+            ctx, state, v, args,
+        ))
     }
 }
 
@@ -278,7 +284,10 @@ impl regecs::scene::Interface for Interface {
     type Builder = ObjectBuilder;
 
     fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
-        (components::TestComponentManager::default(), TestSystemManager::default())
+        (
+            components::TestComponentManager::default(),
+            TestSystemManager::default(),
+        )
     }
 }
 
@@ -296,7 +305,9 @@ fn main() {
     let mgr = sc.component_manager_mut();
     //let mut entity = Entity::new(mgr, 0);
     //let test = entity.add_attach(components::Test { value: 12 });
-    let test = mgr.store_mut().add_attach(0, components::Test { value: 12 });
+    let test = mgr
+        .store_mut()
+        .add_attach(0, components::Test { value: 12 });
     mgr.store_mut()[test].value = 1;
     let test1 = mgr.store_mut().add(components::Test { value: 0 });
     let test2 = mgr.store_mut().add(components::Test2 { value2: 0 });

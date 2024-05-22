@@ -28,9 +28,9 @@
 
 extern crate core;
 
+mod clear;
 mod dispatch;
 mod fields_enum;
-mod clear;
 mod r#impl;
 mod new_impl;
 mod object_impl;
@@ -38,8 +38,8 @@ mod object_impl;
 use crate::new_impl::NewImpl;
 use crate::object_impl::ObjectImpl;
 use crate::r#impl::Impl;
-use proc_macro::{self, TokenStream};
 use clear::ClearImpl;
+use proc_macro::{self, TokenStream};
 use quote::ToTokens;
 use syn::{parse_macro_input, Attribute, DeriveInput, Type};
 
