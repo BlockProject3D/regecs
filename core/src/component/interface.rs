@@ -29,10 +29,10 @@
 //! REGECS component interfaces
 
 use crate::component::list::List;
-use std::fmt::{Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
 use crate::component::store::ComponentStore;
 use crate::entity::EntityIndex;
+use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 /// Represents a component
 pub trait Component: Sized {

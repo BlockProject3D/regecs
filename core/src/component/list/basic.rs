@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::list::{List, Iter};
+use crate::component::list::{Iter, List};
 use crate::component::Component;
 use std::{
     ops::{Index, IndexMut},
@@ -96,14 +96,14 @@ bcp_iterator!(BcpIteratorMut, mut);
 /// *May not be optimized for rendering 3D model components*
 pub struct BasicComponentList<T: Component> {
     comps: Vec<Option<T>>,
-    size: usize
+    size: usize,
 }
 
 impl<T: Component> Default for BasicComponentList<T> {
     fn default() -> Self {
         return BasicComponentList {
             comps: Vec::new(),
-            size: 0
+            size: 0,
         };
     }
 }

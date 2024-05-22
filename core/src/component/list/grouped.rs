@@ -26,7 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::list::{BasicComponentList, List, Iter};
+use crate::component::list::{BasicComponentList, Iter, List};
 use crate::component::Component;
 use std::{
     collections::{hash_map::Values, HashMap},
@@ -154,9 +154,7 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> Default for GroupCompo
     }
 }
 
-impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T>
-    for GroupComponentList<K, T>
-{
+impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T> for GroupComponentList<K, T> {
     fn add(&mut self, comp: T) -> usize {
         let r = self.comps.add(comp);
         self.update_group(r, K::default());
