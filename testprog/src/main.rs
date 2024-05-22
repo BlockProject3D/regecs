@@ -47,6 +47,7 @@ mod components {
     use regecs::component::{Clear, ComponentRef};
     use regecs::entity::EntityIndex;
     use regecs::system::Update;
+    use regecs_codegen::Clear;
 
     pub struct Test {
         pub value: i32,
@@ -99,7 +100,7 @@ mod components {
         type List = GroupComponentList<u32, ComplexComponent>;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Clear)]
     pub struct TestComponentManager {
         tests: ComponentStore<Test>,
         test2s: ComponentStore<Test2>,
@@ -107,15 +108,6 @@ mod components {
     }
 
     regecs::impl_component_manager!(TestComponentManager { (tests: Test) (test2s: Test2) (complexes: ComplexComponent) });
-
-    // TODO: Implement a derive proc macro for Clear
-    impl Clear for TestComponentManager {
-        fn clear(&mut self, entity: EntityIndex) {
-            self.tests.clear(entity);
-            self.test2s.clear(entity);
-            self.complexes.clear(entity);
-        }
-    }
 
     pub struct ComplexSystem {
         events: Vec<(ComponentRef<ComplexComponent>, u32)>,

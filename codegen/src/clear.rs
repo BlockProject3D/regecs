@@ -102,8 +102,8 @@ impl Impl for ClearImpl {
         let no_clear = v.attrs.iter().any(|v| {
             v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())
         });
-        self.parser.parse_variant(self.name.clone(), v);
-        /*if no_clear {
+        let v = self.parser.parse_variant(self.name.clone(), v);
+        if no_clear {
             if let Some(v) = v {
                 match v {
                     Dispatch::Variant(v) => {
@@ -117,17 +117,22 @@ impl Impl for ClearImpl {
                     _ => std::unreachable!(),
                 }
             }
-        }*/
+        }
     }
 
     fn parse_field(&mut self, f: Field) {
         let no_clear = f.attrs.iter().any(|v| {
             v.path.segments.last().map(|v| v.ident.to_string()) == Some("no_clear".into())
         });
-        /*let f = self.parser.parse_field(f);
+        let f = self.parser.parse_field(f);
         if no_clear {
-            self.no_clear.insert(f.name.clone());
-        }*/
+            match f {
+                Dispatch::Field(f) => {
+                    self.no_clear.insert(f.name.clone());
+                },
+                _ => std::unreachable!()
+            }
+        }
     }
 
     fn into_token_stream(self) -> TokenStream {
@@ -139,7 +144,7 @@ impl Impl for ClearImpl {
         if self.is_enum {
             quote! {
                 impl regecs::component::Clear for #name {
-                    fn clear(&mut self, entity: regecs::object::ObjectRef) {
+                    fn clear(&mut self, entity: regecs::entity::EntityIndex) {
                         match self {
                             #(#tokens,)*
                         }
@@ -149,7 +154,7 @@ impl Impl for ClearImpl {
         } else {
             quote! {
                 impl regecs::component::Clear for #name {
-                    fn clear(&mut self, entity: regecs::object::ObjectRef) {
+                    fn clear(&mut self, entity: regecs::entity::EntityIndex) {
                         #(#tokens;)*
                     }
                 }

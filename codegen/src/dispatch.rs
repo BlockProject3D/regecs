@@ -100,9 +100,9 @@ impl DispatchParser {
         }
     }
 
-    pub fn parse_variant(&mut self, type_name: Ident, v: Variant) {
+    pub fn parse_variant(&mut self, type_name: Ident, v: Variant) -> Option<&Dispatch> {
         let variant = v.ident;
-        match v.fields {
+        let dispatch = match v.fields {
             Fields::Named(v) => {
                 let fields = expand_named_fields(&v);
                 let children: Vec<FieldDispatch> = v
@@ -114,12 +114,11 @@ impl DispatchParser {
                         ty: v.ty,
                     })
                     .collect();
-                self.dispatches
-                    .push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                        variant: quote! { #type_name::#variant #fields },
-                        variant_name: variant,
-                        children,
-                    }));
+                Some(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                    variant: quote! { #type_name::#variant #fields },
+                    variant_name: variant,
+                    children,
+                }))
             },
             Fields::Unnamed(v) => {
                 if v.unnamed.len() > 1 {
@@ -135,30 +134,32 @@ impl DispatchParser {
                             ty: v.ty,
                         })
                         .collect();
-                    self.dispatches
-                        .push(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
-                            variant: quote! { #type_name::#variant #fields },
-                            variant_name: variant,
-                            children,
-                        }));
-                    return;
+                    Some(Dispatch::VariantMultiField(MultiFieldVariantDispatch {
+                        variant: quote! { #type_name::#variant #fields },
+                        variant_name: variant,
+                        children,
+                    }))
+                } else if v.unnamed.len() < 1 {
+                    None
+                } else {
+                    let field = v.unnamed.into_iter().last().unwrap();
+                    Some(Dispatch::Variant(VariantDispatch {
+                        ty: field.ty,
+                        target: quote! { v },
+                        variant: quote! { #type_name::#variant(v) },
+                        variant_name: variant,
+                    }))
                 }
-                if v.unnamed.len() < 1 {
-                    return;
-                }
-                let field = v.unnamed.into_iter().last().unwrap();
-                self.dispatches.push(Dispatch::Variant(VariantDispatch {
-                    ty: field.ty,
-                    target: quote! { v },
-                    variant: quote! { #type_name::#variant(v) },
-                    variant_name: variant,
-                }));
             },
-            _ => (),
+            _ => None,
+        };
+        if let Some(dispatch) = dispatch {
+            self.dispatches.push(dispatch);
         }
+        self.dispatches.last()
     }
 
-    pub fn parse_field(&mut self, f: Field) {
+    pub fn parse_field(&mut self, f: Field) -> &Dispatch {
         let index = Index::from(self.dispatches.len());
         let name = f
             .ident
@@ -173,6 +174,7 @@ impl DispatchParser {
             ty: f.ty,
             target: quote! { &mut self.#name },
         }));
+        unsafe { self.dispatches.last().unwrap_unchecked() }
     }
 
     pub fn into_inner(self) -> Vec<Dispatch> {
