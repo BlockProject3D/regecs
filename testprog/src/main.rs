@@ -217,40 +217,7 @@ impl regecs::object::New<Ctx1> for Test {
     }
 }
 
-use regecs_codegen::New;
-use regecs_codegen::Object;
-
-pub struct Test2(regecs::object::builder::NullObject);
-
-impl Class for Test2 {
-    fn class(&self) -> &str {
-        todo!()
-    }
-}
-
-impl Object<Ctx1> for Test2 {
-    fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
-        todo!()
-    }
-
-    fn on_remove(&mut self, ctx: &mut Ctx1, state: &i32) {
-        todo!()
-    }
-
-    fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
-        todo!()
-    }
-}
-
-impl regecs::object::New<Ctx1> for Test2 {
-    type Arguments = ();
-
-    fn new(ctx: &mut Ctx1, state: &i32, v: ObjectRef, args: Self::Arguments) -> Self {
-        Self(regecs::object::builder::NullObject::new(
-            ctx, state, v, args,
-        ))
-    }
-}
+regecs::import_object!(pub Null<Ctx1>(regecs::object::builder::NullObject));
 
 type Ctx1 = ObjectState<Interface>;
 type Ctx = SystemState<Ctx1>;
@@ -261,7 +228,7 @@ regecs::register_objects! {
         /// A test object.
         Test: Test,
         /// A null object.
-        Null: Test2,
+        Null: Null,
     }
 }
 

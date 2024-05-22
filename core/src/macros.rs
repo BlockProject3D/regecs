@@ -135,3 +135,40 @@ macro_rules! register_objects {
         )*
     };
 }
+
+#[macro_export]
+macro_rules! import_object {
+    (
+        $(#[$outer: meta])*
+        $visibility: vis $object_name: ident<$ctx: ty>($object_type: ty)
+    ) => {
+        $(#[$outer])*
+        $visibility struct $object_name($object_type);
+
+        impl $crate::object::Class for $object_name {
+            fn class(&self) -> &str {
+                self.0.class()
+            }
+        }
+
+        impl $crate::object::Object<$ctx> for $object_name {
+            fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
+                self.0.on_event(ctx, state, event)
+            }
+            fn on_remove(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+                self.0.on_remove(ctx, state)
+            }
+            fn on_update(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+                self.0.on_update(ctx, state)
+            }
+        }
+
+        impl $crate::object::New<$ctx> for $object_name {
+            type Arguments = <$object_type as $crate::object::New<$ctx>>::Arguments;
+
+            fn new(ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, this: ObjectRef, args: Self::Arguments) -> Self {
+                $object_name(<$object_type as $crate::object::New<$ctx>>::new(ctx, state, this, args))
+            }
+        }
+    };
+}
