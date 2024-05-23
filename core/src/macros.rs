@@ -27,31 +27,32 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #[macro_export]
-macro_rules! impl_component_manager {
+macro_rules! component_pool {
     (
-        $name: ty { $(($pname: ident : $ptype: ty))* }
+        $(#[$outer: meta])*
+        $visibility: vis pool $pool_name: ident {
+            $(
+                $(#[$field_outer: meta])*
+                $component_name: ident : $component_type: ty,
+            )*
+        }
     ) => {
+        $(#[$outer])*
+        $visibility struct $pool_name {
+            $(
+                $(#[$field_outer])*
+                $component_name: $crate::component::store::ComponentStore<$component_type>,
+            )*
+        }
+
         $(
-            impl $crate::component::ComponentPool<$ptype> for $name {
-                fn store(&self) -> &$crate::component::store::ComponentStore<$ptype> {
-                    &self.$pname
+            impl $crate::component::ComponentPool<$component_type> for $pool_name {
+                fn store(&self) -> &$crate::component::store::ComponentStore<$component_type> {
+                    &self.$component_name
                 }
 
-                fn store_mut(&mut self) -> &mut $crate::component::store::ComponentStore<$ptype> {
-                    &mut self.$pname
-                }
-            }
-        )*
-    };
-}
-
-#[macro_export]
-macro_rules! impl_object_wrap {
-    ($name: ty { $(($class_name: ident : $object_type: ty))* }) => {
-        $(
-            impl regecs::object::factory::Wrap<$name> for $object_type {
-                fn wrap(self) -> $name {
-                    $name::$class_name(self)
+                fn store_mut(&mut self) -> &mut $crate::component::store::ComponentStore<$component_type> {
+                    &mut self.$component_name
                 }
             }
         )*

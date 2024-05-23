@@ -39,12 +39,12 @@ use crate::components::ComplexComponent;
 
 mod components {
     use regecs::component::list::Iter;
-    use regecs::component::store::ComponentStore;
     use regecs::component::{
         list::{BasicComponentList, GroupComponentList},
         Component, ComponentPool,
     };
     use regecs::component::ComponentRef;
+    use regecs::component_pool;
     use regecs::system::Update;
     use regecs_codegen::Clear;
 
@@ -55,21 +55,6 @@ mod components {
     impl Component for Test {
         type List = BasicComponentList<Test>;
     }
-
-    //impl ClassConnector for Test
-    //{
-    //    fn class() -> Class
-    //    {
-    /*static CLASS_STORAGE: &'static Class = &Class::new(String::from("Test"), Vec::new(), Test::new_instance);
-    return &CLASS_STORAGE;*/
-    //        return Class::new(String::from("Test"), Vec::new(), Test::new_instance);
-    //    }
-
-    //    fn new_instance() -> Box<dyn Any>
-    //    {
-    //        todo!()
-    //    }
-    //}
 
     pub struct Test2 {
         pub value2: i32,
@@ -99,14 +84,15 @@ mod components {
         type List = GroupComponentList<u32, ComplexComponent>;
     }
 
-    #[derive(Default, Clear)]
-    pub struct TestComponentManager {
-        tests: ComponentStore<Test>,
-        test2s: ComponentStore<Test2>,
-        complexes: ComponentStore<ComplexComponent>,
+    component_pool! {
+        /// A test component pool.
+        #[derive(Default, Clear)]
+        pub pool TestComponentManager {
+            tests: Test,
+            test2s: Test2,
+            complexes: ComplexComponent,
+        }
     }
-
-    regecs::impl_component_manager!(TestComponentManager { (tests: Test) (test2s: Test2) (complexes: ComplexComponent) });
 
     pub struct ComplexSystem {
         events: Vec<(ComponentRef<ComplexComponent>, u32)>,
