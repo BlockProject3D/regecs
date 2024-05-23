@@ -1,4 +1,4 @@
-// Copyright (c) 2022, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,15 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::{Context, Object};
 use std::collections::HashMap;
-
-pub trait NewFactory<C: Context, T: Object<C>> {
-    /// A provider to provide "object safe" factory traits.
-    ///
-    /// Note that REGECS only provides the default [AnyFactory](crate::object::registry::AnyFactory).
-    fn new_factory() -> Self;
-}
 
 pub struct ClassMap<F> {
     map: HashMap<&'static str, F>,

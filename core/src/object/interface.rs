@@ -26,9 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::{Builder, Event};
-use crate::scene::Notify;
+use crate::event::{Builder, EventManager};
+use crate::scene::Interface;
 use std::num::NonZeroU32;
+use crate::scene::event::{Event, Notify};
+use crate::scene::state::ObjectState;
 
 /// Type alias for object references
 ///
@@ -58,28 +60,21 @@ impl ObjectRef {
         self.0.get()
     }
 
-    pub fn send<C: Context>(&self, ctx: &mut C, sender: Option<ObjectRef>, event: C::Event) {
+    pub fn send<I: Interface>(&self, ctx: &mut EventManager<I::Event>, sender: Option<ObjectRef>, event: I::Event) {
         let mut builder = Builder::new(event).target(*self);
         if let Some(sender) = sender {
             builder = builder.sender(sender);
         }
-        ctx.event_manager().send(builder);
+        ctx.send(builder);
     }
 
-    pub fn enable<C: Context>(&self, ctx: &mut C, notify: Notify, enable: bool) {
+    pub fn enable<I: Interface>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify, enable: bool) {
         ctx.enable_object(notify, *self, enable);
     }
 
-    pub fn remove<C: Context>(&self, ctx: &mut C, notify: Notify) {
+    pub fn remove<I: Interface>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify) {
         ctx.remove_object(notify, *self);
     }
-}
-
-pub trait Context: crate::system::Context {
-    type SystemManager;
-
-    fn systems(&self) -> &Self::SystemManager;
-    fn systems_mut(&mut self) -> &mut Self::SystemManager;
 }
 
 pub trait Index {
@@ -123,18 +118,18 @@ pub trait Class {
 }
 
 /// Object interface to represent all objects managed by a scene
-pub trait Object<C: Context>: Class {
-    fn on_event(&mut self, ctx: &mut C, state: &C::AppState, event: &Event<C::Event>);
-    fn on_remove(&mut self, ctx: &mut C, state: &C::AppState);
-    fn on_update(&mut self, ctx: &mut C, state: &C::AppState);
+pub trait Object<I: Interface>: Class {
+    fn on_event(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState, event: &crate::event::Event<I::Event>);
+    fn on_remove(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState);
+    fn on_update(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState);
 
     fn flags(&self) -> Flags {
         Flags::new()
     }
 }
 
-pub trait New<C: Context> {
+pub trait New<I: Interface> {
     type Arguments;
 
-    fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
+    fn new(ctx: &mut ObjectState<I>, state: &I::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
 }

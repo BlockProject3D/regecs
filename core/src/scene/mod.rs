@@ -29,12 +29,9 @@
 //! REGECS scene layer.
 
 mod core;
-mod event;
+pub mod event;
 mod interface;
-mod state;
+pub mod state;
 
 pub use self::core::Scene;
-pub use self::event::Notify;
 pub use self::interface::*;
-pub use self::state::ObjectState;
-pub use self::state::SystemState;

@@ -27,111 +27,20 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::EventManager;
-use crate::object::{Context, ObjectRef, Tree};
+use crate::object::Tree;
 use crate::scene::event::Event;
-use crate::scene::{Interface, Notify};
-use std::marker::PhantomData;
+use crate::scene::Interface;
 
 //TODO: Find better names for fields.
 
-pub struct SystemState<C: Context> {
-    pub(crate) component_manager: C::Pool,
-    pub(crate) event_manager: EventManager<C::Event>,
-    pub(crate) system_event_manager: EventManager<Event<C>>,
-    pub(crate) tree: Tree,
-}
-
-impl<C: Context> crate::system::Context for SystemState<C> {
-    type Builder = C::Builder;
-    type AppState = C::AppState;
-    type Pool = C::Pool;
-    type Event = C::Event;
-
-    fn pool(&self) -> &Self::Pool {
-        return &self.component_manager;
-    }
-
-    fn pool_mut(&mut self) -> &mut Self::Pool {
-        return &mut self.component_manager;
-    }
-
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event> {
-        return &mut self.event_manager;
-    }
-
-    fn objects(&self) -> &Tree {
-        return &self.tree;
-    }
-
-    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
-        let builder = notify
-            .into_builder(super::event::Type::EnableObject(enable))
-            .target(target);
-        self.system_event_manager.send(builder);
-    }
-
-    fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
-        let builder = notify
-            .into_builder(super::event::Type::RemoveObject)
-            .target(target);
-        self.system_event_manager.send(builder);
-    }
-
-    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder) {
-        let builder = notify.into_builder(super::event::Type::SpawnObject(builder));
-        self.system_event_manager.send(builder);
-    }
+pub struct SystemState<I: Interface> {
+    pub pool: I::Pool,
+    pub event_manager: EventManager<I::Event>,
+    pub scene: EventManager<Event<I>>,
+    pub tree: Tree,
 }
 
 pub struct ObjectState<I: Interface> {
-    pub(crate) common: SystemState<Self>,
-    pub(crate) systems: I::SystemManager,
-    pub(crate) useless: PhantomData<I::Builder>,
-}
-
-impl<I: Interface> crate::system::Context for ObjectState<I> {
-    type Builder = I::Builder;
-    type AppState = I::AppState;
-    type Pool = I::ComponentManager;
-    type Event = I::Event;
-
-    fn pool(&self) -> &Self::Pool {
-        return &self.common.component_manager;
-    }
-
-    fn pool_mut(&mut self) -> &mut Self::Pool {
-        return &mut self.common.component_manager;
-    }
-
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event> {
-        return &mut self.common.event_manager;
-    }
-
-    fn objects(&self) -> &Tree {
-        return &self.common.tree;
-    }
-
-    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
-        self.common.enable_object(notify, target, enable)
-    }
-
-    fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
-        self.common.remove_object(notify, target)
-    }
-
-    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder) {
-        self.common.spawn_object(notify, builder)
-    }
-}
-
-impl<I: Interface> Context for ObjectState<I> {
-    type SystemManager = I::SystemManager;
-
-    fn systems(&self) -> &Self::SystemManager {
-        return &self.systems;
-    }
-
-    fn systems_mut(&mut self) -> &mut Self::SystemManager {
-        return &mut self.systems;
-    }
+    pub common: SystemState<I>,
+    pub systems: I::SystemManager,
 }

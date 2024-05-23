@@ -27,12 +27,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::Event;
-use crate::object::{Class, Context, New, Object, ObjectRef};
+use crate::object::{Class, New, Object, ObjectRef};
+use crate::scene::Interface;
+use crate::scene::state::ObjectState;
 
-pub trait Builder<C: Context> {
-    type Object: Object<C>;
+pub trait Builder<I: Interface> {
+    type Object: Object<I>;
 
-    fn build(self, ctx: &mut C, state: &C::AppState, this: ObjectRef) -> Self::Object;
+    fn build(self, ctx: &mut ObjectState<I>, state: &I::AppState, this: ObjectRef) -> Self::Object;
 }
 
 pub struct NullObject;
@@ -43,22 +45,22 @@ impl Class for NullObject {
     }
 }
 
-impl<C: Context> Object<C> for NullObject {
-    fn on_event(&mut self, _: &mut C, _: &C::AppState, _: &Event<C::Event>) {}
+impl<I: Interface> Object<I> for NullObject {
+    fn on_event(&mut self, _: &mut ObjectState<I>, _: &I::AppState, _: &Event<I::Event>) {}
 
-    fn on_remove(&mut self, _: &mut C, _: &C::AppState) {}
+    fn on_remove(&mut self, _: &mut ObjectState<I>, _: &I::AppState) {}
 
-    fn on_update(&mut self, _: &mut C, _: &C::AppState) {}
+    fn on_update(&mut self, _: &mut ObjectState<I>, _: &I::AppState) {}
 }
 
-impl<C: Context> New<C> for NullObject {
+impl<I: Interface> New<I> for NullObject {
     type Arguments = ();
 
-    fn new(_: &mut C, _: &C::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
+    fn new(_: &mut ObjectState<I>, _: &I::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
         Self
     }
 }
 
-pub trait NewBuilder<C: Context>: New<C> {
-    fn new_builder(args: Self::Arguments) -> C::Builder;
+pub trait NewBuilder<I: Interface>: New<I> {
+    fn new_builder(args: Self::Arguments) -> I::Builder;
 }

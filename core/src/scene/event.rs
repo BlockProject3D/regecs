@@ -26,13 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::event::Builder;
-use crate::object::{Context, ObjectRef};
+use crate::event::{Builder, EventManager};
+use crate::object::ObjectRef;
+use crate::scene::Interface;
 
-pub enum Type<C: Context> {
+pub enum Type<B> {
     EnableObject(bool),
     RemoveObject,
-    SpawnObject(C::Builder),
+    SpawnObject(B),
 }
 
 pub enum Notify {
@@ -42,7 +43,7 @@ pub enum Notify {
 }
 
 impl Notify {
-    pub fn into_builder<C: Context>(self, ty: Type<C>) -> Builder<Event<C>> {
+    pub fn into_builder<I: Interface>(self, ty: Type<I::Builder>) -> Builder<Event<I>> {
         match self {
             Notify::Sender(v) => Builder::new(Event { notify: true, ty }).sender(v),
             Notify::All => Builder::new(Event { notify: true, ty }),
@@ -51,7 +52,28 @@ impl Notify {
     }
 }
 
-pub struct Event<C: Context> {
+pub struct Event<I: Interface> {
     pub notify: bool,
-    pub ty: Type<C>,
+    pub ty: Type<I::Builder>,
+}
+
+impl<I: Interface> EventManager<Event<I>> {
+    pub fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
+        let builder = notify
+            .into_builder(Type::EnableObject(enable))
+            .target(target);
+        self.send(builder);
+    }
+
+    pub fn remove_object(&mut self, notify: Notify, target: ObjectRef) {
+        let builder = notify
+            .into_builder(super::event::Type::RemoveObject)
+            .target(target);
+        self.send(builder);
+    }
+
+    pub fn spawn_object(&mut self, notify: Notify, builder: I::Builder) {
+        let builder = notify.into_builder(super::event::Type::SpawnObject(builder));
+        self.send(builder);
+    }
 }

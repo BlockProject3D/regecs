@@ -87,17 +87,17 @@ macro_rules! register_objects {
         }
 
         impl $crate::object::Object<$ctx> for $object_name {
-            fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
+            fn on_event(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState, event: &$crate::event::Event<<$ctx as $crate::scene::Interface>::Event>) {
                 match self {
                     $($object_name::$class_name(v) => v.on_event(ctx, state, event),)*
                 }
             }
-            fn on_remove(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+            fn on_remove(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState) {
                 match self {
                     $($object_name::$class_name(v) => v.on_remove(ctx, state),)*
                 }
             }
-            fn on_update(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+            fn on_update(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState) {
                 match self {
                     $($object_name::$class_name(v) => v.on_update(ctx, state),)*
                 }
@@ -108,18 +108,18 @@ macro_rules! register_objects {
         $visibility enum $builder_name {
             $(
                 $(#[$field_outer])*
-                $class_name(<$object_type as regecs::object::New<$ctx>>::Arguments),
+                $class_name(<$object_type as $crate::object::New<$ctx>>::Arguments),
             )*
         }
 
         impl $crate::object::builder::Builder<$ctx> for $builder_name {
             type Object = $object_name;
 
-            fn build(self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState,
+            fn build(self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState,
                 this: ObjectRef) -> Self::Object {
                 match self {
                     $($builder_name::$class_name(v) =>
-                        $object_name::$class_name(<$object_type as regecs::object::New<$ctx>>::new(
+                        $object_name::$class_name(<$object_type as $crate::object::New<$ctx>>::new(
                             ctx, state, this, v
                         ))
                     ,)*
@@ -153,13 +153,13 @@ macro_rules! import_object {
         }
 
         impl $crate::object::Object<$ctx> for $object_name {
-            fn on_event(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, event: &regecs::event::Event<<$ctx as regecs::system::Context>::Event>) {
+            fn on_event(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState, event: &$crate::event::Event<<$ctx as $crate::scene::Interface>::Event>) {
                 self.0.on_event(ctx, state, event)
             }
-            fn on_remove(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+            fn on_remove(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState) {
                 self.0.on_remove(ctx, state)
             }
-            fn on_update(&mut self, ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState) {
+            fn on_update(&mut self, ctx: &mut $crate::scene::state::ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState) {
                 self.0.on_update(ctx, state)
             }
         }
@@ -167,7 +167,7 @@ macro_rules! import_object {
         impl $crate::object::New<$ctx> for $object_name {
             type Arguments = <$object_type as $crate::object::New<$ctx>>::Arguments;
 
-            fn new(ctx: &mut $ctx, state: &<$ctx as regecs::system::Context>::AppState, this: ObjectRef, args: Self::Arguments) -> Self {
+            fn new(ctx: &mut ObjectState<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState, this: ObjectRef, args: Self::Arguments) -> Self {
                 $object_name(<$object_type as $crate::object::New<$ctx>>::new(ctx, state, this, args))
             }
         }

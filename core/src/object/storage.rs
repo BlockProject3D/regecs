@@ -32,7 +32,8 @@ use std::{
 };
 
 use crate::object::builder::Builder;
-use crate::object::{Context, Flags, ObjectRef};
+use crate::object::{Flags, ObjectRef};
+use crate::scene::Interface;
 
 pub struct Tree {
     enabled: HashSet<ObjectRef>,
@@ -119,27 +120,21 @@ impl Tree {
     }
 }
 
-pub struct Storage<C: Context>
-where
-    C::Builder: Builder<C>,
-{
-    objects: Vec<Option<Box<<C::Builder as Builder<C>>::Object>>>,
+pub struct Storage<I: Interface> {
+    objects: Vec<Option<Box<<I::Builder as Builder<I>>::Object>>>,
 }
 
-impl<C: Context> Storage<C>
-where
-    C::Builder: Builder<C>,
-{
-    pub fn new() -> Storage<C> {
+impl<I: Interface> Storage<I> {
+    pub fn new() -> Storage<I> {
         Storage {
             objects: Vec::new(),
         }
     }
 
-    pub fn insert<F: FnOnce(ObjectRef) -> Box<<C::Builder as Builder<C>>::Object>>(
+    pub fn insert<F: FnOnce(ObjectRef) -> Box<<I::Builder as Builder<I>>::Object>>(
         &mut self,
         func: F,
-    ) -> (ObjectRef, &mut Box<<C::Builder as Builder<C>>::Object>) {
+    ) -> (ObjectRef, &mut Box<<I::Builder as Builder<I>>::Object>) {
         let empty_slot = {
             let mut id = 0;
             while id < self.objects.len() && self.objects[id].is_some() {
@@ -175,16 +170,13 @@ where
 
     pub fn iter_mut(
         &mut self,
-    ) -> impl Iterator<Item = &mut Option<Box<<C::Builder as Builder<C>>::Object>>> {
+    ) -> impl Iterator<Item = &mut Option<Box<<I::Builder as Builder<I>>::Object>>> {
         self.objects.iter_mut()
     }
 }
 
-impl<C: Context> Index<ObjectRef> for Storage<C>
-where
-    C::Builder: Builder<C>,
-{
-    type Output = Box<<C::Builder as Builder<C>>::Object>;
+impl<I: Interface> Index<ObjectRef> for Storage<I> {
+    type Output = Box<<I::Builder as Builder<I>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output {
         return self.objects[(index.into_raw() - 1) as usize]
@@ -193,10 +185,7 @@ where
     }
 }
 
-impl<C: Context> IndexMut<ObjectRef> for Storage<C>
-where
-    C::Builder: Builder<C>,
-{
+impl<I: Interface> IndexMut<ObjectRef> for Storage<I> {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
         return self.objects[(index.into_raw() - 1) as usize]
             .as_mut()

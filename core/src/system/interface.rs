@@ -26,26 +26,18 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::object::ObjectRef;
-use crate::scene::Notify;
-use crate::{component::Clear, event::EventManager, object::Tree};
+use crate::scene::Interface;
+use crate::component::Clear;
+use crate::scene::state::SystemState;
 
 pub trait Context {
     type Builder;
     type AppState;
     type Pool: Clear;
     type Event;
-
-    fn pool(&self) -> &Self::Pool;
-    fn pool_mut(&mut self) -> &mut Self::Pool;
-    fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
-    fn objects(&self) -> &Tree;
-    fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool);
-    fn remove_object(&mut self, notify: Notify, target: ObjectRef);
-    fn spawn_object(&mut self, notify: Notify, builder: Self::Builder);
 }
 
 /// Update functionality.
-pub trait Update<C: Context> {
-    fn update(&mut self, ctx: &mut C, state: &C::AppState);
+pub trait Update<I: Interface> {
+    fn update(&mut self, ctx: &mut SystemState<I>, state: &I::AppState);
 }

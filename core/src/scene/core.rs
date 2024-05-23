@@ -33,12 +33,11 @@ use crate::scene::state::{ObjectState, SystemState};
 use crate::scene::Interface;
 use crate::system::Update;
 use std::collections::HashSet;
-use std::marker::PhantomData;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<I: Interface> {
     state: ObjectState<I>,
-    objects: Storage<ObjectState<I>>,
+    objects: Storage<I>,
     updatable: HashSet<ObjectRef>,
 }
 
@@ -48,13 +47,12 @@ impl<I: Interface> Scene<I> {
         return Scene {
             state: ObjectState {
                 common: SystemState {
-                    component_manager,
+                    pool: component_manager,
                     event_manager: EventManager::new(),
-                    system_event_manager: EventManager::new(),
+                    scene: EventManager::new(),
                     tree: Tree::new(),
                 },
-                systems,
-                useless: PhantomData::default(),
+                systems
             },
             objects: Storage::new(),
             updatable: HashSet::new(),
@@ -78,7 +76,7 @@ impl<I: Interface> Scene<I> {
     fn handle_system_event(
         &mut self,
         state: &I::AppState,
-        ev: Event<super::event::Event<ObjectState<I>>>,
+        ev: Event<super::event::Event<I>>,
     ) {
         let sender = ev.sender();
         let target = ev.target();
@@ -114,7 +112,7 @@ impl<I: Interface> Scene<I> {
             },
             super::event::Type::RemoveObject => {
                 let target = target.expect("No target given to RemoveObject");
-                self.state.common.component_manager.clear(target.into_raw());
+                self.state.common.pool.clear(target.into_raw());
                 self.objects[target].on_remove(&mut self.state, state);
                 self.state
                     .common
@@ -137,7 +135,7 @@ impl<I: Interface> Scene<I> {
 
     pub fn update(&mut self, state: &I::AppState) {
         self.state.systems.update(&mut self.state.common, state);
-        while let Some(ev) = self.state.common.system_event_manager.poll() {
+        while let Some(ev) = self.state.common.scene.poll() {
             self.handle_system_event(state, ev);
         }
         for obj in &self.updatable {
@@ -170,20 +168,20 @@ impl<I: Interface> Scene<I> {
         };
         self.state
             .common
-            .system_event_manager
+            .scene
             .send(Builder::new(ev));
     }
 
-    pub fn component_manager_mut(&mut self) -> &mut I::ComponentManager {
-        &mut self.state.common.component_manager
+    pub fn component_manager_mut(&mut self) -> &mut I::Pool {
+        &mut self.state.common.pool
     }
 
     pub fn system_manager_mut(&mut self) -> &mut I::SystemManager {
         &mut self.state.systems
     }
 
-    pub fn component_manager(&self) -> &I::ComponentManager {
-        &self.state.common.component_manager
+    pub fn component_manager(&self) -> &I::Pool {
+        &self.state.common.pool
     }
 
     pub fn system_manager(&self) -> &I::SystemManager {
@@ -192,7 +190,7 @@ impl<I: Interface> Scene<I> {
 
     //TODO: Allow turning the scene into it's system manager and component manager
 
-    pub fn into_inner(self) -> (I::ComponentManager, I::SystemManager) {
-        return (self.state.common.component_manager, self.state.systems);
+    pub fn into_inner(self) -> (I::Pool, I::SystemManager) {
+        return (self.state.common.pool, self.state.systems);
     }
 }

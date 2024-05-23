@@ -31,7 +31,7 @@ use regecs::component::{ComponentPool, ComponentRef};
 use regecs::event::Event;
 use regecs::object::{Object, ObjectRef};
 use regecs::scene::Scene;
-use regecs::scene::{ObjectState, SystemState};
+use regecs::scene::state::{ObjectState, SystemState};
 use regecs::system::Update;
 use regecs_codegen::{Class, Update};
 
@@ -45,6 +45,7 @@ mod components {
     };
     use regecs::component::ComponentRef;
     use regecs::component_pool;
+    use regecs::scene::state::SystemState;
     use regecs::system::Update;
     use regecs_codegen::Clear;
 
@@ -106,19 +107,19 @@ mod components {
         }
     }
 
-    impl<C: regecs::system::Context> Update<C> for ComplexSystem
+    impl<I: regecs::scene::Interface> Update<I> for ComplexSystem
     where
-        C::Pool: ComponentPool<ComplexComponent>,
+        I::Pool: ComponentPool<ComplexComponent>,
     {
-        fn update(&mut self, ctx: &mut C, _: &C::AppState) {
+        fn update(&mut self, ctx: &mut SystemState<I>, _: &I::AppState) {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
-                ctx.pool_mut()
+                ctx.pool
                     .store_mut()
                     .unchecked_list_mut()
                     .update_group(component.index, new_order);
             }
-            for (i, v) in ctx.pool_mut().store_mut().iter_mut() {
+            for (i, v) in ctx.pool.store_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((ComponentRef::new(i), v.order));
@@ -140,16 +141,16 @@ impl Default for MySystem {
     }
 }
 
-impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
+impl<I: regecs::scene::Interface<AppState = i32>> Update<I> for MySystem
 where
-    C::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
+    I::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
-    fn update(&mut self, ctx: &mut C, state: &C::AppState) {
+    fn update(&mut self, ctx: &mut SystemState<I>, state: &I::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);
-        ctx.pool_mut().store_mut()[test].value = 12;
-        ctx.pool_mut().store_mut()[test2].value2 = 42;
-        assert_eq!(ctx.pool().store()[test2].value2, 42);
+        ctx.pool.store_mut()[test].value = 12;
+        ctx.pool.store_mut()[test2].value2 = 42;
+        assert_eq!(ctx.pool.store()[test2].value2, 42);
         assert_eq!(*state, 42);
     }
 }
@@ -158,7 +159,7 @@ where
 struct MySystem2 {}
 
 #[derive(Default, Update)]
-#[for_context(Ctx)]
+#[for_context(Interface)]
 pub struct TestSystemManager {
     my: MySystem,
     complex: ComplexSystem,
@@ -169,36 +170,33 @@ pub struct TestSystemManager {
 #[derive(Class)]
 pub struct Test;
 
-impl Object<Ctx1> for Test {
-    fn on_event(&mut self, _: &mut Ctx1, _: &i32, _: &Event<()>) {
+impl Object<Interface> for Test {
+    fn on_event(&mut self, _: &mut ObjectState<Interface>, _: &i32, _: &Event<()>) {
         todo!()
     }
 
-    fn on_remove(&mut self, _: &mut Ctx1, _: &i32) {
+    fn on_remove(&mut self, _: &mut ObjectState<Interface>, _: &i32) {
         todo!()
     }
 
-    fn on_update(&mut self, _: &mut Ctx1, _: &i32) {
+    fn on_update(&mut self, _: &mut ObjectState<Interface>, _: &i32) {
         todo!()
     }
 }
 
-impl regecs::object::New<Ctx1> for Test {
+impl regecs::object::New<Interface> for Test {
     type Arguments = i32;
 
-    fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
+    fn new(_: &mut ObjectState<Interface>, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
     }
 }
 
-regecs::import_object!(pub Null<Ctx1>(regecs::object::builder::NullObject));
-
-type Ctx1 = ObjectState<Interface>;
-type Ctx = SystemState<Ctx1>;
+regecs::import_object!(pub Null<Interface>(regecs::object::builder::NullObject));
 
 regecs::register_objects! {
     /// The root factory for all objects of this test.
-    pub builder ObjectBuilder for object RootObject<Ctx1> {
+    pub builder ObjectBuilder for object RootObject<Interface> {
         /// A test object.
         Test: Test,
         /// A null object.
@@ -210,11 +208,11 @@ pub struct Interface;
 impl regecs::scene::Interface for Interface {
     type Event = ();
     type AppState = i32;
-    type ComponentManager = components::TestComponentManager;
+    type Pool = components::TestComponentManager;
     type SystemManager = TestSystemManager;
     type Builder = ObjectBuilder;
 
-    fn into_inner(self) -> (Self::ComponentManager, Self::SystemManager) {
+    fn into_inner(self) -> (Self::Pool, Self::SystemManager) {
         (
             components::TestComponentManager::default(),
             TestSystemManager::default(),
