@@ -60,7 +60,7 @@ impl ObjectRef {
         self.0.get()
     }
 
-    pub fn send<I: Interface>(&self, ctx: &mut EventManager<I::Event>, sender: Option<ObjectRef>, event: I::Event) {
+    pub fn send<E>(&self, ctx: &mut EventManager<E>, sender: Option<ObjectRef>, event: E) {
         let mut builder = Builder::new(event).target(*self);
         if let Some(sender) = sender {
             builder = builder.sender(sender);
