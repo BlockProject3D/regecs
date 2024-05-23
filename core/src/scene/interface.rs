@@ -30,7 +30,7 @@ use crate::component::Clear;
 use crate::object::builder::Builder;
 use crate::system::Update;
 
-pub trait Interface: Sized {
+pub trait Configuration: Sized {
     type Event;
     type AppState;
     type Pool: Clear;

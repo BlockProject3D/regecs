@@ -33,7 +33,7 @@ use std::{
 
 use crate::object::builder::Builder;
 use crate::object::{Flags, ObjectRef};
-use crate::scene::Interface;
+use crate::scene::Configuration;
 
 pub struct Tree {
     enabled: HashSet<ObjectRef>,
@@ -120,11 +120,11 @@ impl Tree {
     }
 }
 
-pub struct Storage<I: Interface> {
+pub struct Storage<I: Configuration> {
     objects: Vec<Option<Box<<I::Builder as Builder<I>>::Object>>>,
 }
 
-impl<I: Interface> Storage<I> {
+impl<I: Configuration> Storage<I> {
     pub fn new() -> Storage<I> {
         Storage {
             objects: Vec::new(),
@@ -175,7 +175,7 @@ impl<I: Interface> Storage<I> {
     }
 }
 
-impl<I: Interface> Index<ObjectRef> for Storage<I> {
+impl<I: Configuration> Index<ObjectRef> for Storage<I> {
     type Output = Box<<I::Builder as Builder<I>>::Object>;
 
     fn index(&self, index: ObjectRef) -> &Self::Output {
@@ -185,7 +185,7 @@ impl<I: Interface> Index<ObjectRef> for Storage<I> {
     }
 }
 
-impl<I: Interface> IndexMut<ObjectRef> for Storage<I> {
+impl<I: Configuration> IndexMut<ObjectRef> for Storage<I> {
     fn index_mut(&mut self, index: ObjectRef) -> &mut Self::Output {
         return self.objects[(index.into_raw() - 1) as usize]
             .as_mut()

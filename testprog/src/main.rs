@@ -107,7 +107,7 @@ mod components {
         }
     }
 
-    impl<I: regecs::scene::Interface> Update<I> for ComplexSystem
+    impl<I: regecs::scene::Configuration> Update<I> for ComplexSystem
     where
         I::Pool: ComponentPool<ComplexComponent>,
     {
@@ -141,7 +141,7 @@ impl Default for MySystem {
     }
 }
 
-impl<I: regecs::scene::Interface<AppState = i32>> Update<I> for MySystem
+impl<I: regecs::scene::Configuration<AppState = i32>> Update<I> for MySystem
 where
     I::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
@@ -205,7 +205,7 @@ regecs::register_objects! {
 }
 
 pub struct Interface;
-impl regecs::scene::Interface for Interface {
+impl regecs::scene::Configuration for Interface {
     type Event = ();
     type AppState = i32;
     type Pool = components::TestComponentManager;

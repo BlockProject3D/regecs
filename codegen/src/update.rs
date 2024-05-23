@@ -121,7 +121,7 @@ impl Impl for UpdateImpl {
         if is_enum {
             quote! {
                 impl regecs::system::Update<#context> for #name {
-                    fn update(&mut self, ctx: &mut regecs::scene::state::System<#context>, state: &<#context as regecs::scene::Interface>::AppState) {
+                    fn update(&mut self, ctx: &mut regecs::scene::state::System<#context>, state: &<#context as regecs::scene::Configuration>::AppState) {
                         match self {
                             #(#tokens,)*
                         }
@@ -131,7 +131,7 @@ impl Impl for UpdateImpl {
         } else {
             quote! {
                 impl regecs::system::Update<#context> for #name {
-                    fn update(&mut self, ctx: &mut regecs::scene::state::System<#context>, state: &<#context as regecs::scene::Interface>::AppState) {
+                    fn update(&mut self, ctx: &mut regecs::scene::state::System<#context>, state: &<#context as regecs::scene::Configuration>::AppState) {
                         #(#tokens;)*
                     }
                 }

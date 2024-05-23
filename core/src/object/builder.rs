@@ -28,10 +28,10 @@
 
 use crate::event::Event;
 use crate::object::{Class, New, Object, ObjectRef};
-use crate::scene::Interface;
+use crate::scene::Configuration;
 use crate::scene::state;
 
-pub trait Builder<I: Interface> {
+pub trait Builder<I: Configuration> {
     type Object: Object<I>;
 
     fn build(self, ctx: &mut state::Object<I>, state: &I::AppState, this: ObjectRef) -> Self::Object;
@@ -45,7 +45,7 @@ impl Class for NullObject {
     }
 }
 
-impl<I: Interface> Object<I> for NullObject {
+impl<I: Configuration> Object<I> for NullObject {
     fn on_event(&mut self, _: &mut state::Object<I>, _: &I::AppState, _: &Event<I::Event>) {}
 
     fn on_remove(&mut self, _: &mut state::Object<I>, _: &I::AppState) {}
@@ -53,7 +53,7 @@ impl<I: Interface> Object<I> for NullObject {
     fn on_update(&mut self, _: &mut state::Object<I>, _: &I::AppState) {}
 }
 
-impl<I: Interface> New<I> for NullObject {
+impl<I: Configuration> New<I> for NullObject {
     type Arguments = ();
 
     fn new(_: &mut state::Object<I>, _: &I::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
@@ -61,6 +61,6 @@ impl<I: Interface> New<I> for NullObject {
     }
 }
 
-pub trait NewBuilder<I: Interface>: New<I> {
+pub trait NewBuilder<I: Configuration>: New<I> {
     fn new_builder(args: Self::Arguments) -> I::Builder;
 }

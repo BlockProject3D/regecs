@@ -28,7 +28,7 @@
 
 use crate::event::{Builder, EventManager};
 use crate::object::ObjectRef;
-use crate::scene::Interface;
+use crate::scene::Configuration;
 
 pub enum Type<B> {
     EnableObject(bool),
@@ -43,7 +43,7 @@ pub enum Notify {
 }
 
 impl Notify {
-    pub fn into_builder<I: Interface>(self, ty: Type<I::Builder>) -> Builder<Event<I>> {
+    pub fn into_builder<I: Configuration>(self, ty: Type<I::Builder>) -> Builder<Event<I>> {
         match self {
             Notify::Sender(v) => Builder::new(Event { notify: true, ty }).sender(v),
             Notify::All => Builder::new(Event { notify: true, ty }),
@@ -52,12 +52,12 @@ impl Notify {
     }
 }
 
-pub struct Event<I: Interface> {
+pub struct Event<I: Configuration> {
     pub notify: bool,
     pub ty: Type<I::Builder>,
 }
 
-impl<I: Interface> EventManager<Event<I>> {
+impl<I: Configuration> EventManager<Event<I>> {
     pub fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
         let builder = notify
             .into_builder(Type::EnableObject(enable))

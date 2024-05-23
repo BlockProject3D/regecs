@@ -26,10 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::scene::Interface;
+use crate::scene::Configuration;
 use crate::scene::state::System;
 
 /// Update functionality.
-pub trait Update<I: Interface> {
+pub trait Update<I: Configuration> {
     fn update(&mut self, ctx: &mut System<I>, state: &I::AppState);
 }

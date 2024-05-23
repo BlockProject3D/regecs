@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, EventManager};
-use crate::scene::Interface;
+use crate::scene::Configuration;
 use std::num::NonZeroU32;
 use crate::scene::event::{Event, Notify};
 use crate::scene::state;
@@ -68,11 +68,11 @@ impl ObjectRef {
         ctx.send(builder);
     }
 
-    pub fn enable<I: Interface>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify, enable: bool) {
+    pub fn enable<I: Configuration>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify, enable: bool) {
         ctx.enable_object(notify, *self, enable);
     }
 
-    pub fn remove<I: Interface>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify) {
+    pub fn remove<I: Configuration>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify) {
         ctx.remove_object(notify, *self);
     }
 }
@@ -118,7 +118,7 @@ pub trait Class {
 }
 
 /// Object interface to represent all objects managed by a scene
-pub trait Object<I: Interface>: Class {
+pub trait Object<I: Configuration>: Class {
     fn on_event(&mut self, ctx: &mut state::Object<I>, state: &I::AppState, event: &crate::event::Event<I::Event>);
     fn on_remove(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
     fn on_update(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
@@ -128,7 +128,7 @@ pub trait Object<I: Interface>: Class {
     }
 }
 
-pub trait New<I: Interface> {
+pub trait New<I: Configuration> {
     type Arguments;
 
     fn new(ctx: &mut state::Object<I>, state: &I::AppState, this: ObjectRef, args: Self::Arguments) -> Self;

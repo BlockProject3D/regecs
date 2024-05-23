@@ -29,18 +29,18 @@
 use crate::event::EventManager;
 use crate::object::Tree;
 use crate::scene::event::Event;
-use crate::scene::Interface;
+use crate::scene::Configuration;
 
 //TODO: Find better names for fields.
 
-pub struct System<I: Interface> {
+pub struct System<I: Configuration> {
     pub pool: I::Pool,
     pub event_manager: EventManager<I::Event>,
     pub scene: EventManager<Event<I>>,
     pub tree: Tree,
 }
 
-pub struct Object<I: Interface> {
+pub struct Object<I: Configuration> {
     pub common: System<I>,
     pub systems: I::SystemManager,
 }
