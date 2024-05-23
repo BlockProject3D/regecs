@@ -177,6 +177,10 @@ impl<K: Sized + Eq + Hash + Copy + Default, T: Component> List<T> for GroupCompo
     fn len(&self) -> usize {
         return self.comps.len();
     }
+
+    fn trim(&mut self) {
+        self.comps.trim();
+    }
 }
 
 impl<'a, K: 'a + Sized + Eq + Hash + Copy + Default, T: 'a + Component> Iter<'a, T>

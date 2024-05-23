@@ -169,6 +169,8 @@ impl<T: Component> Clear for ComponentStore<T> {
         for index in self.attachments.list(entity) {
             self.list.remove(index);
         }
+        //Call trim once after all components attached to the entity have been removed.
+        self.list.trim();
         self.attachments.clear(entity);
     }
 }

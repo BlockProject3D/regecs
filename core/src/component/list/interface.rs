@@ -65,6 +65,12 @@ where
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    /// Trims the end of this container if needed.
+    ///
+    /// This function is automatically called by [ComponentStore](crate::component::store::ComponentStore)
+    /// after all components of attached to a given entity have all been removed. 
+    fn trim(&mut self);
 }
 
 /// Allows a component list to be iterated

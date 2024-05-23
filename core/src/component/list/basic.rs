@@ -125,16 +125,19 @@ impl<T: Component> List<T> for BasicComponentList<T> {
 
     fn remove(&mut self, r: usize) {
         self.comps[r] = None; //Mark slot as unclaimed
-        let mut i = self.comps.len() - 1; //Trim end of array
-        while i > 0 && self.comps[i].is_none() {
-            self.comps.remove(i);
-            i -= 1;
-        }
         self.size -= 1;
     }
 
     fn len(&self) -> usize {
         self.size
+    }
+
+    fn trim(&mut self) {
+        let mut i = self.comps.len() - 1; //Trim end of array
+        while i > 0 && self.comps[i].is_none() {
+            self.comps.remove(i);
+            i -= 1;
+        }
     }
 }
 
