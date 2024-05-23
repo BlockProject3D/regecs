@@ -27,15 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::scene::Interface;
-use crate::component::Clear;
 use crate::scene::state::SystemState;
-
-pub trait Context {
-    type Builder;
-    type AppState;
-    type Pool: Clear;
-    type Event;
-}
 
 /// Update functionality.
 pub trait Update<I: Interface> {
