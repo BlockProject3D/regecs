@@ -113,12 +113,12 @@ mod components {
         fn update(&mut self, ctx: &mut C, _: &C::AppState) {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
-                ctx.components_mut()
+                ctx.pool_mut()
                     .store_mut()
                     .unchecked_list_mut()
                     .update_group(component.index, new_order);
             }
-            for (i, v) in ctx.components_mut().store_mut().iter_mut() {
+            for (i, v) in ctx.pool_mut().store_mut().iter_mut() {
                 if v.last_order != v.order {
                     // Record new events
                     self.events.push((ComponentRef::new(i), v.order));
@@ -147,9 +147,9 @@ where
     fn update(&mut self, ctx: &mut C, state: &C::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);
-        ctx.components_mut().store_mut()[test].value = 12;
-        ctx.components_mut().store_mut()[test2].value2 = 42;
-        assert_eq!(ctx.components().store()[test2].value2, 42);
+        ctx.pool_mut().store_mut()[test].value = 12;
+        ctx.pool_mut().store_mut()[test2].value2 = 42;
+        assert_eq!(ctx.pool().store()[test2].value2, 42);
         assert_eq!(*state, 42);
     }
 }

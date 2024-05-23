@@ -47,11 +47,11 @@ impl<C: Context> crate::system::Context for SystemState<C> {
     type Pool = C::Pool;
     type Event = C::Event;
 
-    fn components(&self) -> &Self::Pool {
+    fn pool(&self) -> &Self::Pool {
         return &self.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::Pool {
+    fn pool_mut(&mut self) -> &mut Self::Pool {
         return &mut self.component_manager;
     }
 
@@ -95,11 +95,11 @@ impl<I: Interface> crate::system::Context for ObjectState<I> {
     type Pool = I::ComponentManager;
     type Event = I::Event;
 
-    fn components(&self) -> &Self::Pool {
+    fn pool(&self) -> &Self::Pool {
         return &self.common.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::Pool {
+    fn pool_mut(&mut self) -> &mut Self::Pool {
         return &mut self.common.component_manager;
     }
 
