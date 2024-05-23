@@ -29,12 +29,12 @@
 use crate::event::Event;
 use crate::object::{Class, New, Object, ObjectRef};
 use crate::scene::Interface;
-use crate::scene::state::ObjectState;
+use crate::scene::state;
 
 pub trait Builder<I: Interface> {
     type Object: Object<I>;
 
-    fn build(self, ctx: &mut ObjectState<I>, state: &I::AppState, this: ObjectRef) -> Self::Object;
+    fn build(self, ctx: &mut state::Object<I>, state: &I::AppState, this: ObjectRef) -> Self::Object;
 }
 
 pub struct NullObject;
@@ -46,17 +46,17 @@ impl Class for NullObject {
 }
 
 impl<I: Interface> Object<I> for NullObject {
-    fn on_event(&mut self, _: &mut ObjectState<I>, _: &I::AppState, _: &Event<I::Event>) {}
+    fn on_event(&mut self, _: &mut state::Object<I>, _: &I::AppState, _: &Event<I::Event>) {}
 
-    fn on_remove(&mut self, _: &mut ObjectState<I>, _: &I::AppState) {}
+    fn on_remove(&mut self, _: &mut state::Object<I>, _: &I::AppState) {}
 
-    fn on_update(&mut self, _: &mut ObjectState<I>, _: &I::AppState) {}
+    fn on_update(&mut self, _: &mut state::Object<I>, _: &I::AppState) {}
 }
 
 impl<I: Interface> New<I> for NullObject {
     type Arguments = ();
 
-    fn new(_: &mut ObjectState<I>, _: &I::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
+    fn new(_: &mut state::Object<I>, _: &I::AppState, _: ObjectRef, _: Self::Arguments) -> Self {
         Self
     }
 }

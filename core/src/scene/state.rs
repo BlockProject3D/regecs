@@ -33,14 +33,14 @@ use crate::scene::Interface;
 
 //TODO: Find better names for fields.
 
-pub struct SystemState<I: Interface> {
+pub struct System<I: Interface> {
     pub pool: I::Pool,
     pub event_manager: EventManager<I::Event>,
     pub scene: EventManager<Event<I>>,
     pub tree: Tree,
 }
 
-pub struct ObjectState<I: Interface> {
-    pub common: SystemState<I>,
+pub struct Object<I: Interface> {
+    pub common: System<I>,
     pub systems: I::SystemManager,
 }

@@ -30,7 +30,7 @@ use crate::event::{Builder, EventManager};
 use crate::scene::Interface;
 use std::num::NonZeroU32;
 use crate::scene::event::{Event, Notify};
-use crate::scene::state::ObjectState;
+use crate::scene::state;
 
 /// Type alias for object references
 ///
@@ -119,9 +119,9 @@ pub trait Class {
 
 /// Object interface to represent all objects managed by a scene
 pub trait Object<I: Interface>: Class {
-    fn on_event(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState, event: &crate::event::Event<I::Event>);
-    fn on_remove(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState);
-    fn on_update(&mut self, ctx: &mut ObjectState<I>, state: &I::AppState);
+    fn on_event(&mut self, ctx: &mut state::Object<I>, state: &I::AppState, event: &crate::event::Event<I::Event>);
+    fn on_remove(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
+    fn on_update(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
 
     fn flags(&self) -> Flags {
         Flags::new()
@@ -131,5 +131,5 @@ pub trait Object<I: Interface>: Class {
 pub trait New<I: Interface> {
     type Arguments;
 
-    fn new(ctx: &mut ObjectState<I>, state: &I::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
+    fn new(ctx: &mut state::Object<I>, state: &I::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
 }

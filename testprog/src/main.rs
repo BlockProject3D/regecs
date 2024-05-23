@@ -31,7 +31,7 @@ use regecs::component::{ComponentPool, ComponentRef};
 use regecs::event::Event;
 use regecs::object::{Object, ObjectRef};
 use regecs::scene::Scene;
-use regecs::scene::state::{ObjectState, SystemState};
+use regecs::scene::state;
 use regecs::system::Update;
 use regecs_codegen::{Class, Update};
 
@@ -45,7 +45,7 @@ mod components {
     };
     use regecs::component::ComponentRef;
     use regecs::component_pool;
-    use regecs::scene::state::SystemState;
+    use regecs::scene::state::System;
     use regecs::system::Update;
     use regecs_codegen::Clear;
 
@@ -111,7 +111,7 @@ mod components {
     where
         I::Pool: ComponentPool<ComplexComponent>,
     {
-        fn update(&mut self, ctx: &mut SystemState<I>, _: &I::AppState) {
+        fn update(&mut self, ctx: &mut System<I>, _: &I::AppState) {
             println!("____");
             while let Some((component, new_order)) = self.events.pop() {
                 ctx.pool
@@ -145,7 +145,7 @@ impl<I: regecs::scene::Interface<AppState = i32>> Update<I> for MySystem
 where
     I::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
-    fn update(&mut self, ctx: &mut SystemState<I>, state: &I::AppState) {
+    fn update(&mut self, ctx: &mut state::System<I>, state: &I::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);
         let test2: ComponentRef<components::Test2> = ComponentRef::new(0);
         ctx.pool.store_mut()[test].value = 12;
@@ -171,15 +171,15 @@ pub struct TestSystemManager {
 pub struct Test;
 
 impl Object<Interface> for Test {
-    fn on_event(&mut self, _: &mut ObjectState<Interface>, _: &i32, _: &Event<()>) {
+    fn on_event(&mut self, _: &mut state::Object<Interface>, _: &i32, _: &Event<()>) {
         todo!()
     }
 
-    fn on_remove(&mut self, _: &mut ObjectState<Interface>, _: &i32) {
+    fn on_remove(&mut self, _: &mut state::Object<Interface>, _: &i32) {
         todo!()
     }
 
-    fn on_update(&mut self, _: &mut ObjectState<Interface>, _: &i32) {
+    fn on_update(&mut self, _: &mut state::Object<Interface>, _: &i32) {
         todo!()
     }
 }
@@ -187,7 +187,7 @@ impl Object<Interface> for Test {
 impl regecs::object::New<Interface> for Test {
     type Arguments = i32;
 
-    fn new(_: &mut ObjectState<Interface>, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
+    fn new(_: &mut state::Object<Interface>, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
     }
 }

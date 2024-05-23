@@ -27,9 +27,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::scene::Interface;
-use crate::scene::state::SystemState;
+use crate::scene::state::System;
 
 /// Update functionality.
 pub trait Update<I: Interface> {
-    fn update(&mut self, ctx: &mut SystemState<I>, state: &I::AppState);
+    fn update(&mut self, ctx: &mut System<I>, state: &I::AppState);
 }

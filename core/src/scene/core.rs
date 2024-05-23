@@ -29,14 +29,14 @@
 use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{builder::Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
-use crate::scene::state::{ObjectState, SystemState};
 use crate::scene::Interface;
 use crate::system::Update;
 use std::collections::HashSet;
+use crate::scene::state;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<I: Interface> {
-    state: ObjectState<I>,
+    state: state::Object<I>,
     objects: Storage<I>,
     updatable: HashSet<ObjectRef>,
 }
@@ -45,8 +45,8 @@ impl<I: Interface> Scene<I> {
     pub fn new(interface: I) -> Scene<I> {
         let (component_manager, systems) = interface.into_inner();
         return Scene {
-            state: ObjectState {
-                common: SystemState {
+            state: state::Object {
+                common: state::System {
                     pool: component_manager,
                     event_manager: EventManager::new(),
                     scene: EventManager::new(),
