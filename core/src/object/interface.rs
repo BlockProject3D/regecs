@@ -90,7 +90,7 @@ impl Flags {
     pub fn new() -> Flags {
         Flags {
             updates: false,
-            receives_events: false,
+            receives_events: true,
         }
     }
 
