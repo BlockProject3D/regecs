@@ -116,7 +116,7 @@ macro_rules! register_objects {
             type Object = $object_name;
 
             fn build(self, ctx: &mut $crate::scene::state::Object<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState,
-                this: ObjectRef) -> Self::Object {
+                this: $crate::object::ObjectRef) -> Self::Object {
                 match self {
                     $($builder_name::$class_name(v) =>
                         $object_name::$class_name(<$object_type as $crate::object::New<$ctx>>::new(
@@ -167,7 +167,7 @@ macro_rules! import_object {
         impl $crate::object::New<$ctx> for $object_name {
             type Arguments = <$object_type as $crate::object::New<$ctx>>::Arguments;
 
-            fn new(ctx: &mut $crate::scene::state::Object<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState, this: ObjectRef, args: Self::Arguments) -> Self {
+            fn new(ctx: &mut $crate::scene::state::Object<$ctx>, state: &<$ctx as $crate::scene::Interface>::AppState, this: $crate::object::ObjectRef, args: Self::Arguments) -> Self {
                 $object_name(<$object_type as $crate::object::New<$ctx>>::new(ctx, state, this, args))
             }
         }
