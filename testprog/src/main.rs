@@ -108,7 +108,7 @@ mod components {
 
     impl<C: regecs::system::Context> Update<C> for ComplexSystem
     where
-        C::ComponentManager: ComponentPool<ComplexComponent>,
+        C::Pool: ComponentPool<ComplexComponent>,
     {
         fn update(&mut self, ctx: &mut C, _: &C::AppState) {
             println!("____");
@@ -142,7 +142,7 @@ impl Default for MySystem {
 
 impl<C: regecs::system::Context<AppState = i32>> Update<C> for MySystem
 where
-    C::ComponentManager: ComponentPool<components::Test> + ComponentPool<components::Test2>,
+    C::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
     fn update(&mut self, ctx: &mut C, state: &C::AppState) {
         let test: ComponentRef<components::Test> = ComponentRef::new(0);

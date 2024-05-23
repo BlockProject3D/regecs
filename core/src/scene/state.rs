@@ -35,7 +35,7 @@ use std::marker::PhantomData;
 //TODO: Find better names for fields.
 
 pub struct SystemState<C: Context> {
-    pub(crate) component_manager: C::ComponentManager,
+    pub(crate) component_manager: C::Pool,
     pub(crate) event_manager: EventManager<C::Event>,
     pub(crate) system_event_manager: EventManager<Event<C>>,
     pub(crate) tree: Tree,
@@ -44,14 +44,14 @@ pub struct SystemState<C: Context> {
 impl<C: Context> crate::system::Context for SystemState<C> {
     type Builder = C::Builder;
     type AppState = C::AppState;
-    type ComponentManager = C::ComponentManager;
+    type Pool = C::Pool;
     type Event = C::Event;
 
-    fn components(&self) -> &Self::ComponentManager {
+    fn components(&self) -> &Self::Pool {
         return &self.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::ComponentManager {
+    fn components_mut(&mut self) -> &mut Self::Pool {
         return &mut self.component_manager;
     }
 
@@ -92,14 +92,14 @@ pub struct ObjectState<I: Interface> {
 impl<I: Interface> crate::system::Context for ObjectState<I> {
     type Builder = I::Builder;
     type AppState = I::AppState;
-    type ComponentManager = I::ComponentManager;
+    type Pool = I::ComponentManager;
     type Event = I::Event;
 
-    fn components(&self) -> &Self::ComponentManager {
+    fn components(&self) -> &Self::Pool {
         return &self.common.component_manager;
     }
 
-    fn components_mut(&mut self) -> &mut Self::ComponentManager {
+    fn components_mut(&mut self) -> &mut Self::Pool {
         return &mut self.common.component_manager;
     }
 

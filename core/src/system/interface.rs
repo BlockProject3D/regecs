@@ -33,11 +33,11 @@ use crate::{component::Clear, event::EventManager, object::Tree};
 pub trait Context {
     type Builder;
     type AppState;
-    type ComponentManager: Clear;
+    type Pool: Clear;
     type Event;
 
-    fn components(&self) -> &Self::ComponentManager;
-    fn components_mut(&mut self) -> &mut Self::ComponentManager;
+    fn components(&self) -> &Self::Pool;
+    fn components_mut(&mut self) -> &mut Self::Pool;
     fn event_manager(&mut self) -> &mut EventManager<Self::Event>;
     fn objects(&self) -> &Tree;
     fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool);
