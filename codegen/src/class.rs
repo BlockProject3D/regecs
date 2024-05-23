@@ -26,17 +26,39 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::component::Clear;
-use crate::object::builder::Builder;
-use crate::scene::{ObjectState, SystemState};
-use crate::system::Update;
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
+use syn::{Field, LitStr, Variant};
+use crate::r#impl::Impl;
 
-pub trait Interface: Sized {
-    type Event;
-    type AppState;
-    type ComponentManager: Clear;
-    type SystemManager: Update<SystemState<ObjectState<Self>>>;
-    type Builder: Builder<ObjectState<Self>>;
+pub struct ClassImpl {
+    name: Ident
+}
 
-    fn into_inner(self) -> (Self::ComponentManager, Self::SystemManager);
+impl Impl for ClassImpl {
+    type Params = Ident;
+
+    fn new(params: Self::Params) -> Self {
+        ClassImpl {
+            name: params
+        }
+    }
+
+    fn parse_variant(&mut self, v: Variant) {
+    }
+
+    fn parse_field(&mut self, f: Field) {
+    }
+
+    fn into_token_stream(self) -> TokenStream {
+        let name = self.name;
+        let token = LitStr::new(&name.to_string(), Span::call_site());
+        quote! {
+            impl regecs::object::Class for #name {
+                fn class(&self) -> &str {
+                    #token
+                }
+            }
+        }
+    }
 }

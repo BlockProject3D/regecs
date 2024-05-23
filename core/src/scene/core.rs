@@ -44,7 +44,7 @@ pub struct Scene<I: Interface> {
 
 impl<I: Interface> Scene<I> {
     pub fn new(interface: I) -> Scene<I> {
-        let (component_manager, systems) = interface.new();
+        let (component_manager, systems) = interface.into_inner();
         return Scene {
             state: ObjectState {
                 common: SystemState {

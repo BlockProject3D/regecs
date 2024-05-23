@@ -27,13 +27,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use components::ComplexSystem;
-use regecs::component::list::List;
 use regecs::component::{ComponentPool, ComponentRef};
 use regecs::event::Event;
-use regecs::object::{Class, Context as _, Object, ObjectRef};
+use regecs::object::{Object, ObjectRef};
 use regecs::scene::Scene;
 use regecs::scene::{ObjectState, SystemState};
-use regecs::system::{Context as _, Update};
+use regecs::system::Update;
+use regecs_codegen::Class;
 
 use crate::components::ComplexComponent;
 
@@ -44,8 +44,7 @@ mod components {
         list::{BasicComponentList, GroupComponentList},
         Component, ComponentPool,
     };
-    use regecs::component::{Clear, ComponentRef};
-    use regecs::entity::EntityIndex;
+    use regecs::component::ComponentRef;
     use regecs::system::Update;
     use regecs_codegen::Clear;
 
@@ -179,24 +178,19 @@ pub struct TestSystemManager {
     my2: MySystem2,
 }
 
+#[derive(Class)]
 pub struct Test;
 
-impl Class for Test {
-    fn class(&self) -> &str {
-        todo!()
-    }
-}
-
 impl Object<Ctx1> for Test {
-    fn on_event(&mut self, ctx: &mut Ctx1, state: &i32, event: &Event<()>) {
+    fn on_event(&mut self, _: &mut Ctx1, _: &i32, _: &Event<()>) {
         todo!()
     }
 
-    fn on_remove(&mut self, ctx: &mut Ctx1, state: &i32) {
+    fn on_remove(&mut self, _: &mut Ctx1, _: &i32) {
         todo!()
     }
 
-    fn on_update(&mut self, ctx: &mut Ctx1, state: &i32) {
+    fn on_update(&mut self, _: &mut Ctx1, _: &i32) {
         todo!()
     }
 }
@@ -224,16 +218,6 @@ regecs::register_objects! {
     }
 }
 
-/*regecs::register_objects!(
-    /// The root factory for all objects of this test.
-    pub RootFactory {
-        context = Ctx1;
-        /// The root object enumeration to allow expanding of dynamic dispatches into static dispatches.
-        object = RootObject;
-        map = [(Test: Test)];
-    }
-);*/
-
 pub struct Interface;
 impl regecs::scene::Interface for Interface {
     type Event = ();
@@ -242,7 +226,7 @@ impl regecs::scene::Interface for Interface {
     type SystemManager = TestSystemManager;
     type Builder = ObjectBuilder;
 
-    fn new(self) -> (Self::ComponentManager, Self::SystemManager) {
+    fn into_inner(self) -> (Self::ComponentManager, Self::SystemManager) {
         (
             components::TestComponentManager::default(),
             TestSystemManager::default(),

@@ -32,16 +32,26 @@ mod clear;
 mod dispatch;
 mod fields_enum;
 mod r#impl;
+mod class;
 
 use crate::r#impl::Impl;
 use clear::ClearImpl;
 use proc_macro::{self, TokenStream};
 use syn::{parse_macro_input, DeriveInput};
+use crate::class::ClassImpl;
 
 #[proc_macro_derive(Clear, attributes(no_clear))]
 pub fn clear(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     ClearImpl::parse_data(ident, data)
+        .into_token_stream()
+        .into()
+}
+
+#[proc_macro_derive(Class)]
+pub fn class(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    ClassImpl::parse_data(ident, data)
         .into_token_stream()
         .into()
 }
