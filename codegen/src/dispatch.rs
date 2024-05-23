@@ -37,29 +37,6 @@ pub enum FieldName {
     Index(usize),
 }
 
-impl FieldName {
-    pub fn is_ident(&self) -> bool {
-        match self {
-            FieldName::Ident(_) => true,
-            FieldName::Index(_) => false,
-        }
-    }
-
-    pub fn to_ident(&self) -> &Ident {
-        match self {
-            FieldName::Ident(v) => v,
-            FieldName::Index(_) => std::unreachable!(),
-        }
-    }
-
-    pub fn to_index(&self) -> usize {
-        match self {
-            FieldName::Ident(_) => std::unreachable!(),
-            FieldName::Index(v) => *v,
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct FieldDispatch {
     pub name: FieldName,
@@ -91,16 +68,19 @@ pub enum Dispatch {
 
 pub struct DispatchParser {
     dispatches: Vec<Dispatch>,
+    is_enum: bool
 }
 
 impl DispatchParser {
     pub fn new() -> DispatchParser {
         DispatchParser {
             dispatches: Vec::new(),
+            is_enum: false
         }
     }
 
     pub fn parse_variant(&mut self, type_name: Ident, v: Variant) -> Option<&Dispatch> {
+        self.is_enum = true;
         let variant = v.ident;
         let dispatch = match v.fields {
             Fields::Named(v) => {
@@ -160,6 +140,7 @@ impl DispatchParser {
     }
 
     pub fn parse_field(&mut self, f: Field) -> &Dispatch {
+        self.is_enum = false;
         let index = Index::from(self.dispatches.len());
         let name = f
             .ident
@@ -175,6 +156,10 @@ impl DispatchParser {
             target: quote! { &mut self.#name },
         }));
         unsafe { self.dispatches.last().unwrap_unchecked() }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        self.is_enum
     }
 
     pub fn into_inner(self) -> Vec<Dispatch> {

@@ -33,12 +33,16 @@ mod dispatch;
 mod fields_enum;
 mod r#impl;
 mod class;
+mod update;
+mod util;
 
 use crate::r#impl::Impl;
 use clear::ClearImpl;
 use proc_macro::{self, TokenStream};
-use syn::{parse_macro_input, DeriveInput};
+use quote::ToTokens;
+use syn::{parse_macro_input, DeriveInput, Attribute, Type};
 use crate::class::ClassImpl;
+use crate::update::UpdateImpl;
 
 #[proc_macro_derive(Clear, attributes(no_clear))]
 pub fn clear(input: TokenStream) -> TokenStream {
@@ -55,3 +59,26 @@ pub fn class(input: TokenStream) -> TokenStream {
         .into_token_stream()
         .into()
 }
+
+fn get_context(attrs: impl Iterator<Item = Attribute>) -> Type {
+    attrs
+        .filter_map(|v| {
+            if v.path.clone().into_token_stream().to_string() == "for_context" {
+                Some(v.parse_args::<Type>().expect("failed to parse context"))
+            } else {
+                None
+            }
+        })
+        .last()
+        .expect("missing context")
+}
+
+#[proc_macro_derive(Update, attributes(no_update, for_context))]
+pub fn update(input: TokenStream) -> TokenStream {
+    let DeriveInput { attrs, ident, data, .. } = parse_macro_input!(input);
+    let context = get_context(attrs.into_iter());
+    UpdateImpl::parse_data((ident, context), data)
+        .into_token_stream()
+        .into()
+}
+

@@ -33,7 +33,7 @@ use regecs::object::{Object, ObjectRef};
 use regecs::scene::Scene;
 use regecs::scene::{ObjectState, SystemState};
 use regecs::system::Update;
-use regecs_codegen::Class;
+use regecs_codegen::{Class, Update};
 
 use crate::components::ComplexComponent;
 
@@ -171,10 +171,12 @@ where
 #[derive(Default)]
 struct MySystem2 {}
 
-#[derive(Default)]
+#[derive(Default, Update)]
+#[for_context(Ctx)]
 pub struct TestSystemManager {
     my: MySystem,
     complex: ComplexSystem,
+    #[no_update]
     my2: MySystem2,
 }
 
@@ -196,7 +198,7 @@ impl Object<Ctx1> for Test {
 }
 
 impl regecs::object::New<Ctx1> for Test {
-    type Arguments = (i32);
+    type Arguments = i32;
 
     fn new(_: &mut Ctx1, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
         Self {}
@@ -231,14 +233,6 @@ impl regecs::scene::Interface for Interface {
             components::TestComponentManager::default(),
             TestSystemManager::default(),
         )
-    }
-}
-
-//TODO: Create a derive macro for Update<T>
-impl Update<Ctx> for TestSystemManager {
-    fn update(&mut self, ctx: &mut Ctx, state: &i32) {
-        self.my.update(ctx, state);
-        self.complex.update(ctx, state);
     }
 }
 

@@ -26,39 +26,62 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
-use syn::{Field, LitStr, Variant};
-use crate::r#impl::Impl;
+use std::collections::HashSet;
+use syn::{Attribute, Field, Variant};
+use crate::dispatch::{Dispatch, FieldName};
 
-pub struct ClassImpl {
-    name: Ident
-}
+pub struct FlagRecorder(HashSet<FieldName>);
 
-impl Impl for ClassImpl {
-    type Params = Ident;
+impl FlagRecorder {
+    pub fn new() -> Self {
+        Self(HashSet::new())
+    }
 
-    fn new(params: Self::Params) -> Self {
-        ClassImpl {
-            name: params
+    pub fn is_flagged(&self, dispatch: &Dispatch) -> bool {
+        match dispatch {
+            Dispatch::Field(v) => self.0.contains(&v.name),
+            Dispatch::Variant(v) => self.0.contains(&FieldName::Ident(v.variant_name.clone())),
+            Dispatch::VariantMultiField(v) => self.0.contains(&FieldName::Ident(v.variant_name.clone()))
         }
     }
 
-    fn parse_variant(&mut self, _: Variant) {
-    }
-
-    fn parse_field(&mut self, _: Field) {
-    }
-
-    fn into_token_stream(self) -> TokenStream {
-        let name = self.name;
-        let token = LitStr::new(&name.to_string(), Span::call_site());
-        quote! {
-            impl regecs::object::Class for #name {
-                fn class(&self) -> &str {
-                    #token
+    pub fn flag<'a>(&mut self, dispatch: impl Into<Option<&'a Dispatch>>) {
+        if let Some(v) = dispatch.into() {
+            match v {
+                Dispatch::Variant(v) => {
+                    self.0
+                        .insert(FieldName::Ident(v.variant_name.clone()));
+                },
+                Dispatch::VariantMultiField(v) => {
+                    self.0
+                        .insert(FieldName::Ident(v.variant_name.clone()));
+                },
+                Dispatch::Field(f) => {
+                    self.0.insert(f.name.clone());
                 }
             }
         }
+    }
+}
+
+pub trait Attributes {
+    fn attributes(&self) -> &Vec<Attribute>;
+
+    fn has_attribute(&self, name: &str) -> bool {
+        self.attributes().iter().any(|v| {
+            v.path.segments.last().map(|v| v.ident.to_string()) == Some(name.into())
+        })
+    }
+}
+
+impl Attributes for Variant {
+    fn attributes(&self) -> &Vec<Attribute> {
+        &self.attrs
+    }
+}
+
+impl Attributes for Field {
+    fn attributes(&self) -> &Vec<Attribute> {
+        &self.attrs
     }
 }
