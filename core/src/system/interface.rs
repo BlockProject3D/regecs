@@ -30,6 +30,6 @@ use crate::scene::Configuration;
 use crate::scene::state::System;
 
 /// Update functionality.
-pub trait Update<I: Configuration> {
-    fn update(&mut self, ctx: &mut System<I>, state: &I::AppState);
+pub trait Update<C: Configuration> {
+    fn update(&mut self, ctx: &mut System<C>, state: &C::AppState);
 }

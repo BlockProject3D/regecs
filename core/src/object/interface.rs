@@ -68,11 +68,11 @@ impl ObjectRef {
         ctx.send(builder);
     }
 
-    pub fn enable<I: Configuration>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify, enable: bool) {
+    pub fn enable<C: Configuration>(&self, ctx: &mut EventManager<Event<C>>, notify: Notify, enable: bool) {
         ctx.enable_object(notify, *self, enable);
     }
 
-    pub fn remove<I: Configuration>(&self, ctx: &mut EventManager<Event<I>>, notify: Notify) {
+    pub fn remove<C: Configuration>(&self, ctx: &mut EventManager<Event<C>>, notify: Notify) {
         ctx.remove_object(notify, *self);
     }
 }
@@ -118,18 +118,18 @@ pub trait Class {
 }
 
 /// Object interface to represent all objects managed by a scene
-pub trait Object<I: Configuration>: Class {
-    fn on_event(&mut self, ctx: &mut state::Object<I>, state: &I::AppState, event: &crate::event::Event<I::Event>);
-    fn on_remove(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
-    fn on_update(&mut self, ctx: &mut state::Object<I>, state: &I::AppState);
+pub trait Object<C: Configuration>: Class {
+    fn on_event(&mut self, ctx: &mut state::Object<C>, state: &C::AppState, event: &crate::event::Event<C::Event>);
+    fn on_remove(&mut self, ctx: &mut state::Object<C>, state: &C::AppState);
+    fn on_update(&mut self, ctx: &mut state::Object<C>, state: &C::AppState);
 
     fn flags(&self) -> Flags {
         Flags::new()
     }
 }
 
-pub trait New<I: Configuration> {
+pub trait New<C: Configuration> {
     type Arguments;
 
-    fn new(ctx: &mut state::Object<I>, state: &I::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
+    fn new(ctx: &mut state::Object<C>, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
 }
