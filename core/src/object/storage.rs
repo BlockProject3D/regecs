@@ -85,6 +85,7 @@ impl Tree {
 
     pub(crate) fn insert(&mut self, obj: ObjectRef, flags: Flags, class: &str) {
         self.by_id.insert(obj, flags);
+        self.enabled.insert(obj);
         let var = self
             .by_class
             .entry(String::from(class))
