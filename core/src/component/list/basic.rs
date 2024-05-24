@@ -59,6 +59,9 @@ macro_rules! bcp_iterator {
 
             fn next(&mut self) -> Option<Self::Item>
             {
+                if self.comps.len() <= 0 {
+                    return None;
+                }
                 while self.pos < self.comps.len() && self.comps[self.pos].is_none() {
                     self.pos += 1;
                 }

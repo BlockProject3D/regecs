@@ -63,6 +63,9 @@ macro_rules! gcp_iterator {
 
             fn next(&mut self) -> Option<Self::Item>
             {
+                if self.comps.len() <= 0 {
+                    return None;
+                }
                 let next_id;
 
                 macro_rules! obtain_new {
