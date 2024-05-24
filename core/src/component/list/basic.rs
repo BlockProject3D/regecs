@@ -65,20 +65,21 @@ macro_rules! bcp_iterator {
                 while self.pos < self.comps.len() && self.comps[self.pos].is_none() {
                     self.pos += 1;
                 }
+                self.pos += 1;
                 macro_rules! bcp_iter_internal {
                     () => {
-                        if let Some(v) = &self.comps[self.pos] {
-                            return Some((self.pos, v));
+                        if let Some(v) = &self.comps.get(self.pos - 1)? {
+                            return Some((self.pos - 1, v));
                         } else {
                             return None;
                         }
                     };
                     (mut) => {
-                        if let Some(v) = &mut self.comps[self.pos] {
+                        if let Some(v) = &mut self.comps.get_mut(self.pos - 1)? {
                             unsafe
                             {
                                 let ptr = v as *mut T;
-                                return Some((self.pos, &mut *ptr));
+                                return Some((self.pos - 1, &mut *ptr));
                             }
                         } else {
                             return None;
