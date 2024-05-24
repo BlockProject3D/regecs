@@ -188,7 +188,13 @@ impl<I: Configuration> Scene<I> {
         &self.state.systems
     }
 
-    //TODO: Allow turning the scene into it's system manager and component manager
+    pub fn state(&self) -> &state::Object<I> {
+        &self.state
+    }
+
+    pub fn state_mut(&mut self) -> &mut state::Object<I> {
+        &mut self.state
+    }
 
     pub fn into_inner(self) -> (I::Pool, I::SystemManager) {
         return (self.state.common.pool, self.state.systems);
