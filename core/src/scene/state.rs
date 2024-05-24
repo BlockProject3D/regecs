@@ -31,16 +31,14 @@ use crate::object::Tree;
 use crate::scene::event::Event;
 use crate::scene::Configuration;
 
-//TODO: Find better names for fields.
-
-pub struct System<I: Configuration> {
-    pub pool: I::Pool,
-    pub event_manager: EventManager<I::Event>,
-    pub scene: EventManager<Event<I>>,
+pub struct System<C: Configuration> {
+    pub pool: C::Pool,
+    pub event_manager: EventManager<C::Event>,
+    pub scene: EventManager<Event<C>>,
     pub tree: Tree,
 }
 
-pub struct Object<I: Configuration> {
-    pub common: System<I>,
-    pub systems: I::SystemManager,
+pub struct Object<C: Configuration> {
+    pub common: System<C>,
+    pub systems: C::SystemManager,
 }

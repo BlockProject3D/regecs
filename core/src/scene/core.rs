@@ -35,14 +35,14 @@ use std::collections::HashSet;
 use crate::scene::state;
 
 /// Represents a scene, provides storage for systems and objects
-pub struct Scene<I: Configuration> {
-    state: state::Object<I>,
-    objects: Storage<I>,
+pub struct Scene<C: Configuration> {
+    state: state::Object<C>,
+    objects: Storage<C>,
     updatable: HashSet<ObjectRef>,
 }
 
-impl<I: Configuration> Scene<I> {
-    pub fn new(interface: I) -> Scene<I> {
+impl<C: Configuration> Scene<C> {
+    pub fn new(interface: C) -> Scene<C> {
         let (component_manager, systems) = interface.into_inner();
         return Scene {
             state: state::Object {
@@ -61,9 +61,9 @@ impl<I: Configuration> Scene<I> {
 
     fn object_event_call(
         &mut self,
-        state: &I::AppState,
+        state: &C::AppState,
         obj_ref: ObjectRef,
-        event: &Event<I::Event>,
+        event: &Event<C::Event>,
     ) {
         if !self.state.common.tree.can_handle_events(obj_ref) {
             //Disabled objects are not allowed to handle any event
@@ -75,8 +75,8 @@ impl<I: Configuration> Scene<I> {
 
     fn handle_system_event(
         &mut self,
-        state: &I::AppState,
-        ev: Event<super::event::Event<I>>,
+        state: &C::AppState,
+        ev: Event<super::event::Event<C>>,
     ) {
         let sender = ev.sender();
         let target = ev.target();
@@ -133,7 +133,7 @@ impl<I: Configuration> Scene<I> {
         }
     }
 
-    pub fn update(&mut self, state: &I::AppState) {
+    pub fn update(&mut self, state: &C::AppState) {
         self.state.systems.update(&mut self.state.common, state);
         while let Some(ev) = self.state.common.scene.poll() {
             self.handle_system_event(state, ev);
@@ -161,7 +161,7 @@ impl<I: Configuration> Scene<I> {
         }
     }
 
-    pub fn spawn_object(&mut self, builder: I::Builder) {
+    pub fn spawn_object(&mut self, builder: C::Builder) {
         let ev = super::event::Event {
             notify: false,
             ty: super::event::Type::SpawnObject(builder),
@@ -172,31 +172,31 @@ impl<I: Configuration> Scene<I> {
             .send(Builder::new(ev));
     }
 
-    pub fn component_manager_mut(&mut self) -> &mut I::Pool {
+    pub fn component_manager_mut(&mut self) -> &mut C::Pool {
         &mut self.state.common.pool
     }
 
-    pub fn system_manager_mut(&mut self) -> &mut I::SystemManager {
+    pub fn system_manager_mut(&mut self) -> &mut C::SystemManager {
         &mut self.state.systems
     }
 
-    pub fn component_manager(&self) -> &I::Pool {
+    pub fn component_manager(&self) -> &C::Pool {
         &self.state.common.pool
     }
 
-    pub fn system_manager(&self) -> &I::SystemManager {
+    pub fn system_manager(&self) -> &C::SystemManager {
         &self.state.systems
     }
 
-    pub fn state(&self) -> &state::Object<I> {
+    pub fn state(&self) -> &state::Object<C> {
         &self.state
     }
 
-    pub fn state_mut(&mut self) -> &mut state::Object<I> {
+    pub fn state_mut(&mut self) -> &mut state::Object<C> {
         &mut self.state
     }
 
-    pub fn into_inner(self) -> (I::Pool, I::SystemManager) {
+    pub fn into_inner(self) -> (C::Pool, C::SystemManager) {
         return (self.state.common.pool, self.state.systems);
     }
 }
