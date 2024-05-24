@@ -119,9 +119,9 @@ pub trait Class {
 
 /// Object interface to represent all objects managed by a scene
 pub trait Object<C: Configuration>: Class {
-    fn on_event(&mut self, ctx: &mut state::Object<C>, state: &C::AppState, event: &crate::event::Event<C::Event>);
-    fn on_remove(&mut self, ctx: &mut state::Object<C>, state: &C::AppState);
-    fn on_update(&mut self, ctx: &mut state::Object<C>, state: &C::AppState);
+    fn on_event(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState, _event: &crate::event::Event<C::Event>) {}
+    fn on_remove(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState) {}
+    fn on_update(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState) {}
 
     fn flags(&self) -> Flags {
         Flags::new()
