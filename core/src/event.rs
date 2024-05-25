@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -29,7 +29,6 @@
 //! REGECS event system.
 
 use std::collections::VecDeque;
-use std::ops::Deref;
 
 use crate::object::ObjectRef;
 
@@ -49,16 +48,12 @@ impl<E> Event<E> {
         self.target
     }
 
+    pub fn data(&self) -> &E {
+        &self.data
+    }
+
     pub fn into_inner(self) -> E {
         self.data
-    }
-}
-
-impl<E> Deref for Event<E> {
-    type Target = E;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
     }
 }
 

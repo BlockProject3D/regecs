@@ -26,6 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::borrow::Borrow;
 use crate::component::attachments::AttachmentsManager;
 use crate::component::list::List;
 use crate::component::{Clear, Component, ComponentRef};
@@ -108,43 +109,44 @@ impl<T: Component> ComponentStore<T> {
         ComponentRef::new(self.list.add(comp))
     }
 
-    pub fn add_attach(&mut self, entity: EntityIndex, comp: T) -> ComponentRef<T> {
+    pub fn add_attach(&mut self, entity: impl Into<EntityIndex>, comp: T) -> ComponentRef<T> {
         let r = self.list.add(comp);
-        self.attachments.attach(entity, ComponentRef::new(r));
+        self.attachments.attach(entity.into(), ComponentRef::new(r));
         ComponentRef::new(r)
     }
 
-    pub fn remove(&mut self, r: ComponentRef<T>) {
+    pub fn remove(&mut self, r: impl Borrow<ComponentRef<T>>) {
+        let r = r.borrow();
         self.list.remove(r.index);
         self.attachments.remove(ComponentRef::new(r.index));
     }
 
-    pub fn attachments(&self, entity: EntityIndex) -> Iter<T> {
+    pub fn attachments(&self, entity: impl Into<EntityIndex>) -> Iter<T> {
         Iter {
-            attachments: self.attachments.list(entity),
+            attachments: self.attachments.list(entity.into()),
             list: &self.list,
         }
     }
 
-    pub fn attachments_mut(&mut self, entity: EntityIndex) -> IterMut<T> {
+    pub fn attachments_mut(&mut self, entity: impl Into<EntityIndex>) -> IterMut<T> {
         IterMut {
-            attachments: self.attachments.list(entity),
+            attachments: self.attachments.list(entity.into()),
             list: &mut self.list,
         }
     }
 }
 
-impl<T: Component> Index<ComponentRef<T>> for ComponentStore<T> {
+impl<T: Component, B: Borrow<ComponentRef<T>>> Index<B> for ComponentStore<T> {
     type Output = T;
 
-    fn index(&self, index: ComponentRef<T>) -> &Self::Output {
-        self.list.index(index.index)
+    fn index(&self, index: B) -> &Self::Output {
+        self.list.index(index.borrow().index)
     }
 }
 
-impl<T: Component> IndexMut<ComponentRef<T>> for ComponentStore<T> {
-    fn index_mut(&mut self, index: ComponentRef<T>) -> &mut Self::Output {
-        self.list.index_mut(index.index)
+impl<T: Component, B: Borrow<ComponentRef<T>>> IndexMut<B> for ComponentStore<T> {
+    fn index_mut(&mut self, index: B) -> &mut Self::Output {
+        self.list.index_mut(index.borrow().index)
     }
 }
 

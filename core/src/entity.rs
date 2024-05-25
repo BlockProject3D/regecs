@@ -31,8 +31,15 @@
 use crate::component::store::{Iter, IterMut};
 use crate::component::Component;
 use crate::component::ComponentPool;
+use crate::object::ObjectRef;
 
 pub type EntityIndex = u32;
+
+impl From<ObjectRef> for EntityIndex {
+    fn from(value: ObjectRef) -> Self {
+        value.into_raw()
+    }
+}
 
 pub struct ComponentType<T: Component> {
     useless: std::marker::PhantomData<T>,

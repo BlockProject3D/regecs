@@ -121,13 +121,13 @@ mod objects {
 
     impl Object<Config> for TimerTest {
         fn on_event(&mut self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), event: &regecs::event::Event<Event>) {
-            match **event {
+            match event.data() {
                 Event::Timer(r) => {
                     let comp = &ctx.common.pool.store()[r];
                     if comp.tick_counter >= EXPECTED_TICK_COUNT {
                         ctx.common.pool.store_mut().remove(r);
                     }
-                    if ctx.common.pool.store().attachments(self.this.into_raw()).count() <= 0 {
+                    if ctx.common.pool.store().attachments(self.this).count() <= 0 {
                         self.this.remove(&mut ctx.common.scene, Notify::None);
                     }
                 }
@@ -141,11 +141,11 @@ mod objects {
         type Object = TimerTest;
 
         fn build(self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), this: ObjectRef) -> Self::Object {
-            ctx.common.pool.store_mut().add_attach(this.into_raw(), super::components::Timer::with_target(Event::Timer, Duration::from_secs(1), this));
-            ctx.common.pool.store_mut().add_attach(this.into_raw(), super::components::Timer::with_target(Event::Timer, Duration::from_millis(500), this));
-            ctx.common.pool.store_mut().add_attach(this.into_raw(), super::components::Timer::with_target(Event::Timer, Duration::from_millis(1), this));
-            ctx.common.pool.store_mut().add_attach(this.into_raw(), super::components::Timer::with_target(Event::Timer, Duration::from_millis(5), this));
-            ctx.common.pool.store_mut().add_attach(this.into_raw(), super::components::Timer::with_target(Event::Timer, Duration::from_millis(10), this));
+            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_secs(1), this));
+            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(500), this));
+            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(1), this));
+            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(5), this));
+            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(10), this));
             TimerTest {
                 this
             }
