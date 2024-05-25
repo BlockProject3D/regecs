@@ -32,6 +32,9 @@ use std::num::NonZeroU32;
 use crate::scene::event::{Event, Notify};
 use crate::scene::state;
 
+#[cfg(feature = "codegen")]
+pub use regecs_codegen::Class;
+
 /// Type alias for object references
 ///
 /// *serves also as entry point into REGECS entity layer*

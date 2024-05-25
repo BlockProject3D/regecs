@@ -29,6 +29,9 @@
 use crate::scene::Configuration;
 use crate::scene::state::System;
 
+#[cfg(feature = "codegen")]
+pub use regecs_codegen::Update;
+
 /// Update functionality.
 pub trait Update<C: Configuration> {
     fn update(&mut self, ctx: &mut System<C>, state: &C::AppState);

@@ -14,3 +14,7 @@ categories = ["game-development", "rust-patterns"]
 
 [dependencies]
 bpx = { version = "3.0.0" }
+regecs-codegen = { version = "2.0.0-rc.1.0.0", path = "../codegen", optional = true }
+
+[features]
+codegen = ["regecs-codegen"]

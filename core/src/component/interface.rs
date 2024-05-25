@@ -34,6 +34,9 @@ use crate::entity::EntityIndex;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+#[cfg(feature = "codegen")]
+pub use regecs_codegen::Clear;
+
 /// Represents a component
 pub trait Component: Sized {
     /// The type of ComponentPool to use for storing instances of this component

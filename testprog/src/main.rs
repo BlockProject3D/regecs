@@ -28,26 +28,22 @@
 
 use components::ComplexSystem;
 use regecs::component::{ComponentPool, ComponentRef};
+use regecs::entity::EntityIndex;
 use regecs::event::Event;
-use regecs::object::{Object, ObjectRef};
+use regecs::object::{Class, Object, ObjectRef};
 use regecs::scene::Scene;
 use regecs::scene::state;
 use regecs::system::Update;
-use regecs_codegen::{Class, Update};
 
 use crate::components::ComplexComponent;
 
 mod components {
     use regecs::component::list::Iter;
-    use regecs::component::{
-        list::{BasicComponentList, GroupComponentList},
-        Component, ComponentPool,
-    };
+    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool, Clear};
     use regecs::component::ComponentRef;
     use regecs::component_pool;
     use regecs::scene::state::System;
     use regecs::system::Update;
-    use regecs_codegen::Clear;
 
     pub struct Test {
         pub value: i32,
@@ -228,7 +224,7 @@ fn main() {
     //let test = entity.add_attach(components::Test { value: 12 });
     let test = mgr
         .store_mut()
-        .add_attach(0, components::Test { value: 12 });
+        .add_attach(0 as EntityIndex, components::Test { value: 12 });
     mgr.store_mut()[test].value = 1;
     let test1 = mgr.store_mut().add(components::Test { value: 0 });
     let test2 = mgr.store_mut().add(components::Test2 { value2: 0 });
