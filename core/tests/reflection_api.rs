@@ -26,15 +26,46 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Identifier(usize);
+use phf::phf_map;
+use regecs::component::list::BasicComponentList;
+use regecs::component_pool;
+use regecs::reflection::component::Component;
+use regecs::reflection::component::list::ComponentList;
+use regecs::reflection::component::pool::ComponentInfo;
+use regecs::reflection::Identifier;
+use regecs::reflection::property::list::PropertyList;
 
-impl Identifier {
-    pub const fn from_raw(raw: usize) -> Identifier {
-        Self(raw)
-    }
+pub struct TestComponent {
 
-    pub const fn into_raw(self) -> usize {
-        self.0
+}
+
+impl regecs::component::Component for TestComponent {
+    type List = BasicComponentList<Self>;
+}
+
+impl Component for TestComponent {
+    const PROPERTIES: &'static PropertyList = &PropertyList::new(phf_map!());
+    const NAME: &'static str = "TestComponent";
+}
+
+component_pool! {
+    pool TestPool {
+        tests: TestComponent,
     }
+}
+
+impl regecs::reflection::component::pool::ComponentPool for TestPool {
+    const COMPONENTS: &'static ComponentList = &ComponentList::new(phf_map! {
+        "TestComponent" => ComponentInfo {
+            properties: TestComponent::PROPERTIES,
+            name: TestComponent::NAME,
+            identifier: Identifier::from_raw(0)
+        }
+    });
+}
+
+#[test]
+fn reflection_main() {
+    use regecs::reflection::component::pool::ComponentPool;
+    TestPool::get_ref(regecs::component::ComponentRef::<TestComponent>::new(0));
 }

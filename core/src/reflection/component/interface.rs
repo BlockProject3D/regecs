@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,53 +26,16 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::reflection::class::Class;
+use crate::reflection::Identifier;
+use crate::reflection::property::list::PropertyList;
+use crate::reflection::property::value::Value;
 
-pub mod config;
-
-#[derive(Clone)]
-pub struct PropertyType
-{
-    pub type_name: &'static str,
-    pub class: Option<Class>
+pub trait Component {
+    const PROPERTIES: &'static PropertyList;
+    const NAME: &'static str;
 }
 
-pub trait AsProperty
-{
-    type ConfigType: 'static + config::PropertyConfig;
-    fn prop_type() -> PropertyType;
-}
-
-pub struct Property
-{
-    name: String,
-    optional: bool,
-    ptype: PropertyType,
-    config: Box<dyn config::PropertyConfig>
-}
-
-impl Clone for Property
-{
-    fn clone(&self) -> Self
-    {
-        return Property {
-            name: self.name.clone(),
-            optional: self.optional,
-            ptype: self.ptype.clone(),
-            config: self.config.clone_box()
-        };
-    }
-}
-
-impl Property
-{
-    fn new<T: AsProperty>(name: String, optional: bool, config: T::ConfigType) -> Property
-    {
-        return Property {
-            name,
-            optional,
-            ptype: T::prop_type(),
-            config: Box::new(config)
-        };
-    }
+pub trait PropertyAccessor<V: Value> {
+    fn set_property(&mut self, identifier: Identifier, value: V) -> Result<(), V::ParseError>;
+    fn get_property(&self, identifier: Identifier, value: V) -> Result<V, V::LoadError>;
 }

@@ -26,15 +26,43 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Identifier(usize);
+use crate::reflection::Identifier;
 
-impl Identifier {
-    pub const fn from_raw(raw: usize) -> Identifier {
-        Self(raw)
-    }
-
-    pub const fn into_raw(self) -> usize {
-        self.0
-    }
+#[derive(Copy, Clone)]
+pub struct Property {
+    pub name: &'static str,
+    pub identifier: Identifier,
+    pub ty: &'static str
 }
+
+pub trait Type {
+    fn type_name() -> &'static str;
+}
+
+macro_rules! impl_type {
+    (
+        $($type: ty => $name: literal),*
+    ) => {
+        $(
+            impl Type for $type {
+                fn type_name() -> &'static str {
+                    $name
+                }
+            }
+        )*
+    };
+}
+
+impl_type!(
+    i8 => "i8",
+    i16 => "i16",
+    i32 => "i32",
+    i64 => "i64",
+    u8 => "u8",
+    u16 => "u16",
+    u32 => "u32",
+    u64 => "u64",
+    f32 => "f32",
+    f64 => "f64",
+    bool => "bool"
+);

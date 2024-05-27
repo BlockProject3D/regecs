@@ -26,15 +26,46 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Identifier(usize);
+use crate::reflection::component::list::ComponentList;
+use crate::reflection::Identifier;
+use crate::reflection::property::list::PropertyList;
+use crate::reflection::property::value::Value;
 
-impl Identifier {
-    pub const fn from_raw(raw: usize) -> Identifier {
-        Self(raw)
+#[derive(Copy, Clone)]
+pub struct ComponentInfo {
+    pub properties: &'static PropertyList,
+    pub name: &'static str,
+    pub identifier: Identifier
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct ComponentRef {
+    ty: Identifier,
+    index: usize
+}
+
+impl ComponentRef {
+    pub fn from_raw(ty: Identifier, index: usize) -> Self {
+        Self {
+            ty,
+            index
+        }
     }
 
-    pub const fn into_raw(self) -> usize {
-        self.0
+    pub fn into_raw(self) -> (Identifier, usize) {
+        (self.ty, self.index)
     }
+}
+
+pub trait ComponentPool {
+    const COMPONENTS: &'static ComponentList;
+
+    fn get_ref<T: crate::reflection::component::Component + crate::component::Component>(r: crate::component::ComponentRef<T>) -> ComponentRef {
+        ComponentRef::from_raw(Self::COMPONENTS[T::NAME].identifier, r.index)
+    }
+}
+
+pub trait PropertyAccessor<V: Value> {
+    fn set_property(&mut self, r: ComponentRef, identifier: Identifier, value: V) -> Result<(), V::ParseError>;
+    fn get_property(&self, r: ComponentRef, identifier: Identifier, value: V) -> Result<V, V::LoadError>;
 }

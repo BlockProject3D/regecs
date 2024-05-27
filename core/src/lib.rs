@@ -31,6 +31,7 @@ pub mod entity;
 pub mod event;
 pub mod macros;
 pub mod object;
+#[cfg(feature = "reflection")]
 pub mod reflection;
 pub mod scene;
 pub mod system;

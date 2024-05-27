@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -35,7 +35,14 @@
 //pub mod interface;
 //pub mod property;
 
-pub mod property {
+pub mod property;
+pub mod component;
+
+mod interface;
+
+pub use interface::*;
+
+/*pub mod property {
     use std::borrow::Cow;
 
     //TODO: Add Signed and Unsigned enums with support for writing and reading signed and unsigned
@@ -84,3 +91,4 @@ pub mod property {
         fn write<T: Writer>(&self, writer: &mut T) -> Result<(), T::Error>;
     }
 }
+*/

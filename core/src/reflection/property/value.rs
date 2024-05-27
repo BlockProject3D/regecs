@@ -1,4 +1,4 @@
-// Copyright (c) 2021, BlockProject 3D
+// Copyright (c) 2024, BlockProject 3D
 //
 // All rights reserved.
 //
@@ -26,16 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub struct Property
-{
-    name: String,
-    optional: bool,
-    ptype: PropertyType,
-    config: Box<dyn config::PropertyConfig>
+pub trait Value: Sized {
+    type ParseError;
+    type LoadError;
 }
 
-pub struct PropertyGroup
-{
-    name: String,
-    props: Vec<Property>
+pub trait ValueParser<T>: Value {
+    fn parse(self) -> Result<T, Self::ParseError>;
+    fn load(self, value: T) -> Result<Self, Self::LoadError>;
 }

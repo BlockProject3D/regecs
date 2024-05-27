@@ -26,15 +26,29 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Identifier(usize);
+use std::ops::Index;
+use crate::reflection::property::Property;
 
-impl Identifier {
-    pub const fn from_raw(raw: usize) -> Identifier {
-        Self(raw)
+pub struct PropertyList(phf::Map<&'static str, Property>);
+
+impl PropertyList {
+    pub const fn new(map: phf::Map<&'static str, Property>) -> Self {
+        Self(map)
     }
 
-    pub const fn into_raw(self) -> usize {
-        self.0
+    pub fn iter(&self) -> impl Iterator<Item = &Property> {
+        self.0.values()
+    }
+
+    pub fn get(&self, name: &str) -> Option<&Property> {
+        self.0.get(name)
+    }
+}
+
+impl Index<&str> for PropertyList {
+    type Output = Property;
+
+    fn index(&self, index: &str) -> &Self::Output {
+        &self.0[index]
     }
 }

@@ -15,6 +15,12 @@ categories = ["game-development", "rust-patterns"]
 [dependencies]
 bpx = { version = "3.0.0" }
 regecs-codegen = { version = "2.0.0-rc.1.0.0", path = "../codegen", optional = true }
+phf = { version = "0.11.2", features = ["macros"], optional = true }
 
 [features]
 codegen = ["regecs-codegen"]
+reflection = ["phf"]
+
+[[test]]
+name = "reflection_api"
+required-features = ["reflection"]

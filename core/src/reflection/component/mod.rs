@@ -26,15 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Identifier(usize);
+mod interface;
+pub mod list;
+pub mod pool;
 
-impl Identifier {
-    pub const fn from_raw(raw: usize) -> Identifier {
-        Self(raw)
-    }
-
-    pub const fn into_raw(self) -> usize {
-        self.0
-    }
-}
+pub use interface::*;
