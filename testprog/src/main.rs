@@ -166,7 +166,7 @@ pub struct TestSystemManager {
 #[derive(Class)]
 pub struct Test;
 
-impl Object<Interface> for Test {
+impl Object<state::Object<Interface>> for Test {
     fn on_event(&mut self, _: &mut state::Object<Interface>, _: &i32, _: &Event<()>) {
         todo!()
     }
@@ -180,7 +180,7 @@ impl Object<Interface> for Test {
     }
 }
 
-impl regecs::object::New<Interface> for Test {
+impl regecs::object::New<state::Object<Interface>> for Test {
     type Arguments = i32;
 
     fn new(_: &mut state::Object<Interface>, _: &i32, _: ObjectRef, _: Self::Arguments) -> Self {
@@ -188,11 +188,11 @@ impl regecs::object::New<Interface> for Test {
     }
 }
 
-regecs::import_object!(pub Null<Interface>(regecs::object::builder::NullObject));
+regecs::import_object!(pub Null<state::Object<Interface>>(regecs::object::builder::NullObject));
 
 regecs::register_objects! {
     /// The root factory for all objects of this test.
-    pub builder ObjectBuilder for object RootObject<Interface> {
+    pub builder ObjectBuilder for object RootObject<state::Object<Interface>> {
         /// A test object.
         Test: Test,
         /// A null object.

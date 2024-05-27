@@ -47,3 +47,9 @@ pub struct Object<C: Configuration> {
     pub common: System<C>,
     pub systems: C::SystemManager,
 }
+
+impl<C: Configuration> crate::object::Context for Object<C> {
+    type AppState = C::AppState;
+    type Event = C::Event;
+    type Builder = C::Builder;
+}

@@ -30,7 +30,6 @@ use crate::event::{Builder, EventManager};
 use crate::scene::Configuration;
 use std::num::NonZeroU32;
 use crate::scene::event::{Event, Notify};
-use crate::scene::state;
 
 #[cfg(feature = "codegen")]
 pub use regecs_codegen::Class;
@@ -120,19 +119,25 @@ pub trait Class {
     fn class(&self) -> &str;
 }
 
+pub trait Context where Self: Sized {
+    type AppState;
+    type Event;
+    type Builder: crate::object::builder::Builder<Self>;
+}
+
 /// Object interface to represent all objects managed by a scene
-pub trait Object<C: Configuration>: Class {
-    fn on_event(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState, _event: &crate::event::Event<C::Event>) {}
-    fn on_remove(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState) {}
-    fn on_update(&mut self, _ctx: &mut state::Object<C>, _state: &C::AppState) {}
+pub trait Object<C: Context>: Class {
+    fn on_event(&mut self, _ctx: &mut C, _state: &C::AppState, _event: &crate::event::Event<C::Event>) {}
+    fn on_remove(&mut self, _ctx: &mut C, _state: &C::AppState) {}
+    fn on_update(&mut self, _ctx: &mut C, _state: &C::AppState) {}
 
     fn flags(&self) -> Flags {
         Flags::new()
     }
 }
 
-pub trait New<C: Configuration> {
+pub trait New<C: Context> {
     type Arguments;
 
-    fn new(ctx: &mut state::Object<C>, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
+    fn new(ctx: &mut C, state: &C::AppState, this: ObjectRef, args: Self::Arguments) -> Self;
 }

@@ -37,7 +37,7 @@ use crate::scene::state;
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<C: Configuration> {
     state: state::Object<C>,
-    objects: Storage<C>,
+    objects: Storage<state::Object<C>>,
     updatable: HashSet<ObjectRef>,
 }
 

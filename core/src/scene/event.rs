@@ -43,7 +43,7 @@ pub enum Notify {
 }
 
 impl Notify {
-    pub fn into_builder<I: Configuration>(self, ty: Type<I::Builder>) -> Builder<Event<I>> {
+    pub fn into_builder<C: Configuration>(self, ty: Type<C::Builder>) -> Builder<Event<C>> {
         match self {
             Notify::Sender(v) => Builder::new(Event { notify: true, ty }).sender(v),
             Notify::All => Builder::new(Event { notify: true, ty }),
@@ -52,12 +52,12 @@ impl Notify {
     }
 }
 
-pub struct Event<I: Configuration> {
+pub struct Event<C: Configuration> {
     pub notify: bool,
-    pub ty: Type<I::Builder>,
+    pub ty: Type<C::Builder>,
 }
 
-impl<I: Configuration> EventManager<Event<I>> {
+impl<C: Configuration> EventManager<Event<C>> {
     pub fn enable_object(&mut self, notify: Notify, target: ObjectRef, enable: bool) {
         let builder = notify
             .into_builder(Type::EnableObject(enable))
@@ -72,7 +72,7 @@ impl<I: Configuration> EventManager<Event<I>> {
         self.send(builder);
     }
 
-    pub fn spawn_object(&mut self, notify: Notify, builder: I::Builder) {
+    pub fn spawn_object(&mut self, notify: Notify, builder: C::Builder) {
         let builder = notify.into_builder(super::event::Type::SpawnObject(builder));
         self.send(builder);
     }

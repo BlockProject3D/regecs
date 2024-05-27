@@ -28,15 +28,15 @@
 
 use crate::component::Clear;
 use crate::object::builder::Builder;
-use crate::scene::state::System;
+use crate::scene::state;
 use crate::system::Update;
 
 pub trait Configuration: Sized {
     type Event;
     type AppState;
     type Pool: Clear;
-    type SystemManager: Update<System<Self>>;
-    type Builder: Builder<Self>;
+    type SystemManager: Update<state::System<Self>>;
+    type Builder: Builder<state::Object<Self>>;
 
     fn into_inner(self) -> (Self::Pool, Self::SystemManager);
 }

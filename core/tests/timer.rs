@@ -119,7 +119,7 @@ mod objects {
         }
     }
 
-    impl Object<Config> for TimerTest {
+    impl Object<regecs::scene::state::Object<Config>> for TimerTest {
         fn on_event(&mut self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), event: &regecs::event::Event<Event>) {
             match event.data() {
                 Event::Timer(r) => {
@@ -137,7 +137,7 @@ mod objects {
 
     pub struct TimerTestBuilder;
 
-    impl Builder<Config> for TimerTestBuilder {
+    impl Builder<regecs::scene::state::Object<Config>> for TimerTestBuilder {
         type Object = TimerTest;
 
         fn build(self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), this: ObjectRef) -> Self::Object {
