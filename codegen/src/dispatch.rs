@@ -26,6 +26,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::fmt::{Display, Formatter};
 use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -35,6 +36,15 @@ use syn::{Field, Fields, Index, Type, Variant};
 pub enum FieldName {
     Ident(Ident),
     Index(usize),
+}
+
+impl Display for FieldName {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FieldName::Ident(v) => write!(f, "{}", v),
+            FieldName::Index(v) => write!(f, "id{}", v)
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -64,6 +74,15 @@ pub enum Dispatch {
     Field(FieldDispatch),
     Variant(VariantDispatch),
     VariantMultiField(MultiFieldVariantDispatch),
+}
+
+impl Dispatch {
+    pub fn into_field(self) -> Option<FieldDispatch> {
+        match self {
+            Dispatch::Field(f) => Some(f),
+            _ => None
+        }
+    }
 }
 
 pub struct DispatchParser {

@@ -35,6 +35,7 @@ mod r#impl;
 mod class;
 mod update;
 mod util;
+mod component;
 
 use crate::r#impl::Impl;
 use clear::ClearImpl;
@@ -42,6 +43,7 @@ use proc_macro::{self, TokenStream};
 use quote::ToTokens;
 use syn::{parse_macro_input, DeriveInput, Attribute, Type};
 use crate::class::ClassImpl;
+use crate::component::ComponentImpl;
 use crate::update::UpdateImpl;
 
 #[proc_macro_derive(Clear, attributes(no_clear))]
@@ -82,3 +84,10 @@ pub fn update(input: TokenStream) -> TokenStream {
         .into()
 }
 
+#[proc_macro_derive(Component, attributes(property))]
+pub fn component(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    ComponentImpl::parse_data(ident, data)
+        .into_token_stream()
+        .into()
+}

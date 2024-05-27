@@ -67,6 +67,11 @@ impl FlagRecorder {
 pub trait Attributes {
     fn attributes(&self) -> &Vec<Attribute>;
 
+    fn attributes_by_name(&self, name: &str) -> impl Iterator<Item = &Attribute> {
+        self.attributes().iter().filter(|v| v.path.segments.last()
+            .map(|v| v.ident.to_string()) == Some(name.into()))
+    }
+
     fn has_attribute(&self, name: &str) -> bool {
         self.attributes().iter().any(|v| {
             v.path.segments.last().map(|v| v.ident.to_string()) == Some(name.into())

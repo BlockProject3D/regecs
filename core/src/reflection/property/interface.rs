@@ -36,7 +36,7 @@ pub struct Property {
 }
 
 pub trait Type {
-    fn type_name() -> &'static str;
+    const NAME: &'static str;
 }
 
 macro_rules! impl_type {
@@ -45,9 +45,7 @@ macro_rules! impl_type {
     ) => {
         $(
             impl Type for $type {
-                fn type_name() -> &'static str {
-                    $name
-                }
+                const NAME: &'static str = $name;
             }
         )*
     };

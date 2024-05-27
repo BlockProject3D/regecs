@@ -30,6 +30,9 @@ use crate::reflection::Identifier;
 use crate::reflection::property::list::PropertyList;
 use crate::reflection::property::value::Value;
 
+#[cfg(feature = "codegen")]
+pub use regecs_codegen::Component;
+
 pub trait Component {
     const PROPERTIES: &'static PropertyList;
     const NAME: &'static str;

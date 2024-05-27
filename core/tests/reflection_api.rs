@@ -33,19 +33,15 @@ use regecs::reflection::component::Component;
 use regecs::reflection::component::list::ComponentList;
 use regecs::reflection::component::pool::ComponentInfo;
 use regecs::reflection::Identifier;
-use regecs::reflection::property::list::PropertyList;
 
+#[derive(Component)]
 pub struct TestComponent {
-
+    #[property]
+    test_field: u32
 }
 
 impl regecs::component::Component for TestComponent {
     type List = BasicComponentList<Self>;
-}
-
-impl Component for TestComponent {
-    const PROPERTIES: &'static PropertyList = &PropertyList::new(phf_map!());
-    const NAME: &'static str = "TestComponent";
 }
 
 component_pool! {
@@ -68,4 +64,5 @@ impl regecs::reflection::component::pool::ComponentPool for TestPool {
 fn reflection_main() {
     use regecs::reflection::component::pool::ComponentPool;
     TestPool::get_ref(regecs::component::ComponentRef::<TestComponent>::new(0));
+    assert_eq!(TestComponent::PROPERTIES.iter().count(), 0);
 }
