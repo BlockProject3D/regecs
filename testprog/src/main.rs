@@ -103,7 +103,7 @@ mod components {
         }
     }
 
-    impl<I: regecs::scene::Configuration> Update<I> for ComplexSystem
+    impl<I: regecs::scene::Configuration> Update<System<I>> for ComplexSystem
     where
         I::Pool: ComponentPool<ComplexComponent>,
     {
@@ -137,7 +137,7 @@ impl Default for MySystem {
     }
 }
 
-impl<I: regecs::scene::Configuration<AppState = i32>> Update<I> for MySystem
+impl<I: regecs::scene::Configuration<AppState = i32>> Update<state::System<I>> for MySystem
 where
     I::Pool: ComponentPool<components::Test> + ComponentPool<components::Test2>,
 {
@@ -155,7 +155,7 @@ where
 struct MySystem2 {}
 
 #[derive(Default, Update)]
-#[for_context(Interface)]
+#[for_context(state::System<Interface>)]
 pub struct TestSystemManager {
     my: MySystem,
     complex: ComplexSystem,

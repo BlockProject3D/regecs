@@ -30,12 +30,17 @@ use crate::event::EventManager;
 use crate::object::Tree;
 use crate::scene::event::Event;
 use crate::scene::Configuration;
+use crate::system::Context;
 
 pub struct System<C: Configuration> {
     pub pool: C::Pool,
     pub event_manager: EventManager<C::Event>,
     pub scene: EventManager<Event<C>>,
     pub tree: Tree,
+}
+
+impl<C: Configuration> Context for System<C> {
+    type AppState = C::AppState;
 }
 
 pub struct Object<C: Configuration> {

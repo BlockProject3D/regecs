@@ -77,7 +77,7 @@ mod systems {
 
     #[derive(Default)]
     pub struct TimerManager;
-    impl<C: Configuration> Update<C> for TimerManager
+    impl<C: Configuration> Update<System<C>> for TimerManager
         where C::Pool: ComponentPool<super::components::Timer<C::Event>> {
         fn update(&mut self, ctx: &mut System<C>, _: &C::AppState) {
             let now = Instant::now();

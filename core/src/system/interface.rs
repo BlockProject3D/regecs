@@ -26,13 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::scene::Configuration;
-use crate::scene::state::System;
-
 #[cfg(feature = "codegen")]
 pub use regecs_codegen::Update;
 
+pub trait Context {
+    type AppState;
+}
+
 /// Update functionality.
-pub trait Update<C: Configuration> {
-    fn update(&mut self, ctx: &mut System<C>, state: &C::AppState);
+pub trait Update<C: Context> {
+    fn update(&mut self, ctx: &mut C, state: &C::AppState);
 }
