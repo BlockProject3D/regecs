@@ -30,6 +30,9 @@ use std::ffi::{CStr, CString, OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::Arc;
+use crate::reflection::property::Type;
+
+pub use super::value_string::ValueString;
 
 pub trait Error {
     fn undefined_property() -> Self;
@@ -40,49 +43,49 @@ pub trait Value: Sized {
     type LoadError: Error;
 }
 
-pub trait GetProp<'a, Prop> {
-    fn get_prop(prop: &'a Prop) -> Self;
+pub enum Mode<'a, Prop: Type> {
+    Owned(Prop),
+    Borrowed(&'a Prop),
+    Deref(&'a Prop::DerefTarget)
 }
 
-impl<'a, T: Clone> GetProp<'a, T> for T {
-    fn get_prop(prop: &'a T) -> Self {
-        prop.clone()
+pub trait GetProp<'a, Prop: Type> {
+    fn get_prop(self) -> Mode<'a, Prop>;
+}
+
+impl<'a, T: Clone + Type> GetProp<'a, T> for T {
+    fn get_prop(self) -> Mode<'a, T> {
+        Mode::Owned(self.clone())
     }
 }
 
-impl<'a, T> GetProp<'a, T> for &'a T {
-    fn get_prop(prop: &'a T) -> Self {
-        prop
+impl<'a, T: Type> GetProp<'a, T> for &'a T {
+    fn get_prop(self) -> Mode<'a, T> {
+        Mode::Borrowed(self)
     }
 }
 
-impl<'a, T> GetProp<'a, Vec<T>> for &'a [T] {
-    fn get_prop(prop: &'a Vec<T>) -> Self {
-        &*prop
+impl<'a, T: Type> GetProp<'a, Vec<T>> for &'a [T] {
+    fn get_prop(self) -> Mode<'a, Vec<T>> {
+        Mode::Deref(self)
     }
 }
 
-impl<'a> GetProp<'a, String> for &'a [u8] {
-    fn get_prop(prop: &'a String) -> Self {
-        prop.as_ref()
+impl<'a, T: Type> GetProp<'a, Box<T>> for &'a T {
+    fn get_prop(self) -> Mode<'a, Box<T>> {
+        Mode::Deref(self)
     }
 }
 
-impl<'a, T> GetProp<'a, Box<T>> for &'a T {
-    fn get_prop(prop: &'a Box<T>) -> Self {
-        &*prop
+impl<'a, T: Type> GetProp<'a, Rc<T>> for &'a T {
+    fn get_prop(self) -> Mode<'a, Rc<T>> {
+        Mode::Deref(self)
     }
 }
 
-impl<'a, T> GetProp<'a, Rc<T>> for &'a T {
-    fn get_prop(prop: &'a Rc<T>) -> Self {
-        &*prop
-    }
-}
-
-impl<'a, T> GetProp<'a, Arc<T>> for &'a T {
-    fn get_prop(prop: &'a Arc<T>) -> Self {
-        &*prop
+impl<'a, T: Type> GetProp<'a, Arc<T>> for &'a T {
+    fn get_prop(self) -> Mode<'a, Arc<T>> {
+        Mode::Deref(self)
     }
 }
 
@@ -90,8 +93,8 @@ macro_rules! get_prop {
     ($($ptype: ty => $pborrowed: ty),*) => {
         $(
             impl<'a> GetProp<'a, $ptype> for &'a $pborrowed {
-                fn get_prop(prop: &'a $ptype) -> &'a $pborrowed {
-                    &*prop
+                fn get_prop(self) -> Mode<'a, $ptype> {
+                    Mode::Deref(self)
                 }
             }
         )*
@@ -105,7 +108,7 @@ get_prop! {
     PathBuf => Path
 }
 
-pub trait ValueParser<T>: Value {
+pub trait ValueParser<T: Type>: Value {
     fn parse(self) -> Result<T, Self::ParseError>;
-    fn load<'a>(self, value: impl GetProp<'a, T>) -> Result<Self, Self::LoadError>;
+    fn load<'a, V: GetProp<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a;
 }

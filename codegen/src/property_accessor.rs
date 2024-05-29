@@ -30,7 +30,7 @@ use std::collections::HashMap;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, ToTokens};
 use quote::__private::Span;
-use syn::{ExprAssign, Field, Path, Token, Variant};
+use syn::{ExprAssign, Field, Token, Variant};
 use syn::punctuated::Punctuated;
 use crate::dispatch::{DispatchParser, FieldDispatch};
 use crate::r#impl::Impl;
@@ -106,7 +106,7 @@ impl Impl for PropertyAccessorImpl {
         }
     }
 
-    fn parse_variant(&mut self, v: Variant) {
+    fn parse_variant(&mut self, _: Variant) {
         panic!("Enums are not supported");
     }
 

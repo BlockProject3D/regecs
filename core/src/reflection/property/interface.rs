@@ -26,6 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::ffi::{CStr, CString, OsStr, OsString};
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::sync::Arc;
 use crate::reflection::Identifier;
 
 #[derive(Copy, Clone)]
@@ -37,31 +42,62 @@ pub struct Property {
 
 pub trait Type {
     const NAME: &'static str;
+    const SUPER_NAME: Option<&'static str>;
+    type DerefTarget: ?Sized;
+}
+
+impl<T: Type> Type for Vec<T> {
+    const NAME: &'static str = T::NAME;
+    const SUPER_NAME: Option<&'static str> = Some("Vec");
+    type DerefTarget = <Vec<T> as Deref>::Target;
+}
+
+impl<T: Type> Type for Box<T> {
+    const NAME: &'static str = T::NAME;
+    const SUPER_NAME: Option<&'static str> = Some("Box");
+    type DerefTarget = <Box<T> as Deref>::Target;
+}
+
+impl<T: Type> Type for Rc<T> {
+    const NAME: &'static str = T::NAME;
+    const SUPER_NAME: Option<&'static str> = Some("Rc");
+    type DerefTarget = <Rc<T> as Deref>::Target;
+}
+
+impl<T: Type> Type for Arc<T> {
+    const NAME: &'static str = T::NAME;
+    const SUPER_NAME: Option<&'static str> = Some("Vec");
+    type DerefTarget = <Arc<T> as Deref>::Target;
 }
 
 macro_rules! impl_type {
     (
-        $($type: ty => $name: literal),*
+        $($type: ty: $deref: ty => $name: literal),*
     ) => {
         $(
             impl Type for $type {
                 const NAME: &'static str = $name;
+                const SUPER_NAME: Option<&'static str> = None;
+                type DerefTarget = $deref;
             }
         )*
     };
 }
 
 impl_type!(
-    i8 => "i8",
-    i16 => "i16",
-    i32 => "i32",
-    i64 => "i64",
-    u8 => "u8",
-    u16 => "u16",
-    u32 => "u32",
-    u64 => "u64",
-    f32 => "f32",
-    f64 => "f64",
-    bool => "bool",
-    String => "String"
+    i8: i8 => "i8",
+    i16: i16 => "i16",
+    i32: i32 => "i32",
+    i64: i64 => "i64",
+    u8: u8 => "u8",
+    u16: u16 => "u16",
+    u32: u32 => "u32",
+    u64: u64 => "u64",
+    f32: f32 => "f32",
+    f64: f64 => "f64",
+    bool: bool => "bool",
+    String: str => "String",
+    PathBuf: Path => "Path",
+    OsString: OsStr => "OsStr",
+    CString: CStr => "CStr"
 );
