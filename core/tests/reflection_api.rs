@@ -33,7 +33,7 @@ use regecs::reflection::component::{Component, PropertyAccessor};
 use regecs::reflection::component::list::ComponentList;
 use regecs::reflection::component::pool::ComponentInfo;
 use regecs::reflection::Identifier;
-use regecs::reflection::property::value::{GetProp, Value, ValueParser};
+use regecs::reflection::property::value::ValueString;
 
 #[derive(Component, PropertyAccessor, Default)]
 pub struct TestComponent {
@@ -89,5 +89,14 @@ fn reflection_main() {
     let test_field = TestComponent::PROPERTIES["test_field"].identifier;
     let test_field1 = TestComponent::PROPERTIES["test_field1"].identifier;
     let test_str = TestComponent::PROPERTIES["test_str"].identifier;
-    //comp.set_property(test_str, "test");
+    comp.set_property(test_str, ValueString::from("This is a test")).unwrap();
+    let prop = comp.get_property(test_str, ValueString::new()).unwrap();
+    assert_eq!(prop.into_inner(), "This is a test");
+    let prop = comp.get_property(test_field, ValueString::new()).unwrap();
+    assert_eq!(prop.into_inner(), "42");
+    let prop = comp.get_property(test_field1, ValueString::new()).unwrap();
+    assert_eq!(prop.into_inner(), "0");
+    comp.set_property(test_field1, ValueString::from("424242")).unwrap();
+    let prop = comp.get_property(test_field1, ValueString::new()).unwrap();
+    assert_eq!(prop.into_inner(), "424242");
 }
