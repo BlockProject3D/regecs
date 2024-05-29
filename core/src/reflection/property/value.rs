@@ -26,12 +26,86 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::ffi::{CStr, CString, OsStr, OsString};
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::sync::Arc;
+
+pub trait Error {
+    fn undefined_property() -> Self;
+}
+
 pub trait Value: Sized {
-    type ParseError;
-    type LoadError;
+    type ParseError: Error;
+    type LoadError: Error;
+}
+
+pub trait GetProp<'a, Prop> {
+    fn get_prop(prop: &'a Prop) -> Self;
+}
+
+impl<'a, T: Clone> GetProp<'a, T> for T {
+    fn get_prop(prop: &'a T) -> Self {
+        prop.clone()
+    }
+}
+
+impl<'a, T> GetProp<'a, T> for &'a T {
+    fn get_prop(prop: &'a T) -> Self {
+        prop
+    }
+}
+
+impl<'a, T> GetProp<'a, Vec<T>> for &'a [T] {
+    fn get_prop(prop: &'a Vec<T>) -> Self {
+        &*prop
+    }
+}
+
+impl<'a> GetProp<'a, String> for &'a [u8] {
+    fn get_prop(prop: &'a String) -> Self {
+        prop.as_ref()
+    }
+}
+
+impl<'a, T> GetProp<'a, Box<T>> for &'a T {
+    fn get_prop(prop: &'a Box<T>) -> Self {
+        &*prop
+    }
+}
+
+impl<'a, T> GetProp<'a, Rc<T>> for &'a T {
+    fn get_prop(prop: &'a Rc<T>) -> Self {
+        &*prop
+    }
+}
+
+impl<'a, T> GetProp<'a, Arc<T>> for &'a T {
+    fn get_prop(prop: &'a Arc<T>) -> Self {
+        &*prop
+    }
+}
+
+macro_rules! get_prop {
+    ($($ptype: ty => $pborrowed: ty),*) => {
+        $(
+            impl<'a> GetProp<'a, $ptype> for &'a $pborrowed {
+                fn get_prop(prop: &'a $ptype) -> &'a $pborrowed {
+                    &*prop
+                }
+            }
+        )*
+    };
+}
+
+get_prop! {
+    String => str,
+    OsString => OsStr,
+    CString => CStr,
+    PathBuf => Path
 }
 
 pub trait ValueParser<T>: Value {
     fn parse(self) -> Result<T, Self::ParseError>;
-    fn load(self, value: T) -> Result<Self, Self::LoadError>;
+    fn load<'a>(self, value: impl GetProp<'a, T>) -> Result<Self, Self::LoadError>;
 }

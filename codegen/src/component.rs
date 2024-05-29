@@ -61,7 +61,7 @@ impl Impl for ComponentImpl {
     }
 
     fn parse_variant(&mut self, _: Variant) {
-        panic!("Enums are not supported")
+        panic!("Enums are not supported");
     }
 
     fn parse_field(&mut self, f: Field) {

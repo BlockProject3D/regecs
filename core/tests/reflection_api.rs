@@ -29,15 +29,35 @@
 use phf::phf_map;
 use regecs::component::list::BasicComponentList;
 use regecs::component_pool;
-use regecs::reflection::component::Component;
+use regecs::reflection::component::{Component, PropertyAccessor};
 use regecs::reflection::component::list::ComponentList;
 use regecs::reflection::component::pool::ComponentInfo;
 use regecs::reflection::Identifier;
+use regecs::reflection::property::value::{GetProp, Value, ValueParser};
 
-#[derive(Component)]
+#[derive(Component, PropertyAccessor, Default)]
 pub struct TestComponent {
     #[property]
-    test_field: u32
+    test_field: u32,
+    #[property(get=test_field1)]
+    test_field1: u32,
+    #[property(set=set_test_str, get=test_str)]
+    test_str: String
+}
+
+impl TestComponent {
+    pub fn test_str(&self) -> &str {
+        &self.test_str
+    }
+
+    pub fn test_field1(&self) -> u32 {
+        self.test_field1
+    }
+
+    pub fn set_test_str(&mut self, value: String) {
+        self.test_field = 42;
+        self.test_str = value;
+    }
 }
 
 impl regecs::component::Component for TestComponent {
@@ -64,5 +84,10 @@ impl regecs::reflection::component::pool::ComponentPool for TestPool {
 fn reflection_main() {
     use regecs::reflection::component::pool::ComponentPool;
     TestPool::get_ref(regecs::component::ComponentRef::<TestComponent>::new(0));
-    assert_eq!(TestComponent::PROPERTIES.iter().count(), 0);
+    assert_eq!(TestComponent::PROPERTIES.iter().count(), 3);
+    let mut comp = TestComponent::default();
+    let test_field = TestComponent::PROPERTIES["test_field"].identifier;
+    let test_field1 = TestComponent::PROPERTIES["test_field1"].identifier;
+    let test_str = TestComponent::PROPERTIES["test_str"].identifier;
+    //comp.set_property(test_str, "test");
 }

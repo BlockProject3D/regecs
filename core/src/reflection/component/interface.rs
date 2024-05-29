@@ -33,6 +33,9 @@ use crate::reflection::property::value::Value;
 #[cfg(feature = "codegen")]
 pub use regecs_codegen::Component;
 
+#[cfg(feature = "codegen")]
+pub use regecs_codegen::PropertyAccessor;
+
 pub trait Component {
     const PROPERTIES: &'static PropertyList;
     const NAME: &'static str;

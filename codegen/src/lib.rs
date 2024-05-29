@@ -36,6 +36,7 @@ mod class;
 mod update;
 mod util;
 mod component;
+mod property_accessor;
 
 use crate::r#impl::Impl;
 use clear::ClearImpl;
@@ -44,6 +45,7 @@ use quote::ToTokens;
 use syn::{parse_macro_input, DeriveInput, Attribute, Type};
 use crate::class::ClassImpl;
 use crate::component::ComponentImpl;
+use crate::property_accessor::PropertyAccessorImpl;
 use crate::update::UpdateImpl;
 
 #[proc_macro_derive(Clear, attributes(no_clear))]
@@ -88,6 +90,14 @@ pub fn update(input: TokenStream) -> TokenStream {
 pub fn component(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
     ComponentImpl::parse_data(ident, data)
+        .into_token_stream()
+        .into()
+}
+
+#[proc_macro_derive(PropertyAccessor, attributes(property))]
+pub fn property_accessor(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    PropertyAccessorImpl::parse_data(ident, data)
         .into_token_stream()
         .into()
 }

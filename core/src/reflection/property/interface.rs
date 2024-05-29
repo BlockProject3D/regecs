@@ -62,5 +62,6 @@ impl_type!(
     u64 => "u64",
     f32 => "f32",
     f64 => "f64",
-    bool => "bool"
+    bool => "bool",
+    String => "String"
 );
