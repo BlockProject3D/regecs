@@ -45,6 +45,10 @@ pub struct ComponentRef {
 }
 
 impl ComponentRef {
+    pub fn from_ref<P: ComponentPool, T: crate::reflection::component::Component + crate::component::Component>(r: crate::component::ComponentRef<T>) -> Self {
+        ComponentRef::from_raw(P::COMPONENTS[T::NAME].identifier, r.index)
+    }
+
     pub fn from_raw(ty: Identifier, index: usize) -> Self {
         Self {
             ty,
@@ -55,14 +59,35 @@ impl ComponentRef {
     pub fn into_raw(self) -> (Identifier, usize) {
         (self.ty, self.index)
     }
+
+    pub fn ty(&self) -> Identifier {
+        self.ty
+    }
+
+    /// Converts this (type unsafe) [ComponentRef](ComponentRef) into a type safe [ComponentRef](crate::component::ComponentRef).
+    ///
+    /// Safety
+    ///
+    /// This assumes that the target type T exactly matches the type identifier of this [ComponentRef](ComponentRef).
+    pub fn unchecked_into_ref<T: crate::component::Component>(self) -> crate::component::ComponentRef<T> {
+        crate::component::ComponentRef::new(self.index)
+    }
+
+    /// Converts this (type unsafe) [ComponentRef](ComponentRef) into a type safe [ComponentRef](crate::component::ComponentRef).
+    ///
+    /// Panic
+    ///
+    /// This function panics if the target type T does not exactly match the type identifier of this [ComponentRef](ComponentRef).
+    pub fn into_ref<P: ComponentPool, T: crate::reflection::component::Component + crate::component::Component>(self) -> crate::component::ComponentRef<T> {
+        if P::COMPONENTS[T::NAME].identifier != self.ty {
+            panic!("attempt to convert component refs of unrelated type");
+        }
+        self.unchecked_into_ref()
+    }
 }
 
 pub trait ComponentPool {
     const COMPONENTS: &'static ComponentList;
-
-    fn get_ref<T: crate::reflection::component::Component + crate::component::Component>(r: crate::component::ComponentRef<T>) -> ComponentRef {
-        ComponentRef::from_raw(Self::COMPONENTS[T::NAME].identifier, r.index)
-    }
 }
 
 pub trait PropertyAccessor<V: Value> {
