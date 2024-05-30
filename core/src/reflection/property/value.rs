@@ -49,51 +49,51 @@ pub enum Mode<'a, Prop: Type> {
     Deref(&'a Prop::DerefTarget)
 }
 
-pub trait GetProp<'a, Prop: Type> {
-    fn get_prop(self) -> Mode<'a, Prop>;
+pub trait ToMode<'a, Prop: Type> {
+    fn to_mode(self) -> Mode<'a, Prop>;
 }
 
-impl<'a, T: Clone + Type> GetProp<'a, T> for T {
-    fn get_prop(self) -> Mode<'a, T> {
+impl<'a, T: Clone + Type> ToMode<'a, T> for T {
+    fn to_mode(self) -> Mode<'a, T> {
         Mode::Owned(self.clone())
     }
 }
 
-impl<'a, T: Type> GetProp<'a, T> for &'a T {
-    fn get_prop(self) -> Mode<'a, T> {
+impl<'a, T: Type> ToMode<'a, T> for &'a T {
+    fn to_mode(self) -> Mode<'a, T> {
         Mode::Borrowed(self)
     }
 }
 
-impl<'a, T: Type> GetProp<'a, Vec<T>> for &'a [T] {
-    fn get_prop(self) -> Mode<'a, Vec<T>> {
+impl<'a, T: Type> ToMode<'a, Vec<T>> for &'a [T] {
+    fn to_mode(self) -> Mode<'a, Vec<T>> {
         Mode::Deref(self)
     }
 }
 
-impl<'a, T: Type> GetProp<'a, Box<T>> for &'a T {
-    fn get_prop(self) -> Mode<'a, Box<T>> {
+impl<'a, T: Type> ToMode<'a, Box<T>> for &'a T {
+    fn to_mode(self) -> Mode<'a, Box<T>> {
         Mode::Deref(self)
     }
 }
 
-impl<'a, T: Type> GetProp<'a, Rc<T>> for &'a T {
-    fn get_prop(self) -> Mode<'a, Rc<T>> {
+impl<'a, T: Type> ToMode<'a, Rc<T>> for &'a T {
+    fn to_mode(self) -> Mode<'a, Rc<T>> {
         Mode::Deref(self)
     }
 }
 
-impl<'a, T: Type> GetProp<'a, Arc<T>> for &'a T {
-    fn get_prop(self) -> Mode<'a, Arc<T>> {
+impl<'a, T: Type> ToMode<'a, Arc<T>> for &'a T {
+    fn to_mode(self) -> Mode<'a, Arc<T>> {
         Mode::Deref(self)
     }
 }
 
-macro_rules! get_prop {
+macro_rules! impl_to_mode {
     ($($ptype: ty => $pborrowed: ty),*) => {
         $(
-            impl<'a> GetProp<'a, $ptype> for &'a $pborrowed {
-                fn get_prop(self) -> Mode<'a, $ptype> {
+            impl<'a> ToMode<'a, $ptype> for &'a $pborrowed {
+                fn to_mode(self) -> Mode<'a, $ptype> {
                     Mode::Deref(self)
                 }
             }
@@ -101,7 +101,7 @@ macro_rules! get_prop {
     };
 }
 
-get_prop! {
+impl_to_mode! {
     String => str,
     OsString => OsStr,
     CString => CStr,
@@ -110,5 +110,5 @@ get_prop! {
 
 pub trait ValueParser<T: Type>: Value {
     fn parse(self) -> Result<T, Self::ParseError>;
-    fn load<'a, V: GetProp<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a;
+    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a;
 }

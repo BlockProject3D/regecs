@@ -28,7 +28,7 @@
 
 use std::str::FromStr;
 use crate::reflection::property::Type;
-use crate::reflection::property::value::{GetProp, Mode, Value, ValueParser};
+use crate::reflection::property::value::{ToMode, Mode, Value, ValueParser};
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -69,8 +69,8 @@ impl<T: Type + FromStr + ToString> ValueParser<T> for ValueString where <T as Ty
         self.0.parse().map_err(|_| Error::Parse)
     }
 
-    fn load<'a, V: GetProp<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a {
-        let mode = value.get_prop();
+    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a {
+        let mode = value.to_mode();
         Ok(match mode {
             Mode::Owned(v) => ValueString(v.to_string()),
             Mode::Borrowed(v) => ValueString(v.to_string()),
