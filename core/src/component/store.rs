@@ -26,11 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::borrow::Borrow;
 use crate::component::attachments::AttachmentsManager;
 use crate::component::list::List;
 use crate::component::{Clear, Component, ComponentRef};
 use crate::entity::EntityIndex;
+use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
 pub struct IterMut<'a, T: Component> {

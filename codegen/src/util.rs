@@ -26,9 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::dispatch::{Dispatch, FieldName};
 use std::collections::HashSet;
 use syn::{Attribute, Field, Variant};
-use crate::dispatch::{Dispatch, FieldName};
 
 pub struct FlagRecorder(HashSet<FieldName>);
 
@@ -41,7 +41,9 @@ impl FlagRecorder {
         match dispatch {
             Dispatch::Field(v) => self.0.contains(&v.name),
             Dispatch::Variant(v) => self.0.contains(&FieldName::Ident(v.variant_name.clone())),
-            Dispatch::VariantMultiField(v) => self.0.contains(&FieldName::Ident(v.variant_name.clone()))
+            Dispatch::VariantMultiField(v) => {
+                self.0.contains(&FieldName::Ident(v.variant_name.clone()))
+            },
         }
     }
 
@@ -49,16 +51,14 @@ impl FlagRecorder {
         if let Some(v) = dispatch.into() {
             match v {
                 Dispatch::Variant(v) => {
-                    self.0
-                        .insert(FieldName::Ident(v.variant_name.clone()));
+                    self.0.insert(FieldName::Ident(v.variant_name.clone()));
                 },
                 Dispatch::VariantMultiField(v) => {
-                    self.0
-                        .insert(FieldName::Ident(v.variant_name.clone()));
+                    self.0.insert(FieldName::Ident(v.variant_name.clone()));
                 },
                 Dispatch::Field(f) => {
                     self.0.insert(f.name.clone());
-                }
+                },
             }
         }
     }
@@ -68,14 +68,15 @@ pub trait Attributes {
     fn attributes(&self) -> &Vec<Attribute>;
 
     fn attributes_by_name(&self, name: &str) -> impl Iterator<Item = &Attribute> {
-        self.attributes().iter().filter(|v| v.path.segments.last()
-            .map(|v| v.ident.to_string()) == Some(name.into()))
+        self.attributes()
+            .iter()
+            .filter(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some(name.into()))
     }
 
     fn has_attribute(&self, name: &str) -> bool {
-        self.attributes().iter().any(|v| {
-            v.path.segments.last().map(|v| v.ident.to_string()) == Some(name.into())
-        })
+        self.attributes()
+            .iter()
+            .any(|v| v.path.segments.last().map(|v| v.ident.to_string()) == Some(name.into()))
     }
 }
 

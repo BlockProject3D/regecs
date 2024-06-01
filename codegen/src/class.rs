@@ -26,29 +26,25 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::r#impl::Impl;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Field, LitStr, Variant};
-use crate::r#impl::Impl;
 
 pub struct ClassImpl {
-    name: Ident
+    name: Ident,
 }
 
 impl Impl for ClassImpl {
     type Params = Ident;
 
     fn new(params: Self::Params) -> Self {
-        ClassImpl {
-            name: params
-        }
+        ClassImpl { name: params }
     }
 
-    fn parse_variant(&mut self, _: Variant) {
-    }
+    fn parse_variant(&mut self, _: Variant) {}
 
-    fn parse_field(&mut self, _: Field) {
-    }
+    fn parse_field(&mut self, _: Field) {}
 
     fn into_token_stream(self) -> TokenStream {
         let name = self.name;

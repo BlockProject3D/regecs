@@ -26,14 +26,14 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::str::FromStr;
+use crate::reflection::property::value::{Mode, ToMode, Value, ValueParser};
 use crate::reflection::property::Type;
-use crate::reflection::property::value::{ToMode, Mode, Value, ValueParser};
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub enum Error {
     UndefinedProperty,
-    Parse
+    Parse,
 }
 
 impl crate::reflection::property::value::Error for Error {
@@ -63,18 +63,25 @@ impl Value for ValueString {
     type LoadError = Error;
 }
 
-impl<T: Type + FromStr + ToString> ValueParser<T> for ValueString where <T as Type>::DerefTarget: ToString {
+impl<T: Type + FromStr + ToString> ValueParser<T> for ValueString
+where
+    <T as Type>::DerefTarget: ToString,
+{
     fn parse(self) -> Result<T, Self::ParseError> {
         //Stupid rust type system cannot infer type when attempting to use the error type of FromStr.
         self.0.parse().map_err(|_| Error::Parse)
     }
 
-    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a {
+    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError>
+    where
+        <T as Type>::DerefTarget: 'a,
+        T: 'a,
+    {
         let mode = value.to_mode();
         Ok(match mode {
             Mode::Owned(v) => ValueString(v.to_string()),
             Mode::Borrowed(v) => ValueString(v.to_string()),
-            Mode::Deref(v) => ValueString(v.to_string())
+            Mode::Deref(v) => ValueString(v.to_string()),
         })
     }
 }

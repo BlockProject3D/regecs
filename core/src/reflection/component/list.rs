@@ -26,8 +26,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ops::Index;
 use crate::reflection::component::pool::ComponentInfo;
+use std::ops::Index;
 
 pub struct ComponentList(phf::Map<&'static str, ComponentInfo>);
 

@@ -69,7 +69,7 @@ where
     /// Trims the end of this container if needed.
     ///
     /// This function is automatically called by [ComponentStore](crate::component::store::ComponentStore)
-    /// after all components of attached to a given entity have all been removed. 
+    /// after all components of attached to a given entity have all been removed.
     fn trim(&mut self);
 }
 

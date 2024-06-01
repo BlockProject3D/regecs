@@ -26,12 +26,12 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{Field, Variant};
 use crate::dispatch::{DispatchParser, FieldDispatch};
 use crate::r#impl::Impl;
 use crate::util::Attributes;
+use proc_macro2::{Ident, TokenStream};
+use quote::quote;
+use syn::{Field, Variant};
 
 fn to_token_stream((index, field): (usize, FieldDispatch)) -> TokenStream {
     let name = field.name.to_string();
@@ -47,7 +47,7 @@ fn to_token_stream((index, field): (usize, FieldDispatch)) -> TokenStream {
 
 pub struct ComponentImpl {
     parser: DispatchParser,
-    name: Ident
+    name: Ident,
 }
 
 impl Impl for ComponentImpl {
@@ -56,7 +56,7 @@ impl Impl for ComponentImpl {
     fn new(params: Self::Params) -> Self {
         Self {
             parser: DispatchParser::new(),
-            name: params
+            name: params,
         }
     }
 
@@ -71,9 +71,12 @@ impl Impl for ComponentImpl {
     }
 
     fn into_token_stream(self) -> TokenStream {
-        let name=  self.name;
+        let name = self.name;
         let name_string = name.to_string();
-        let tokens = self.parser.into_inner().into_iter()
+        let tokens = self
+            .parser
+            .into_inner()
+            .into_iter()
             .filter_map(|v| v.into_field())
             .enumerate()
             .map(to_token_stream);

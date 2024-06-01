@@ -26,11 +26,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::reflection::property::Type;
 use std::ffi::{CStr, CString, OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::Arc;
-use crate::reflection::property::Type;
 
 pub use super::value_string::ValueString;
 
@@ -46,7 +46,7 @@ pub trait Value: Sized {
 pub enum Mode<'a, Prop: Type> {
     Owned(Prop),
     Borrowed(&'a Prop),
-    Deref(&'a Prop::DerefTarget)
+    Deref(&'a Prop::DerefTarget),
 }
 
 pub trait ToMode<'a, Prop: Type> {
@@ -110,5 +110,8 @@ impl_to_mode! {
 
 pub trait ValueParser<T: Type>: Value {
     fn parse(self) -> Result<T, Self::ParseError>;
-    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError> where <T as Type>::DerefTarget: 'a, T: 'a;
+    fn load<'a, V: ToMode<'a, T>>(self, value: V) -> Result<Self, Self::LoadError>
+    where
+        <T as Type>::DerefTarget: 'a,
+        T: 'a;
 }

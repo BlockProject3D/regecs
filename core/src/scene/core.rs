@@ -29,10 +29,10 @@
 use crate::component::Clear;
 use crate::event::{Builder, Event, EventManager};
 use crate::object::{builder::Builder as ObjectBuilder, Class, Object, ObjectRef, Storage, Tree};
+use crate::scene::state;
 use crate::scene::Configuration;
 use crate::system::Update;
 use std::collections::HashSet;
-use crate::scene::state;
 
 /// Represents a scene, provides storage for systems and objects
 pub struct Scene<C: Configuration> {
@@ -52,7 +52,7 @@ impl<C: Configuration> Scene<C> {
                     scene: EventManager::new(),
                     tree: Tree::new(),
                 },
-                systems
+                systems,
             },
             objects: Storage::new(),
             updatable: HashSet::new(),
@@ -73,11 +73,7 @@ impl<C: Configuration> Scene<C> {
         obj.on_event(&mut self.state, state, &event);
     }
 
-    fn handle_system_event(
-        &mut self,
-        state: &C::AppState,
-        ev: Event<super::event::Event<C>>,
-    ) {
+    fn handle_system_event(&mut self, state: &C::AppState, ev: Event<super::event::Event<C>>) {
         let sender = ev.sender();
         let target = ev.target();
         let inner = ev.into_inner();
@@ -166,10 +162,7 @@ impl<C: Configuration> Scene<C> {
             notify: false,
             ty: super::event::Type::SpawnObject(builder),
         };
-        self.state
-            .common
-            .scene
-            .send(Builder::new(ev));
+        self.state.common.scene.send(Builder::new(ev));
     }
 
     pub fn component_manager_mut(&mut self) -> &mut C::Pool {

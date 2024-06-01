@@ -27,33 +27,35 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::reflection::component::list::ComponentList;
-use crate::reflection::Identifier;
 use crate::reflection::property::list::PropertyList;
 use crate::reflection::property::value::Value;
+use crate::reflection::Identifier;
 
 #[derive(Copy, Clone)]
 pub struct ComponentInfo {
     pub properties: &'static PropertyList,
     pub name: &'static str,
-    pub identifier: Identifier
+    pub identifier: Identifier,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct ComponentRef {
     ty: Identifier,
-    index: usize
+    index: usize,
 }
 
 impl ComponentRef {
-    pub fn from_ref<P: ComponentPool, T: crate::reflection::component::Component + crate::component::Component>(r: crate::component::ComponentRef<T>) -> Self {
+    pub fn from_ref<
+        P: ComponentPool,
+        T: crate::reflection::component::Component + crate::component::Component,
+    >(
+        r: crate::component::ComponentRef<T>,
+    ) -> Self {
         ComponentRef::from_raw(P::COMPONENTS[T::NAME].identifier, r.index)
     }
 
     pub fn from_raw(ty: Identifier, index: usize) -> Self {
-        Self {
-            ty,
-            index
-        }
+        Self { ty, index }
     }
 
     pub fn into_raw(self) -> (Identifier, usize) {
@@ -69,7 +71,9 @@ impl ComponentRef {
     /// Safety
     ///
     /// This assumes that the target type T exactly matches the type identifier of this [ComponentRef](ComponentRef).
-    pub fn unchecked_into_ref<T: crate::component::Component>(self) -> crate::component::ComponentRef<T> {
+    pub fn unchecked_into_ref<T: crate::component::Component>(
+        self,
+    ) -> crate::component::ComponentRef<T> {
         crate::component::ComponentRef::new(self.index)
     }
 
@@ -78,7 +82,12 @@ impl ComponentRef {
     /// Panic
     ///
     /// This function panics if the target type T does not exactly match the type identifier of this [ComponentRef](ComponentRef).
-    pub fn into_ref<P: ComponentPool, T: crate::reflection::component::Component + crate::component::Component>(self) -> crate::component::ComponentRef<T> {
+    pub fn into_ref<
+        P: ComponentPool,
+        T: crate::reflection::component::Component + crate::component::Component,
+    >(
+        self,
+    ) -> crate::component::ComponentRef<T> {
         if P::COMPONENTS[T::NAME].identifier != self.ty {
             panic!("attempt to convert component refs of unrelated type");
         }
@@ -91,6 +100,16 @@ pub trait ComponentPool {
 }
 
 pub trait PropertyAccessor<V: Value> {
-    fn set_property(&mut self, r: ComponentRef, identifier: Identifier, value: V) -> Result<(), V::ParseError>;
-    fn get_property(&self, r: ComponentRef, identifier: Identifier, value: V) -> Result<V, V::LoadError>;
+    fn set_property(
+        &mut self,
+        r: ComponentRef,
+        identifier: Identifier,
+        value: V,
+    ) -> Result<(), V::ParseError>;
+    fn get_property(
+        &self,
+        r: ComponentRef,
+        identifier: Identifier,
+        value: V,
+    ) -> Result<V, V::LoadError>;
 }

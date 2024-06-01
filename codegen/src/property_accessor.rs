@@ -26,22 +26,28 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::collections::HashMap;
-use proc_macro2::{Ident, TokenStream};
-use quote::{quote, ToTokens};
-use quote::__private::Span;
-use syn::{ExprAssign, Field, Token, Variant};
-use syn::punctuated::Punctuated;
 use crate::dispatch::{DispatchParser, FieldDispatch};
 use crate::r#impl::Impl;
 use crate::util::Attributes;
+use proc_macro2::{Ident, TokenStream};
+use quote::__private::Span;
+use quote::{quote, ToTokens};
+use std::collections::HashMap;
+use syn::punctuated::Punctuated;
+use syn::{ExprAssign, Field, Token, Variant};
 
 fn get_target(map: &HashMap<String, Ident>, field: &FieldDispatch) -> (TokenStream, bool) {
     let field_name = field.name.to_string();
     map.get(&field_name)
-        .map(|v| (quote! {
-                self.#v
-        }, true)).unwrap_or_else(|| {
+        .map(|v| {
+            (
+                quote! {
+                        self.#v
+                },
+                true,
+            )
+        })
+        .unwrap_or_else(|| {
             let ident = Ident::new(&field_name, Span::call_site());
             (quote! { self.#ident }, false)
         })
@@ -51,7 +57,7 @@ pub struct PropertyAccessorImpl {
     parser: DispatchParser,
     name: Ident,
     set_map: HashMap<String, Ident>,
-    get_map: HashMap<String, Ident>
+    get_map: HashMap<String, Ident>,
 }
 
 impl PropertyAccessorImpl {
@@ -102,7 +108,7 @@ impl Impl for PropertyAccessorImpl {
             name: params,
             parser: DispatchParser::new(),
             set_map: HashMap::new(),
-            get_map: HashMap::new()
+            get_map: HashMap::new(),
         }
     }
 
@@ -116,16 +122,20 @@ impl Impl for PropertyAccessorImpl {
             let args = attr.parse_args_with(Punctuated::<ExprAssign, Token![,]>::parse_terminated);
             if let Ok(args) = args {
                 for kv in args {
-                    let key: Ident = syn::parse2(kv.left.into_token_stream()).expect("unable to parse key name as identifier");
-                    let value: Ident = syn::parse2(kv.right.into_token_stream()).expect("unable to parse value as identifier");
+                    let key: Ident = syn::parse2(kv.left.into_token_stream())
+                        .expect("unable to parse key name as identifier");
+                    let value: Ident = syn::parse2(kv.right.into_token_stream())
+                        .expect("unable to parse value as identifier");
                     match &*key.to_string() {
                         "get" => {
-                            self.get_map.insert(f.ident.clone().unwrap().to_string(), value);
+                            self.get_map
+                                .insert(f.ident.clone().unwrap().to_string(), value);
                         },
                         "set" => {
-                            self.set_map.insert(f.ident.clone().unwrap().to_string(), value);
+                            self.set_map
+                                .insert(f.ident.clone().unwrap().to_string(), value);
                         },
-                        _ => ()
+                        _ => (),
                     }
                 }
             }
@@ -136,26 +146,33 @@ impl Impl for PropertyAccessorImpl {
     fn into_token_stream(mut self) -> TokenStream {
         let dispatches = self.parser.into_inner();
         self.parser = DispatchParser::new(); //required to allow re-using self for gen_set_prop
-        let type_list: Vec<TokenStream> = dispatches.iter()
+        let type_list: Vec<TokenStream> = dispatches
+            .iter()
             .filter_map(|v| v.clone().into_field())
             .map(|v| {
                 let ty = v.ty;
                 quote! {
                     regecs::reflection::property::value::ValueParser<#ty>
                 }
-            }).collect();
-        let setter_mapping: Vec<TokenStream> = dispatches.iter()
-            .filter_map(|v| v.clone().into_field())
-            .enumerate()
-            .map(|v | self.gen_set_prop(v))
+            })
             .collect();
-        let getter_mapping: Vec<TokenStream> = dispatches.iter()
+        let setter_mapping: Vec<TokenStream> = dispatches
+            .iter()
             .filter_map(|v| v.clone().into_field())
             .enumerate()
-            .map(|v | self.gen_get_prop(v))
+            .map(|v| self.gen_set_prop(v))
+            .collect();
+        let getter_mapping: Vec<TokenStream> = dispatches
+            .iter()
+            .filter_map(|v| v.clone().into_field())
+            .enumerate()
+            .map(|v| self.gen_get_prop(v))
             .collect();
         let name = self.name;
-        let new_name = Ident::new(&(String::from("PropertyAccessor") + &name.to_string()), name.span());
+        let new_name = Ident::new(
+            &(String::from("PropertyAccessor") + &name.to_string()),
+            name.span(),
+        );
         quote! {
             pub trait #new_name: #(#type_list)+* {}
             impl<T: #(#type_list)+*> #new_name for T {}

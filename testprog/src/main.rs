@@ -31,16 +31,19 @@ use regecs::component::{ComponentPool, ComponentRef};
 use regecs::entity::EntityIndex;
 use regecs::event::Event;
 use regecs::object::{Class, Object, ObjectRef};
-use regecs::scene::Scene;
 use regecs::scene::state;
+use regecs::scene::Scene;
 use regecs::system::Update;
 
 use crate::components::ComplexComponent;
 
 mod components {
     use regecs::component::list::Iter;
-    use regecs::component::{list::{BasicComponentList, GroupComponentList}, Component, ComponentPool, Clear};
     use regecs::component::ComponentRef;
+    use regecs::component::{
+        list::{BasicComponentList, GroupComponentList},
+        Clear, Component, ComponentPool,
+    };
     use regecs::component_pool;
     use regecs::scene::state::System;
     use regecs::system::Update;

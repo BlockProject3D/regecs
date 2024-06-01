@@ -26,10 +26,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::fmt::{Display, Formatter};
 use crate::fields_enum::{expand_named_fields, expand_unnamed_fields};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
+use std::fmt::{Display, Formatter};
 use syn::{Field, Fields, Index, Type, Variant};
 
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -42,7 +42,7 @@ impl Display for FieldName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             FieldName::Ident(v) => write!(f, "{}", v),
-            FieldName::Index(v) => write!(f, "id{}", v)
+            FieldName::Index(v) => write!(f, "id{}", v),
         }
     }
 }
@@ -80,21 +80,21 @@ impl Dispatch {
     pub fn into_field(self) -> Option<FieldDispatch> {
         match self {
             Dispatch::Field(f) => Some(f),
-            _ => None
+            _ => None,
         }
     }
 }
 
 pub struct DispatchParser {
     dispatches: Vec<Dispatch>,
-    is_enum: bool
+    is_enum: bool,
 }
 
 impl DispatchParser {
     pub fn new() -> DispatchParser {
         DispatchParser {
             dispatches: Vec::new(),
-            is_enum: false
+            is_enum: false,
         }
     }
 

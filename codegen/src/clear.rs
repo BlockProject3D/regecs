@@ -30,11 +30,11 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Field, Variant};
 
+use crate::util::{Attributes, FlagRecorder};
 use crate::{
     dispatch::{Dispatch, DispatchParser},
     r#impl::Impl,
 };
-use crate::util::{Attributes, FlagRecorder};
 
 fn to_token_stream(dispatch: &Dispatch, flags: &FlagRecorder) -> Option<TokenStream> {
     let flagged = flags.is_flagged(dispatch);
@@ -81,7 +81,7 @@ fn to_token_stream(dispatch: &Dispatch, flags: &FlagRecorder) -> Option<TokenStr
 pub struct ClearImpl {
     name: Ident,
     parser: DispatchParser,
-    no_clear: FlagRecorder
+    no_clear: FlagRecorder,
 }
 
 impl Impl for ClearImpl {
@@ -91,7 +91,7 @@ impl Impl for ClearImpl {
         Self {
             name,
             parser: DispatchParser::new(),
-            no_clear: FlagRecorder::new()
+            no_clear: FlagRecorder::new(),
         }
     }
 

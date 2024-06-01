@@ -26,37 +26,41 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::thread::sleep;
-use std::time::Duration;
-use regecs::{component_pool};
 use regecs::component::Clear;
+use regecs::component_pool;
 use regecs::entity::EntityIndex;
 use regecs::scene::Scene;
+use std::thread::sleep;
+use std::time::Duration;
 
 const EXPECTED_TICK_COUNT: usize = 4;
 
 mod components {
-    use std::time::{Duration, Instant};
-    use regecs::component::{Component, ComponentRef};
     use regecs::component::list::BasicComponentList;
+    use regecs::component::{Component, ComponentRef};
     use regecs::object::ObjectRef;
+    use std::time::{Duration, Instant};
 
     pub struct Timer<E> {
         pub event: fn(ComponentRef<Timer<E>>) -> E,
         pub target: Option<ObjectRef>,
         pub interval: Duration,
         pub last_trigger_time: Instant,
-        pub tick_counter: usize
+        pub tick_counter: usize,
     }
 
     impl<E> Timer<E> {
-        pub fn with_target(event: fn(ComponentRef<Timer<E>>) -> E, interval: Duration, target: ObjectRef) -> Self {
+        pub fn with_target(
+            event: fn(ComponentRef<Timer<E>>) -> E,
+            interval: Duration,
+            target: ObjectRef,
+        ) -> Self {
             Self {
                 event,
                 interval,
                 target: Some(target),
                 last_trigger_time: Instant::now(),
-                tick_counter: 0
+                tick_counter: 0,
             }
         }
     }
@@ -67,18 +71,20 @@ mod components {
 }
 
 mod systems {
-    use std::time::Instant;
-    use regecs::component::{ComponentPool, ComponentRef};
     use regecs::component::list::Iter;
+    use regecs::component::{ComponentPool, ComponentRef};
     use regecs::event::Builder;
-    use regecs::scene::Configuration;
     use regecs::scene::state::System;
+    use regecs::scene::Configuration;
     use regecs::system::Update;
+    use std::time::Instant;
 
     #[derive(Default)]
     pub struct TimerManager;
     impl<C: Configuration> Update<System<C>> for TimerManager
-        where C::Pool: ComponentPool<super::components::Timer<C::Event>> {
+    where
+        C::Pool: ComponentPool<super::components::Timer<C::Event>>,
+    {
         fn update(&mut self, ctx: &mut System<C>, _: &C::AppState) {
             let now = Instant::now();
             for (index, component) in ctx.pool.store_mut().iter_mut() {
@@ -89,7 +95,7 @@ mod systems {
                     let event = (component.event)(ComponentRef::new(index));
                     match component.target {
                         None => ctx.event_manager.send(Builder::new(event)),
-                        Some(target) => target.send(&mut ctx.event_manager, None, event)
+                        Some(target) => target.send(&mut ctx.event_manager, None, event),
                     }
                 }
             }
@@ -98,19 +104,19 @@ mod systems {
 }
 
 mod objects {
-    use std::time::Duration;
-    use regecs::component::{ComponentPool, ComponentRef};
-    use regecs::object::{Class, Object, ObjectRef};
-    use regecs::object::builder::Builder;
-    use regecs::scene::event::Notify;
     use crate::{Config, EXPECTED_TICK_COUNT};
+    use regecs::component::{ComponentPool, ComponentRef};
+    use regecs::object::builder::Builder;
+    use regecs::object::{Class, Object, ObjectRef};
+    use regecs::scene::event::Notify;
+    use std::time::Duration;
 
     pub enum Event {
-        Timer(ComponentRef<super::components::Timer<Event>>)
+        Timer(ComponentRef<super::components::Timer<Event>>),
     }
 
     pub struct TimerTest {
-        this: ObjectRef
+        this: ObjectRef,
     }
 
     impl Class for TimerTest {
@@ -120,7 +126,12 @@ mod objects {
     }
 
     impl Object<regecs::scene::state::Object<Config>> for TimerTest {
-        fn on_event(&mut self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), event: &regecs::event::Event<Event>) {
+        fn on_event(
+            &mut self,
+            ctx: &mut regecs::scene::state::Object<Config>,
+            _: &(),
+            event: &regecs::event::Event<Event>,
+        ) {
             match event.data() {
                 Event::Timer(r) => {
                     let comp = &ctx.common.pool.store()[r];
@@ -130,7 +141,7 @@ mod objects {
                     if ctx.common.pool.store().attachments(self.this).count() <= 0 {
                         self.this.remove(&mut ctx.common.scene, Notify::None);
                     }
-                }
+                },
             }
         }
     }
@@ -140,15 +151,41 @@ mod objects {
     impl Builder<regecs::scene::state::Object<Config>> for TimerTestBuilder {
         type Object = TimerTest;
 
-        fn build(self, ctx: &mut regecs::scene::state::Object<Config>, _: &(), this: ObjectRef) -> Self::Object {
-            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_secs(1), this));
-            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(500), this));
-            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(1), this));
-            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(5), this));
-            ctx.common.pool.store_mut().add_attach(this, super::components::Timer::with_target(Event::Timer, Duration::from_millis(10), this));
-            TimerTest {
-                this
-            }
+        fn build(
+            self,
+            ctx: &mut regecs::scene::state::Object<Config>,
+            _: &(),
+            this: ObjectRef,
+        ) -> Self::Object {
+            ctx.common.pool.store_mut().add_attach(
+                this,
+                super::components::Timer::with_target(Event::Timer, Duration::from_secs(1), this),
+            );
+            ctx.common.pool.store_mut().add_attach(
+                this,
+                super::components::Timer::with_target(
+                    Event::Timer,
+                    Duration::from_millis(500),
+                    this,
+                ),
+            );
+            ctx.common.pool.store_mut().add_attach(
+                this,
+                super::components::Timer::with_target(Event::Timer, Duration::from_millis(1), this),
+            );
+            ctx.common.pool.store_mut().add_attach(
+                this,
+                super::components::Timer::with_target(Event::Timer, Duration::from_millis(5), this),
+            );
+            ctx.common.pool.store_mut().add_attach(
+                this,
+                super::components::Timer::with_target(
+                    Event::Timer,
+                    Duration::from_millis(10),
+                    this,
+                ),
+            );
+            TimerTest { this }
         }
     }
 }

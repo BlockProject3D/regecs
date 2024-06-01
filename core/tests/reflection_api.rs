@@ -29,11 +29,11 @@
 use phf::phf_map;
 use regecs::component::list::BasicComponentList;
 use regecs::component_pool;
-use regecs::reflection::component::{Component, PropertyAccessor};
 use regecs::reflection::component::list::ComponentList;
 use regecs::reflection::component::pool::{ComponentInfo, ComponentRef};
-use regecs::reflection::Identifier;
+use regecs::reflection::component::{Component, PropertyAccessor};
 use regecs::reflection::property::value::{Error, Value, ValueString};
+use regecs::reflection::Identifier;
 
 #[derive(Component, PropertyAccessor, Default)]
 pub struct TestComponent {
@@ -42,7 +42,7 @@ pub struct TestComponent {
     #[property(get=test_field1)]
     test_field1: u32,
     #[property(set=set_test_str, get=test_str)]
-    test_str: String
+    test_str: String,
 }
 
 impl TestComponent {
@@ -81,18 +81,30 @@ impl regecs::reflection::component::pool::ComponentPool for TestPool {
     });
 }
 
-impl<V: Value + PropertyAccessorTestComponent> regecs::reflection::component::pool::PropertyAccessor<V> for TestPool {
-    fn set_property(&mut self, r: ComponentRef, identifier: Identifier, value: V) -> Result<(), V::ParseError> {
+impl<V: Value + PropertyAccessorTestComponent>
+    regecs::reflection::component::pool::PropertyAccessor<V> for TestPool
+{
+    fn set_property(
+        &mut self,
+        r: ComponentRef,
+        identifier: Identifier,
+        value: V,
+    ) -> Result<(), V::ParseError> {
         match r.ty().into_raw() {
             0 => self.tests[r.unchecked_into_ref()].set_property(identifier, value),
-            _ => Err(V::ParseError::undefined_property())
+            _ => Err(V::ParseError::undefined_property()),
         }
     }
 
-    fn get_property(&self, r: ComponentRef, identifier: Identifier, value: V) -> Result<V, V::LoadError> {
+    fn get_property(
+        &self,
+        r: ComponentRef,
+        identifier: Identifier,
+        value: V,
+    ) -> Result<V, V::LoadError> {
         match r.ty().into_raw() {
             0 => self.tests[r.unchecked_into_ref()].get_property(identifier, value),
-            _ => Err(V::LoadError::undefined_property())
+            _ => Err(V::LoadError::undefined_property()),
         }
     }
 }
@@ -104,14 +116,16 @@ fn reflection_main() {
     let test_field = TestComponent::PROPERTIES["test_field"].identifier;
     let test_field1 = TestComponent::PROPERTIES["test_field1"].identifier;
     let test_str = TestComponent::PROPERTIES["test_str"].identifier;
-    comp.set_property(test_str, ValueString::from("This is a test")).unwrap();
+    comp.set_property(test_str, ValueString::from("This is a test"))
+        .unwrap();
     let prop = comp.get_property(test_str, ValueString::new()).unwrap();
     assert_eq!(prop.into_inner(), "This is a test");
     let prop = comp.get_property(test_field, ValueString::new()).unwrap();
     assert_eq!(prop.into_inner(), "42");
     let prop = comp.get_property(test_field1, ValueString::new()).unwrap();
     assert_eq!(prop.into_inner(), "0");
-    comp.set_property(test_field1, ValueString::from("424242")).unwrap();
+    comp.set_property(test_field1, ValueString::from("424242"))
+        .unwrap();
     let prop = comp.get_property(test_field1, ValueString::new()).unwrap();
     assert_eq!(prop.into_inner(), "424242");
 }
@@ -125,15 +139,23 @@ fn reflection_pool() {
     let mut pool = TestPool::default();
     let r = ComponentRef::from_ref::<TestPool, _>(pool.tests.add(TestComponent::default())); //TODO: This also needs reflection support
     assert_eq!(pool.tests.len(), 1);
-    pool.set_property(r, test_str, ValueString::from("This is a test")).unwrap();
+    pool.set_property(r, test_str, ValueString::from("This is a test"))
+        .unwrap();
     let prop = pool.get_property(r, test_str, ValueString::new()).unwrap();
     assert_eq!(prop.into_inner(), "This is a test");
-    let prop = pool.get_property(r, test_field, ValueString::new()).unwrap();
+    let prop = pool
+        .get_property(r, test_field, ValueString::new())
+        .unwrap();
     assert_eq!(prop.into_inner(), "42");
-    let prop = pool.get_property(r, test_field1, ValueString::new()).unwrap();
+    let prop = pool
+        .get_property(r, test_field1, ValueString::new())
+        .unwrap();
     assert_eq!(prop.into_inner(), "0");
-    pool.set_property(r, test_field1, ValueString::from("424242")).unwrap();
-    let prop = pool.get_property(r, test_field1, ValueString::new()).unwrap();
+    pool.set_property(r, test_field1, ValueString::from("424242"))
+        .unwrap();
+    let prop = pool
+        .get_property(r, test_field1, ValueString::new())
+        .unwrap();
     assert_eq!(prop.into_inner(), "424242");
     pool.tests.remove(r.into_ref::<TestPool, _>()); //TODO: This also needs reflection support
 }

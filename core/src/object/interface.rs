@@ -27,9 +27,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::event::{Builder, EventManager};
+use crate::scene::event::{Event, Notify};
 use crate::scene::Configuration;
 use std::num::NonZeroU32;
-use crate::scene::event::{Event, Notify};
 
 #[cfg(feature = "codegen")]
 pub use regecs_codegen::Class;
@@ -70,7 +70,12 @@ impl ObjectRef {
         ctx.send(builder);
     }
 
-    pub fn enable<C: Configuration>(&self, ctx: &mut EventManager<Event<C>>, notify: Notify, enable: bool) {
+    pub fn enable<C: Configuration>(
+        &self,
+        ctx: &mut EventManager<Event<C>>,
+        notify: Notify,
+        enable: bool,
+    ) {
         ctx.enable_object(notify, *self, enable);
     }
 
@@ -119,7 +124,10 @@ pub trait Class {
     fn class(&self) -> &str;
 }
 
-pub trait Context where Self: Sized {
+pub trait Context
+where
+    Self: Sized,
+{
     type AppState;
     type Event;
     type Builder: crate::object::builder::Builder<Self>;
@@ -127,7 +135,13 @@ pub trait Context where Self: Sized {
 
 /// Object interface to represent all objects managed by a scene
 pub trait Object<C: Context>: Class {
-    fn on_event(&mut self, _ctx: &mut C, _state: &C::AppState, _event: &crate::event::Event<C::Event>) {}
+    fn on_event(
+        &mut self,
+        _ctx: &mut C,
+        _state: &C::AppState,
+        _event: &crate::event::Event<C::Event>,
+    ) {
+    }
     fn on_remove(&mut self, _ctx: &mut C, _state: &C::AppState) {}
     fn on_update(&mut self, _ctx: &mut C, _state: &C::AppState) {}
 

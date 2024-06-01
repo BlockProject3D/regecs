@@ -26,18 +26,18 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use crate::reflection::Identifier;
 use std::ffi::{CStr, CString, OsStr, OsString};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::Arc;
-use crate::reflection::Identifier;
 
 #[derive(Copy, Clone)]
 pub struct Property {
     pub name: &'static str,
     pub identifier: Identifier,
-    pub ty: &'static str
+    pub ty: &'static str,
 }
 
 pub trait Type {

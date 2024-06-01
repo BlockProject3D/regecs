@@ -35,8 +35,8 @@
 //pub mod interface;
 //pub mod property;
 
-pub mod property;
 pub mod component;
+pub mod property;
 
 mod interface;
 

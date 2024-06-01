@@ -26,14 +26,18 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{Field, Type, Variant};
 use crate::dispatch::{Dispatch, DispatchParser};
 use crate::r#impl::Impl;
 use crate::util::{Attributes, FlagRecorder};
+use proc_macro2::{Ident, TokenStream};
+use quote::quote;
+use syn::{Field, Type, Variant};
 
-fn to_token_stream(dispatch: &Dispatch, context: &Type, no_update: &FlagRecorder) -> Option<TokenStream> {
+fn to_token_stream(
+    dispatch: &Dispatch,
+    context: &Type,
+    no_update: &FlagRecorder,
+) -> Option<TokenStream> {
     let flagged = no_update.is_flagged(dispatch);
     match dispatch {
         Dispatch::Field(v) => {
@@ -42,7 +46,9 @@ fn to_token_stream(dispatch: &Dispatch, context: &Type, no_update: &FlagRecorder
             if flagged {
                 None
             } else {
-                Some(quote! { <#ty as regecs::system::Update<#context>>::update(#target, ctx, state) })
+                Some(
+                    quote! { <#ty as regecs::system::Update<#context>>::update(#target, ctx, state) },
+                )
             }
         },
         Dispatch::Variant(v) => {
@@ -52,7 +58,9 @@ fn to_token_stream(dispatch: &Dispatch, context: &Type, no_update: &FlagRecorder
             if flagged {
                 None
             } else {
-                Some(quote! { #v1 => <#ty as regecs::system::Update<#context>>::update(#target, ctx, state) })
+                Some(
+                    quote! { #v1 => <#ty as regecs::system::Update<#context>>::update(#target, ctx, state) },
+                )
             }
         },
         Dispatch::VariantMultiField(v) => {
@@ -79,7 +87,7 @@ pub struct UpdateImpl {
     parser: DispatchParser,
     no_update: FlagRecorder,
     name: Ident,
-    context: Type
+    context: Type,
 }
 
 impl Impl for UpdateImpl {
@@ -90,7 +98,7 @@ impl Impl for UpdateImpl {
             parser: DispatchParser::new(),
             no_update: FlagRecorder::new(),
             name,
-            context
+            context,
         }
     }
 
